@@ -6,7 +6,7 @@ https://www.fortinet.com/aws/
 
 # License
 
-Copyright (c) 2017 Fortinet, Inc.
+Copyright © 2017 Fortinet, Inc.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the
