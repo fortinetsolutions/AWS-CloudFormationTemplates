@@ -293,7 +293,7 @@
       },
       "ca-central-1": {
         "fgtami": "ami-e5823081",
-        "workerami": "ami-44262f27"
+        "workerami": "ami-1ed16d7a"
       }
     }
   },

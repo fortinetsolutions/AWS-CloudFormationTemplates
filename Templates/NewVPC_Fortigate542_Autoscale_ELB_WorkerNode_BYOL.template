@@ -318,7 +318,7 @@
       "ca-central-1": {
         "fgtodami": "ami-e5823081",
         "fgtami": "ami-698a380d",
-        "workerami": "ami-44262f27"
+        "workerami": "ami-1ed16d7a"
       }
     }
   },
