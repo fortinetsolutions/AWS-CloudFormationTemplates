@@ -238,61 +238,75 @@
         "ScaleDown": "600"
       }
     },
-    "RegionMap": {
+   "RegionMap": {
       "us-east-1": {
-        "fgtami": "ami-97f7d480",
+        "fgtodami": "ami-97f7d480",
+        "fgtbyolami": "ami-f2f0d3e5",
         "workerami": "ami-6245d474"
       },
       "us-east-2": {
-        "fgtami": "ami-904b11f5",
+        "fgtodami": "ami-88570ded",
+        "fgtbyolami": "ami-904b11f5",
         "workerami": "ami-349db951"
       },
       "eu-west-1": {
-        "fgtami": "ami-90c592e3",
+        "fgtodami":   "ami-1ac79069",
+        "fgtbyolami": "ami-90c592e3",
         "workerami": "ami-dccbcfba"
       },
       "eu-west-2": {
-        "fgtami": "ami-462d2722",
+        "fgtodami":   "ami-462d2722",
+        "fgtbyolami": "ami-e62f2582",
         "workerami": "ami-04c4d060"
       },
       "eu-central-1": {
-        "fgtami": "ami-7ea45e11",
+        "fgtodami": "ami-22a75d4d",
+        "fgtbyolami": "ami-7ea45e11",
         "workerami": "ami-8869bbe7"
       },
       "ap-northeast-1": {
-        "fgtami": "ami-a2b917c3",
+        "fgtodami": "ami-a2b917c3",
+        "fgtbyolami": "ami-eebb158f",
         "workerami": "ami-860926e1"
       },
       "ap-northeast-2": {
-        "fgtami": "ami-a84296c6",
+        "fgtodami": "ami-a84296c6",
+        "fgtbyolami": "ami-c74c98a9",
         "workerami": "ami-c818caa6"
       },
       "ap-southeast-1": {
-        "fgtami": "ami-24359547",
+        "fgtodami": "ami-24359547",
+        "fgtbyolami": "ami-67359504",
         "workerami": "ami-4f52eb2c"
       },
       "ap-southeast-2": {
-        "fgtami": "ami-f969569a",
+        "fgtodami": "ami-686b540b",
+        "fgtbyolami": "ami-f969569a",
         "workerami": "ami-44262f27"
       },
       "ap-south-1": {
-        "fgtami": "ami-6c9aee03",
+        "fgtodami":   "ami-6c9aee03",
+        "fgtbyolami": "ami-dd9befb2",
         "workerami": "ami-16c7b479"
       },
       "sa-east-1": {
-        "fgtami": "ami-15f56a79",
+        "fgtodami": "ami-15f56a79",
+        "fgtbyolami": "ami-f0f8679c",
         "workerami": "ami-b0d3b1dc"
       },
       "us-west-1": {
-        "fgtami": "ami-76e8a216",
+        "fgtodami": "ami-3be8a25b",
+        "fgtbyolami": "ami-76e8a216",
         "workerami": "ami-6480a504"
       },
       "us-west-2": {
-        "fgtami": "ami-933797f3",
+        "fgtodami": "ami-113b9b71",
+        "fgtbyolami": "ami-933797f3",
         "workerami": "ami-752ab815"
       },
       "ca-central-1": {
-        "fgtami": "ami-e5823081",
+        "fgtodami": "ami-698a380d",
+        "fgtbyolami": "ami-e5823081",
         "workerami": "ami-1ed16d7a"
       }
     }
@@ -849,7 +863,7 @@
             {
               "Ref": "AWS::Region"
             },
-            "fgtami"
+            "fgtodami"
           ]
         },
         "SecurityGroups": [
@@ -1363,7 +1377,7 @@
             {
               "Ref": "AWS::Region"
             },
-            "fgtami"
+            "fgtodami"
           ]
         },
         "InstanceType": {
@@ -1605,7 +1619,7 @@
             {
               "Ref": "AWS::Region"
             },
-            "fgtami"
+            "fgtodami"
           ]
         },
         "InstanceType": {
