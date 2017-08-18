@@ -250,20 +250,20 @@
         "ScaleDown": "600"
       }
     },
-       "RegionMap": {
+    "RegionMap": {
       "us-east-1": {
         "fgtodami": "ami-97f7d480",
         "fgtbyolami": "ami-f2f0d3e5",
         "workerami": "ami-6245d474"
       },
       "us-east-2": {
-        "fgtodami": "ami-88570ded",
-        "fgtbyolami": "ami-904b11f5",
+        "fgtbyolami": "ami-88570ded",
+        "fgtodami": "ami-904b11f5",
         "workerami": "ami-349db951"
       },
       "eu-west-1": {
-        "fgtodami":   "ami-1ac79069",
-        "fgtbyolami": "ami-90c592e3",
+        "fgtbyolami":   "ami-1ac79069",
+        "fgtodami": "ami-90c592e3",
         "workerami": "ami-dccbcfba"
       },
       "eu-west-2": {
@@ -272,8 +272,8 @@
         "workerami": "ami-04c4d060"
       },
       "eu-central-1": {
-        "fgtodami": "ami-22a75d4d",
-        "fgtbyolami": "ami-7ea45e11",
+        "fgtbyolami": "ami-22a75d4d",
+        "fgtodami": "ami-7ea45e11",
         "workerami": "ami-8869bbe7"
       },
       "ap-northeast-1": {
@@ -292,8 +292,8 @@
         "workerami": "ami-4f52eb2c"
       },
       "ap-southeast-2": {
-        "fgtodami": "ami-686b540b",
-        "fgtbyolami": "ami-f969569a",
+        "fgtbyolami": "ami-686b540b",
+        "fgtodami": "ami-f969569a",
         "workerami": "ami-44262f27"
       },
       "ap-south-1": {
@@ -307,18 +307,18 @@
         "workerami": "ami-b0d3b1dc"
       },
       "us-west-1": {
-        "fgtodami": "ami-3be8a25b",
-        "fgtbyolami": "ami-76e8a216",
+        "fgtbyolami": "ami-3be8a25b",
+        "fgtodami": "ami-76e8a216",
         "workerami": "ami-6480a504"
       },
       "us-west-2": {
-        "fgtodami": "ami-113b9b71",
-        "fgtbyolami": "ami-933797f3",
+        "fgtbyolami": "ami-113b9b71",
+        "fgtodami": "ami-933797f3",
         "workerami": "ami-752ab815"
       },
       "ca-central-1": {
-        "fgtodami": "ami-698a380d",
-        "fgtbyolami": "ami-e5823081",
+        "fgtbyolami": "ami-698a380d",
+        "fgtodami": "ami-e5823081",
         "workerami": "ami-1ed16d7a"
       }
     }
@@ -976,6 +976,12 @@
             },
             "workerami"
           ]
+        },
+        "KeyName": {
+          "Ref": "ASKeyPair"
+        },
+        "IamInstanceProfile": {
+          "Ref": "WorkerInstanceProfile"
         },
         "SecurityGroups": [
           {
