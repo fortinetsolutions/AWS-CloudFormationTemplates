@@ -1,0 +1,304 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS CloudFormation Template to launch VPC with Two Subnets (Public, Private), an InternetGateway and RouteTables in a VPC.",
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": {
+            "default": "VPC Configuration"
+          },
+          "Parameters": [
+            "VPCCIDR",
+            "AZForSubnet1",
+            "Public1Subnet",
+            "Private1Subnet"
+          ]
+        }
+      ],
+    }
+  },
+  "Parameters": {
+    "VPCCIDR": {
+      "Type": "String",
+      "Default": "10.0.0.0/16",
+      "Description": "Enter the VPC CIDR that you want to use"
+    },
+    "AZForSubnet1": {
+      "Type": "AWS::EC2::AvailabilityZone::Name",
+      "Description": "Enter the AZ for the primary subnets"
+    },
+    "Public1Subnet": {
+      "Type": "String",
+      "Default": "10.0.0.0/24",
+      "Description": "Enter the value of the Public1 subnet"
+    },
+    "Private1Subnet": {
+      "Type": "String",
+      "Default": "10.0.1.0/24",
+      "Description": "Enter the value of the Private1 subnet"
+    }
+  },
+  "Mappings": {
+    "RegionMap": {
+      "us-east-1": {
+        "fgtami": "ami-c2768daf",
+        "workerami": "ami-6245d474",
+        "fortimgr": "ami-5a2b2032",
+        "webami" :"ami-c481fad3"
+      },
+      "us-west-1": {
+        "fgtami": "ami-10d4ae70",
+        "workerami": "ami-6480a504"
+      },
+      "eu-west-1": {
+        "fgtami": "ami-22e37f51",
+        "workerami": "ami-dccbcfba"
+      },
+      "eu-central-1": {
+        "fgtami": "ami-28a04947",
+        "workerami": "ami-8869bbe7"
+      },
+      "ap-northeast-1": {
+        "fgtami": "ami-c4e50da5",
+        "workerami": "ami-860926e1"
+      },
+      "ap-northeast-2": {
+        "fgtami": "ami-560bc038",
+        "workerami": "ami-c818caa6"
+      },
+      "ap-southeast-1": {
+        "fgtami": "ami-e370a080",
+        "workerami": "ami-4f52eb2c"
+      },
+      "ap-southeast-2": {
+        "fgtami": "ami-ee2c058d",
+        "workerami": "ami-44262f27"
+      },
+      "sa-east-1": {
+        "fgtami": "ami-b7d75ddb",
+        "workerami": "ami-b0d3b1dc"
+      },
+      "us-west-2": {
+        "fgtami": "ami-a29f65c2",
+        "workerami": "ami-752ab815"
+      }
+    }
+  },
+  "Conditions": {
+  },
+  "Resources": {
+    "VPCID": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": {
+          "Ref": "VPCCIDR"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "VPCID"
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "Subnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPCID"
+        },
+        "CidrBlock": {
+          "Ref": "Public1Subnet"
+        },
+        "AvailabilityZone": {
+          "Ref": "AZForSubnet1"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "PublicSubnet1"
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "Subnet2": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPCID"
+        },
+        "CidrBlock": {
+          "Ref": "Private1Subnet"
+        },
+        "AvailabilityZone": {
+          "Ref": "AZForSubnet1"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "PrivateSubnet1"
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "RouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPCID"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "PublicRT"
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "RouteTable1": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPCID"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "InternalRouteTable1"
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "InternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "IGW"
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "AttachGateway": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPCID"
+        },
+        "InternetGatewayId": {
+          "Ref": "InternetGateway"
+        }
+      }
+    },
+    "Route1": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable"
+        },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "InternetGateway"
+        }
+      }
+    },
+    "Route2": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable1"
+        },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "InternetGateway"
+        }
+      }
+    },
+    "SubnetRouteTableAssociation1": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet1"
+        },
+        "RouteTableId": {
+          "Ref": "RouteTable"
+        }
+      }
+    },
+    "SubnetRouteTableAssociation3": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "Subnet2"
+        },
+        "RouteTableId": {
+          "Ref": "RouteTable1"
+        }
+      }
+    }
+  }
+}
