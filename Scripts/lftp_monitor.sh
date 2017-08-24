@@ -5,7 +5,7 @@
 #
 DIRTY_DIR=/mnt/dirty
 QUARANTINE_DIR=/mnt/quarantine
-LOGFILE=~/lftp/logfile
+LOGFILE=/opt/monitor_dirty/logfile
 USERNAME="ftpsecure"
 USERPASSWD="1hop2go"
 SLEEP_PERIOD=15
