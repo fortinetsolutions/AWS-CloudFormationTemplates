@@ -34,7 +34,7 @@ function lftp_real_run()
     then 
       echo "===== Transfer $p Aborted. Moving to quarantine ====="
       filename=$(basename $p)
-      aws s3 rm s3://dgclean-west/$filename
+      aws s3 rm s3://dg-stage-clean/$filename
       sudo mv -f $p $QUARANTINE_DIR
     fi
     echo "===================================="
