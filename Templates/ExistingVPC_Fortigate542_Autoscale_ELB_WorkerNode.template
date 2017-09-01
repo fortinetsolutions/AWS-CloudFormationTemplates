@@ -589,6 +589,7 @@
     },
     "ASG1": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "DependsOn": "SQSRole",
       "Properties": {
         "DesiredCapacity": "0",
         "LaunchConfigurationName": {
