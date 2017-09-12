@@ -23,4 +23,5 @@ module "worker_node" {
   api_termination_protection    = "${var.api_termination_protection}"
   security_group_ids            = "${var.security_group_ids}"
   instance_profile              = "${aws_iam_instance_profile.worker_node_profile.name}"
+  key_name                      = "${var.key_name}"
 }

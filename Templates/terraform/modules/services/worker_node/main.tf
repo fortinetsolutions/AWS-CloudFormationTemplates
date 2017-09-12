@@ -29,13 +29,14 @@ resource "aws_instance" "worker_node" {
   instance_type               = "${var.worker_node_instance_type}"
   availability_zone           = "${var.availability_zone}"
   network_interface   = {
-    network_interface_id = "${aws_network_interface.ENI0.id}"
+    network_interface_id  = "${aws_network_interface.ENI0.id}"
     device_index = 0
   }
-  iam_instance_profile = "${var.instance_profile}"
+  iam_instance_profile    = "${var.instance_profile}"
+  key_name                = "${var.key_name}"
   tags {
-    Name            = "${var.customer_prefix}-${var.environment}-${var.worker_node_instance_name}"
-    Environment     = "${var.environment}"
+    Name                  = "${var.customer_prefix}-${var.environment}-${var.worker_node_instance_name}"
+    Environment           = "${var.environment}"
   }
 }
 

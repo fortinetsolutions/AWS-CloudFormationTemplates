@@ -57,7 +57,7 @@ variable "asg1_desired_size" {
 
 variable "asg2_min_size" {
   description = "Autoscale Group Min Size for Worker Node instances"
-  default     = 1
+  default     = 0
 }
 
 variable "asg2_max_size" {
@@ -67,7 +67,7 @@ variable "asg2_max_size" {
 
 variable "asg2_desired_size" {
   description = "Autoscale Group Desired Size for Worker Node instances"
-  default     = 1
+  default     = 0
 }
 
 variable "scaling_period" {
@@ -83,4 +83,8 @@ variable "threshold_high" {
 variable "threshold_low" {
   description = "Autoscaling Scaling threshold percentage low"
   default     = "40"
+}
+
+variable "key_name" {
+  description = "Key name"
 }

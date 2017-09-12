@@ -49,3 +49,8 @@ variable "instance_profile" {
   description = "IAM Instance Profile for Worker Node"
 }
 
+variable "key_name" {
+  description = "Key name"
+}
+
+

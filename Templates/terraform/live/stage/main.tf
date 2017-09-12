@@ -47,6 +47,7 @@ module "worker_node" {
   asg2_min_size               = "${var.asg2_min_size}"
   asg2_max_size               = "${var.asg2_max_size}"
   asg2_desired_size           = "${var.asg2_desired_size}"
+  key_name                    = "${var.key_name}"
   enable_public_ips           = true
   api_termination_protection  = false
 }

@@ -51,3 +51,8 @@ variable "asg2_max_size" {
 variable "asg2_desired_size" {
   description = "Autoscale Group Desired Size for Worker Node instances"
 }
+
+variable "key_name" {
+  description = "Key name"
+}
+
