@@ -586,6 +586,12 @@
             "Ref": "SecurityGroup"
           }
         ],
+        "KeyName": {
+          "Ref": "FortiGateKeyPair"
+        },
+        "IamInstanceProfile": {
+          "Ref": "BootEC2"
+        },
         "InstanceType": {
           "Ref": "FortiGateInstanceType"
         },
@@ -638,6 +644,12 @@
             "Ref": "SecurityGroup"
           }
         ],
+        "KeyName": {
+          "Ref": "FortiGateKeyPair"
+        },
+        "IamInstanceProfile": {
+          "Ref": "BootEC2"
+        },
         "InstanceType": {
           "Ref": "FortiGateInstanceType"
         },
