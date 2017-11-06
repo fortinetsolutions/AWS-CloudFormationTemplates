@@ -944,6 +944,13 @@
         },
         "MaxSize": "1",
         "MinSize": "0",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "ASInstance",
+            "PropagateAtLaunch": "true"
+          }
+        ],
         "TerminationPolicies": [
           "NewestInstance"
         ],
@@ -1381,6 +1388,42 @@
         ]
       }
     },
+    "EELBSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "GroupDescription": "Allow HTTP from Internet",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "TCP",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": "0.0.0.0/0"
+          }
+        ]
+      }
+    },
+    "IELBSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "GroupDescription": "Allow HTTP from VPC",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "TCP",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
+          }
+        ]
+      }
+    },
     "OnDemandA": {
       "Type": "AWS::EC2::Instance",
       "Properties": {
@@ -1673,6 +1716,14 @@
                 ]
               ]
             }
+          },
+          {
+            "Key": "Fortigate-State",
+            "Value": "UnConfigured"
+          },
+          {
+            "Key": "Fortigate-License",
+            "Value": "OnDemand"
           }
         ]
       }
@@ -1776,6 +1827,7 @@
             "Ref": "Subnet4"
           }
         ],
+        "SecurityGroups" : [{"Ref" : "IELBSecurityGroup"}],
         "Scheme": "internal",
         "LoadBalancerName": {
           "Fn::Join": [
@@ -1829,6 +1881,7 @@
             "Ref": "Subnet2"
           }
         ],
+        "SecurityGroups" : [{"Ref" : "EELBSecurityGroup"}] ,
         "Scheme": "internet-facing",
         "Instances": [
           {
@@ -1912,13 +1965,7 @@
     },
     "UsernameforFortiGate1": {
       "Value": "admin",
-      "Description": "Username to Access Fortigate"
-    },
-    "PasswordforFortiGate1": {
-      "Value": {
-        "Ref": "OnDemandA"
-      },
-      "Description": "Password to login to Fortigate is the instance id"
+      "Description": "Username to Access Fortigate is admin and password to login to Fortigate is the instance id"
     },
     "Fortigate2": {
       "Value": {
@@ -1936,13 +1983,7 @@
     },
     "UsernameforFortiGate2": {
       "Value": "admin",
-      "Description": "Username to Access Fortigate"
-    },
-    "PasswordforFortiGate2": {
-      "Value": {
-        "Ref": "OnDemandB"
-      },
-      "Description": "Password to login to Fortigate is the instance id"
+      "Description": "Username to Access Fortigate is admin and password to login to Fortigate is the instance id"
     }
   }
 }
