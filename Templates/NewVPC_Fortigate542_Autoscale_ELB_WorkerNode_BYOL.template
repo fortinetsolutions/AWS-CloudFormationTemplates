@@ -1015,6 +1015,13 @@
         },
         "MaxSize": "1",
         "MinSize": "0",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "ASInstance",
+            "PropagateAtLaunch": "true"
+          }
+        ],
         "TerminationPolicies": [
           "NewestInstance"
         ],
@@ -1767,7 +1774,7 @@
               ]
             }
           },
-		  {
+          {
 			"Key": "Fortigate-State",
 			"Value": "UnConfigured"
 		  },
