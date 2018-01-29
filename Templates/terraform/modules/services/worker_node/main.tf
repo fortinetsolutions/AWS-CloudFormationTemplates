@@ -12,7 +12,7 @@ resource "aws_network_interface" "ENI0" {
   source_dest_check           = true
 
   tags {
-    Name        = "${var.customer_prefix}-${var.environment}-${var.worker_node_instance_name}ENI0 "
+    Name        = "${var.customer_prefix}-${var.aws_region}-${var.environment}-${var.worker_node_instance_name}ENI0 "
     Environment = "${var.environment}"
   }
 }
@@ -35,8 +35,10 @@ resource "aws_instance" "worker_node" {
   iam_instance_profile    = "${var.instance_profile}"
   key_name                = "${var.key_name}"
   tags {
-    Name                  = "${var.customer_prefix}-${var.environment}-${var.worker_node_instance_name}"
+    Name                  = "${var.customer_prefix}-${var.aws_region}-${var.environment}-${var.worker_node_instance_name}"
+    Customer_Prefix       = "${var.customer_prefix}"
     Environment           = "${var.environment}"
+    Region                = "${var.aws_region}"
   }
 }
 

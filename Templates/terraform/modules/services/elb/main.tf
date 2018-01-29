@@ -7,9 +7,8 @@ provider "aws" {
 }
 
 resource "aws_elb" "external_elb" {
-  name                = "${var.customer_prefix}-${var.environment}-elb"
+  name                = "${var.customer_prefix}-${var.aws_region}-${var.environment}-elb"
   subnets             = ["${var.public1_subnet_id}", "${var.public2_subnet_id}"]
-  /* availability_zones = ["${var.availability_zone_1}", "${var.availability_zone_2}"] */
 
   listener {
     instance_port     = 8080
@@ -50,15 +49,14 @@ resource "aws_elb" "external_elb" {
   connection_draining_timeout = 400
 
   tags {
-    Name = "${var.customer_prefix}-${var.environment}-elb"
+    Name = "${var.customer_prefix}-${var.aws_region}-${var.environment}-elb"
   }
 }
 
 
 resource "aws_elb" "internal_elb" {
-  name                  = "${var.customer_prefix}-${var.environment}-ilb"
+  name                  = "${var.customer_prefix}-${var.aws_region}-${var.environment}-ilb"
   subnets               = ["${var.private1_subnet_id}", "${var.private2_subnet_id}"]
-  /* availability_zones = ["${var.availability_zone_1}", "${var.availability_zone_2}"] */
 
   listener {
     instance_port     = 8080
@@ -99,7 +97,7 @@ resource "aws_elb" "internal_elb" {
   connection_draining_timeout = 400
 
   tags {
-    Name = "${var.customer_prefix}-${var.environment}-ilb"
+    Name = "${var.customer_prefix}-${var.aws_region}-${var.environment}-ilb"
   }
 }
 
