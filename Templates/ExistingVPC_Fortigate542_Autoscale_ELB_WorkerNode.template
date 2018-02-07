@@ -1072,7 +1072,7 @@
         "IamInstanceProfile": {
           "Ref": "BootEC2"
         },
-        "DisableApiTermination": "True",
+        "DisableApiTermination": "False",
         "KeyName": {
           "Ref": "FortiGateKeyPair"
         },
@@ -1317,7 +1317,7 @@
         "IamInstanceProfile": {
           "Ref": "BootEC2"
         },
-        "DisableApiTermination": "True",
+        "DisableApiTermination": "False",
         "NetworkInterfaces": [
           {
             "NetworkInterfaceId": {
