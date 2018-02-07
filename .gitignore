@@ -1,1 +1,11 @@
 # Created by .ignore support plugin (hsz.mobi)
+.DS_Store
+*~
+\#*#
+*.swp
+*.pyc
+debug.log
+Notes.txt
+.idea/*
+venv/*
+.repo_conf/*.retry
