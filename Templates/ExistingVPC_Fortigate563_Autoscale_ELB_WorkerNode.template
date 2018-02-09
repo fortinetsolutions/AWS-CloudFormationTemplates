@@ -1,0 +1,1713 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS CloudFormation Template to FortiGate AutoScaling Solution -- AWSMP::3124a694-441c-4ff1-8bf7-4d153be424a6::b661b99c-17da-4b9e-a9fb-8a59da8e2d1e",
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": {
+            "default": "Auto Scaling Configuration"
+          },
+          "Parameters": [
+            "ScalingParameter",
+            "ScaleUpThreshold",
+            "ScaleDownThreshold",
+            "ScalingPeriod",
+            "ASGroupMaxSize",
+            "ASQueue",
+            "AZForFirewall1",
+            "AZForFirewall2"
+          ]
+        },
+        {
+          "Label": {
+            "default": "VPC Configuration"
+          },
+          "Parameters": [
+            "VPCID",
+            "Public1Subnet",
+            "Private1Subnet",
+            "Public2Subnet",
+            "Private2Subnet"
+          ]
+        },
+        {
+          "Label": {
+            "default": "FortiGate Instance Configuration"
+          },
+          "Parameters": [
+            "InitialFortiGateInstanceType",
+            "FortiGateInstanceType",
+            "CIDRForFortiGateAccess",
+            "FortiGateKeyPair"
+          ]
+        },
+        {
+          "Label": {
+            "default": "External ELB Configuration"
+          },
+          "Parameters": [
+            "ListenerPort",
+            "HealthCheckPort"
+          ]
+        },
+        {
+          "Label": {
+            "default": "Internal ELB Configuration"
+          },
+          "Parameters": [
+            "InternalListenerPort",
+            "InternalHealthCheckPort"
+          ]
+        },
+        {
+          "Label": {
+            "default": "Worker Node Instance Configuration"
+          },
+          "Parameters": [
+            "ASKeyPair",
+            "CIDRForASAccess"
+          ]
+        }
+      ],
+      "ParameterLabels": {
+        "VPCID": {
+          "default": "Please enter the VPC specific details here"
+        }
+      }
+    }
+  },
+  "Parameters": {
+    "ScaleUpThreshold": {
+      "Type": "Number",
+      "Default": "80",
+      "Description": "Enter the value at which a Scaleup event would take place"
+    },
+    "ScaleDownThreshold": {
+      "Type": "Number",
+      "Default": "40",
+      "Description": "Enter the value at which a Scaledown event would take place"
+    },
+    "ScalingParameter": {
+      "Type": "String",
+      "Default": "CPUUtilization",
+      "AllowedValues": [
+        "CPUUtilization",
+        "MemoryUtilization",
+        "ConcurrentSessions",
+        "SessionSetupRate"
+      ],
+      "Description": "Please refer the url https://s3.amazonaws.com/fortinet-autoscaling/Fortinet+Auto+Scaling+in+AWS_Guidelines_Q1+2016.pdf for recommended values for ScaleUp and ScaleDown"
+    },
+    "VPCID": {
+      "Type": "AWS::EC2::VPC::Id",
+      "Description": "Enter the VPC that you want to use the FortiGates in"
+    },
+    "Public1Subnet": {
+      "Type": "AWS::EC2::Subnet::Id",
+      "Description": "Enter the value of the Public1 subnet"
+    },
+    "Public2Subnet": {
+      "Type": "AWS::EC2::Subnet::Id",
+      "Description": "Enter the value of the Public2 subnet"
+    },
+    "CIDRForASAccess": {
+      "Type": "String",
+      "Description": "Enter the CIDR from which AS instance needs to be accessed",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    },
+    "CIDRForFortiGateAccess": {
+      "Type": "String",
+      "Description": "Enter the CIDR from which FortiGate instances needs to be accessed",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    },
+    "Private1Subnet": {
+      "Type": "AWS::EC2::Subnet::Id",
+      "Description": "Enter the value of the Private1 subnet"
+    },
+    "Private2Subnet": {
+      "Type": "AWS::EC2::Subnet::Id",
+      "Description": "Enter the value of the Public1 subnet"
+    },
+    "ScalingPeriod": {
+      "Type": "Number",
+      "Default": "300",
+      "Description": "Enter the number of seconds for the CloudWatchAlarm to trigger the ScaleinPolicy"
+    },
+    "ASGroupMaxSize": {
+      "Type": "Number",
+      "Default": "5",
+      "Description": "MaximumInstances in the ASG"
+    },
+    "ListenerPort": {
+      "Type": "Number",
+      "Default": "80",
+      "Description": "Enter the Listener port for the external ELB"
+    },
+    "HealthCheckPort": {
+      "Type": "Number",
+      "Default": "541",
+      "Description": "Enter the Health Check port used port for the external ELB"
+    },
+    "InternalListenerPort": {
+      "Type": "Number",
+      "Default": "80",
+      "Description": "Enter the Listener port for the Internal ELB"
+    },
+    "InternalHealthCheckPort": {
+      "Type": "Number",
+      "Default": "80",
+      "Description": "Enter the Health Check port used port for the Internal ELB"
+    },
+    "InitialFortiGateInstanceType": {
+      "Type": "String",
+      "Default": "m3.medium",
+      "AllowedValues": [
+        "m3.medium",
+        "m3.large",
+        "m3.xlarge",
+        "m3.2xlarge",
+        "c4.large",
+        "c4.xlarge",
+        "c4.2xlarge",
+        "c3.large",
+        "c3.xlarge",
+        "c3.2xlarge"
+      ],
+      "Description": "Enter the instance type and size that you want for the Initial FortiGates"
+    },
+    "FortiGateInstanceType": {
+      "Type": "String",
+      "Default": "m3.medium",
+      "AllowedValues": [
+        "m3.medium",
+        "m3.large",
+        "m3.xlarge",
+        "m3.2xlarge",
+        "c4.large",
+        "c4.xlarge",
+        "c4.2xlarge",
+        "c3.large",
+        "c3.xlarge",
+        "c3.2xlarge"
+      ],
+      "Description": "Enter the instance type and size that you want for the AutoScaled FortiGates"
+    },
+    "ASKeyPair": {
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "Description": "Enter the keypair that you want to associate with the launch of the worker node"
+    },
+    "FortiGateKeyPair": {
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "Description": "Enter the keypair that you want to associate with the launch of the FortiGates"
+    },
+    "AZForFirewall1": {
+      "Type": "AWS::EC2::AvailabilityZone::Name",
+      "Description": "Enter the AZ for the primary firewall"
+    },
+    "AZForFirewall2": {
+      "Type": "AWS::EC2::AvailabilityZone::Name",
+      "Description": "Enter the AZ for the backup firewall"
+    },
+    "ASQueue": {
+      "Type": "String",
+      "Description": "Enter the Queue Name that would be used by the AutoScaling Group"
+    }
+  },
+  "Mappings": {
+    "DefaultScalingupDownMap": {
+      "CPUUtilization": {
+        "ScaleUp": "80",
+        "ScaleDown": "60"
+      },
+      "MemoryUtilization": {
+        "ScaleUp": "80",
+        "ScaleDown": "60"
+      },
+      "ConcurrentSessions": {
+        "ScaleUp": "80",
+        "ScaleDown": "60"
+      },
+      "SessionSetupRate": {
+        "ScaleUp": "8000",
+        "ScaleDown": "600"
+      }
+    },
+    "RegionMap": {
+      "us-east-1": {
+        "fgtodami": "ami-bdc896c7",
+        "fgtbyolami": "ami-c43364be",
+        "workerami": "ami-6245d474"
+      },
+      "us-east-2": {
+        "fgtodami": "ami-79b9921c",
+        "fgtbyolami": "ami-e4072c81",
+        "workerami": "ami-349db951"
+      },
+      "us-west-1": {
+        "fgtodami": "ami-1c8f8f7c",
+        "fgtbyolami": "ami-918584f1",
+        "workerami": "ami-6480a504"
+      },
+      "us-west-2": {
+        "fgtodami": "ami-8f53e7f7",
+        "fgtbyolami": "ami-56913a2e",
+        "workerami": "ami-752ab815"
+      },
+      "ca-central-1": {
+        "fgtodami": "ami-04840160",
+        "fgtbyolami": "ami-dccd48b8",
+        "workerami": "ami-1ed16d7a"
+      },
+      "eu-central-1": {
+        "fgtodami": "ami-c2891bad",
+        "fgtbyolami": "ami-76801019",
+        "workerami": "ami-8869bbe7"
+      },
+      "eu-west-1": {
+        "fgtodami": "ami-693aaa10",
+        "fgtbyolami": "ami-7ce67205",
+        "workerami": "ami-dccbcfba"
+      },
+      "eu-west-2": {
+        "fgtodami": "ami-b5bba3d1",
+        "fgtbyolami": "ami-022e3666",
+        "workerami": "ami-04c4d060"
+      },
+      "eu-west-3": {
+        "fgtodami": "ami-9202b5ef",
+        "fgtbyolami": "ami-ff16a182",
+        "workerami": "ami-aca91fd1"
+      },
+      "ap-southeast-1": {
+        "fgtodami": "ami-97384beb",
+        "fgtbyolami": "ami-a24532de",
+        "workerami": "ami-4f52eb2c"
+      },
+      "ap-southeast-2": {
+        "fgtodami": "ami-1e877a7c",
+        "fgtbyolami": "ami-22bc4e40",
+        "workerami": "ami-44262f27"
+      },
+      "ap-northeast-1": {
+        "fgtodami": "ami-2454cd42",
+        "fgtbyolami": "ami-4d31a32b",
+        "workerami": "ami-860926e1"
+      },
+      "ap-northeast-2": {
+        "fgtodami": "ami-57822239",
+        "fgtbyolami": "ami-c7e343a9",
+        "workerami": "ami-c818caa6"
+      },
+      "ap-south-1": {
+        "fgtodami": "ami-6cf3a703",
+        "fgtbyolami": "ami-4aefba25",
+        "workerami": "ami-16c7b479"
+      },
+      "sa-east-1": {
+        "fgtodami": "ami-1c3f7d70",
+        "fgtbyolami": "ami-5a743736",
+        "workerami": "ami-b0d3b1dc"
+      }
+    }
+  },
+  "Conditions": {
+    "CPUSelection": {
+      "Fn::Equals": [
+        {
+          "Ref": "ScalingParameter"
+        },
+        "CPUUtilization"
+      ]
+    },
+    "MemorySelection": {
+      "Fn::Equals": [
+        {
+          "Ref": "ScalingParameter"
+        },
+        "MemoryUtilization"
+      ]
+    },
+    "ConcurrentSessionsSelection": {
+      "Fn::Equals": [
+        {
+          "Ref": "ScalingParameter"
+        },
+        "ConcurrentSessions"
+      ]
+    },
+    "SessionSetupRateSelection": {
+      "Fn::Equals": [
+        {
+          "Ref": "ScalingParameter"
+        },
+        "SessionSetupRate"
+      ]
+    }
+  },
+  "Resources": {
+    "MyQueue": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "QueueName": {
+          "Ref": "ASQueue"
+        },
+        "ReceiveMessageWaitTimeSeconds": "20"
+      }
+    },
+    "SQSRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "autoscaling.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/"
+      }
+    },
+    "WorkerRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ec2.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/"
+      }
+    },
+    "WorkerPolicies": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "root",
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "cloudwatch:DescribeAlarms",
+                "cloudwatch:DescribeAlarmsForMetric",
+                "cloudwatch:EnableAlarmActions",
+                "cloudwatch:GetMetricData",
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:ListMetrics",
+                "cloudwatch:PutMetricAlarm",
+                "cloudwatch:PutMetricData",
+                "cloudwatch:SetAlarmState"
+              ],
+              "Resource": [
+                "*"
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+  				"elasticloadbalancing:DescribeLoadBalancers",
+                "elasticloadbalancing:RegisterInstancesWithLoadBalancer"
+              ],
+                "Resource": { "Fn::Join": ["",["arn:aws:elasticloadbalancing:",{ "Ref" : "AWS::Region" },":",{"Ref":"AWS::AccountId"},":","loadbalancer","/",{"Ref":"EElasticLoadBalancer"}]]}
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+  				"elasticloadbalancing:DescribeLoadBalancers",
+                "elasticloadbalancing:RegisterInstancesWithLoadBalancer"
+              ],
+                "Resource": { "Fn::Join": ["",["arn:aws:elasticloadbalancing:",{ "Ref" : "AWS::Region" },":",{"Ref":"AWS::AccountId"},":","loadbalancer","/",{"Ref":"IElasticLoadBalancer"}]]}
+            },
+            {
+              "Effect": "Allow",
+            "Action": [
+              "ec2:CreateNetworkInterface",
+              "ec2:CreateTags",
+              "ec2:DescribeInstanceStatus",
+              "ec2:DescribeInstances",
+              "ec2:DescribeRouteTables",
+              "ec2:DescribeSubnets",
+              "ec2:AttachNetworkInterface",
+              "ec2:ReplaceRoute",
+              "ec2:ReplaceRouteTableAssociation",
+              "ec2:DescribeNetworkInterfaces",
+              "ec2:DescribeAvailabilityZones",
+              "ec2:DescribeVpcs",
+              "ec2:TerminateInstances",
+              "ec2:ModifyNetworkInterfaceAttribute",
+              "ec2:RebootInstances"
+            ],
+              "Resource": [
+                "*"
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "route53:ChangeResourceRecordSets",
+                "route53:ChangeTagsForResource",
+                "route53:CreateHealthCheck",
+                "route53:DeleteHealthCheck",
+                "route53:ListHealthChecks",
+                "route53:ListHostedZonesByName",
+                "route53:ListTagsForResource"
+              ],
+              "Resource": [
+                "*"
+              ]
+            },
+            {
+              "Effect": "Allow",
+            	"Action": [
+                "sqs:PurgeQueue",
+                "sqs:DeleteMessage",
+                "sqs:ListQueues",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl",
+                "sqs:ReceiveMessage"
+           		 ],
+                "Resource": { "Fn::GetAtt":
+                    ["MyQueue","Arn"]
+                  }
+            },
+    		{
+    			"Effect": "Allow",
+      			"Action": [
+        		"s3:ListAllMyBuckets",
+        		"s3:CreateBucket"
+      			],
+      			"Resource": "arn:aws:s3:::*"
+    			},
+
+            {
+              "Effect": "Allow",
+            	"Action": [
+                "s3:GetObject",
+                "s3:ListBucket",
+                "s3:DeleteObject",
+                "s3:PutObject"
+            ],
+              "Resource": { "Fn::Join": ["",[{"Fn::GetAtt": ["S3Bucket","Arn"]},"/","*"]]}
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "cloudformation:DescribeAccountLimits",
+                "cloudformation:DescribeStackEvents",
+                "cloudformation:DescribeStackResource",
+                "cloudformation:DescribeStackResources",
+                "cloudformation:DescribeStacks",
+                "cloudformation:GetStackPolicy",
+                "cloudformation:ListStackResources",
+                "cloudformation:ListStacks"
+              ],
+              "Resource": [
+                "*"
+              ]
+            },
+            {
+              "Effect": "Allow",
+            "Action": [
+              "autoscaling:DescribeAutoScalingGroups",
+              "autoscaling:DescribeAutoScalingInstances",
+              "autoscaling:DescribeAutoScalingNotificationTypes",
+              "autoscaling:DescribeLaunchConfigurations",
+              "autoscaling:DescribeLifecycleHooks",
+              "autoscaling:DescribeLoadBalancers",
+              "autoscaling:DescribePolicies",
+              "autoscaling:DescribeTags"
+            ],
+              "Resource": [
+                "*"
+              ]
+            },
+            {
+            "Effect": "Allow",
+            "Action": [
+              "autoscaling:AttachInstances",
+              "autoscaling:AttachLoadBalancers",
+              "autoscaling:CompleteLifecycleAction",
+              "autoscaling:CreateOrUpdateTags",
+              "autoscaling:DeleteNotificationConfiguration",
+              "autoscaling:DescribeAutoScalingGroups",
+              "autoscaling:DescribeAutoScalingInstances",
+              "autoscaling:DescribeAutoScalingNotificationTypes",
+              "autoscaling:DescribeLaunchConfigurations",
+              "autoscaling:DescribeLifecycleHooks",
+              "autoscaling:DescribeLoadBalancers",
+              "autoscaling:DescribePolicies",
+              "autoscaling:DescribeTags",
+              "autoscaling:DetachInstances",
+              "autoscaling:DetachLoadBalancers",
+              "autoscaling:PutLifecycleHook",
+              "autoscaling:PutNotificationConfiguration",
+              "autoscaling:PutScalingPolicy",
+              "autoscaling:TerminateInstanceInAutoScalingGroup",
+              "autoscaling:UpdateAutoScalingGroup"
+            ],
+              "Resource": { "Fn::Join": ["",["arn:aws:autoscaling:",{ "Ref" : "AWS::Region" },":",{"Ref":"AWS::AccountId"},":","autoScalingGroup",":","*",":","autoScalingGroupName/",{"Ref": "ASG1"}]]}
+            },
+            {
+              "Effect": "Allow",
+            "Action": [
+              "autoscaling:AttachInstances",
+              "autoscaling:AttachLoadBalancers",
+              "autoscaling:CompleteLifecycleAction",
+              "autoscaling:CreateOrUpdateTags",
+              "autoscaling:DeleteNotificationConfiguration",
+              "autoscaling:DescribeAutoScalingGroups",
+              "autoscaling:DescribeAutoScalingInstances",
+              "autoscaling:DescribeAutoScalingNotificationTypes",
+              "autoscaling:DescribeLaunchConfigurations",
+              "autoscaling:DescribeLifecycleHooks",
+              "autoscaling:DescribeLoadBalancers",
+              "autoscaling:DescribePolicies",
+              "autoscaling:DescribeTags",
+              "autoscaling:DetachInstances",
+              "autoscaling:DetachLoadBalancers",
+              "autoscaling:PutLifecycleHook",
+              "autoscaling:PutNotificationConfiguration",
+              "autoscaling:PutScalingPolicy",
+              "autoscaling:TerminateInstanceInAutoScalingGroup",
+              "autoscaling:UpdateAutoScalingGroup"
+            ],
+              "Resource": { "Fn::Join": ["",["arn:aws:autoscaling:",{ "Ref" : "AWS::Region" },":",{"Ref":"AWS::AccountId"},":","autoScalingGroup",":","*",":","autoScalingGroupName/",{"Ref": "ASG2"}]]}
+            }
+          ]
+        },
+        "Roles": [
+          {
+            "Ref": "WorkerRole"
+          }
+        ]
+      }
+    },
+    "WorkerInstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "WorkerRole"
+          }
+        ]
+      }
+    },
+    "S3Bucket":{
+       "Type" : "AWS::S3::Bucket",
+  		"Properties" : {
+  			"BucketName" :         {
+  					"Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "-fortigate-configs"
+                ]
+              ]
+              }
+		}
+	},
+    "BootfromS3": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ec2.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/"
+      }
+    },
+    "BootfromS3Policies": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "root",
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:*"
+              ],
+              "Resource": [
+                "*"
+              ]
+            }
+          ]
+        },
+        "Roles": [
+          {
+            "Ref": "BootfromS3"
+          }
+        ]
+      }
+    },
+    "BootEC2": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "BootfromS3"
+          }
+        ]
+      }
+    },
+    "ASLaunchConfig": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Properties": {
+        "ImageId": {
+          "Fn::FindInMap": [
+            "RegionMap",
+            {
+              "Ref": "AWS::Region"
+            },
+            "fgtodami"
+          ]
+        },
+        "SecurityGroups": [
+          {
+            "Ref": "SecurityGroup"
+          }
+        ],
+        "KeyName": {
+          "Ref": "FortiGateKeyPair"
+        },
+        "IamInstanceProfile": {
+          "Ref": "BootEC2"
+        },
+        "InstanceType": {
+          "Ref": "FortiGateInstanceType"
+        },
+        "AssociatePublicIpAddress": "true"
+      }
+    },
+    "ASG1": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "DependsOn": "SQSRole",
+      "Properties": {
+        "DesiredCapacity": "0",
+        "LoadBalancerNames": [{ "Ref": "EElasticLoadBalancer"}],
+        "LaunchConfigurationName": {
+          "Ref": "ASLaunchConfig"
+        },
+        "MaxSize": {
+          "Ref": "ASGroupMaxSize"
+        },
+        "MinSize": "0",
+        "TerminationPolicies": [
+          "NewestInstance"
+        ],
+        "VPCZoneIdentifier": [
+          {
+            "Ref": "Public1Subnet"
+          },
+          {
+            "Ref": "Public2Subnet"
+          }
+        ]
+      }
+    },
+    "ASLaunchConfigforWorkerNode": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Properties": {
+        "ImageId": {
+          "Fn::FindInMap": [
+            "RegionMap",
+            {
+              "Ref": "AWS::Region"
+            },
+            "workerami"
+          ]
+        },
+        "KeyName": {
+          "Ref": "ASKeyPair"
+        },
+        "IamInstanceProfile": {
+          "Ref": "WorkerInstanceProfile"
+        },
+        "SecurityGroups": [
+          {
+            "Ref": "SecurityGroup"
+          }
+        ],
+        "InstanceType": "t2.micro",
+        "AssociatePublicIpAddress": "true"
+      }
+    },
+    "ASG2": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "DesiredCapacity": "0",
+        "LaunchConfigurationName": {
+          "Ref": "ASLaunchConfigforWorkerNode"
+        },
+        "MaxSize": "1",
+        "MinSize": "0",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "ASInstance",
+            "PropagateAtLaunch": "true"
+          }
+        ],
+        "TerminationPolicies": [
+          "NewestInstance"
+        ],
+        "VPCZoneIdentifier": [
+          {
+            "Ref": "Public1Subnet"
+          },
+          {
+            "Ref": "Public2Subnet"
+          }
+        ]
+      }
+    },
+    "ASLifecycleHook": {
+      "Type": "AWS::AutoScaling::LifecycleHook",
+      "Properties": {
+        "AutoScalingGroupName": {
+          "Ref": "ASG1"
+        },
+        "LifecycleTransition": "autoscaling:EC2_INSTANCE_LAUNCHING",
+        "NotificationTargetARN": {
+          "Fn::GetAtt": [
+            "MyQueue",
+            "Arn"
+          ]
+        },
+        "DefaultResult": "CONTINUE",
+        "RoleARN": {
+          "Fn::GetAtt": [
+            "SQSRole",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "SQSPermission": {
+      "Type": "AWS::SQS::QueuePolicy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Sid": "1",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "SQSRole",
+                    "Arn"
+                  ]
+                }
+              },
+              "Action": "SQS:*",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MyQueue",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Sid": "2",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Ref": "AWS::AccountId"
+                }
+              },
+              "Action": "SQS:*",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MyQueue",
+                  "Arn"
+                ]
+              }
+            }
+          ]
+        },
+        "Queues": [
+          {
+            "Fn::GetAtt": [
+              "MyQueue",
+              "QueueName"
+            ]
+          }
+        ]
+      }
+    },
+    "ScaleInPolicy": {
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+      "Properties": {
+        "AdjustmentType": "ChangeInCapacity",
+        "AutoScalingGroupName": {
+          "Ref": "ASG1"
+        },
+        "ScalingAdjustment": "-1"
+      }
+    },
+    "ScaleOutPolicy": {
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+      "Properties": {
+        "AdjustmentType": "ChangeInCapacity",
+        "AutoScalingGroupName": {
+          "Ref": "ASG1"
+        },
+        "ScalingAdjustment": "1"
+      }
+    },
+    "CPUAlarmHigh": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Condition": "CPUSelection",
+      "Properties": {
+        "EvaluationPeriods": "1",
+        "Statistic": "Average",
+        "Threshold": {
+          "Ref": "ScaleUpThreshold"
+        },
+        "AlarmDescription": "Alarm if CPU too high or metric disappears indicating instance is down",
+        "Period": {
+          "Ref": "ScalingPeriod"
+        },
+        "AlarmActions": [
+          {
+            "Ref": "ScaleOutPolicy"
+          }
+        ],
+        "Namespace": "AWS/EC2",
+        "Dimensions": [
+          {
+            "Name": "AutoScalingGroupName",
+            "Value": {
+              "Ref": "ASG1"
+            }
+          }
+        ],
+        "ComparisonOperator": "GreaterThanThreshold",
+        "MetricName": "CPUUtilization"
+      }
+    },
+    "CPUAlarmLow": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Condition": "CPUSelection",
+      "Properties": {
+        "EvaluationPeriods": "1",
+        "Statistic": "Average",
+        "Threshold": {
+          "Ref": "ScaleDownThreshold"
+        },
+        "AlarmDescription": "Alarm if CPU too low or metric disappears indicating instance is down",
+        "Period": {
+          "Ref": "ScalingPeriod"
+        },
+        "AlarmActions": [
+          {
+            "Ref": "ScaleInPolicy"
+          }
+        ],
+        "Namespace": "AWS/EC2",
+        "Dimensions": [
+          {
+            "Name": "AutoScalingGroupName",
+            "Value": {
+              "Ref": "ASG1"
+            }
+          }
+        ],
+        "ComparisonOperator": "LessThanThreshold",
+        "MetricName": "CPUUtilization"
+      }
+    },
+    "MemoryAlarmHigh": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Condition": "MemorySelection",
+      "Properties": {
+        "EvaluationPeriods": "1",
+        "Statistic": "Average",
+        "Threshold": {
+          "Ref": "ScaleUpThreshold"
+        },
+        "AlarmDescription": "Alarm if CPU too high or metric disappears indicating instance is down",
+        "Period": {
+          "Ref": "ScalingPeriod"
+        },
+        "AlarmActions": [
+          {
+            "Ref": "ScaleOutPolicy"
+          }
+        ],
+        "Namespace": "EC2",
+        "Dimensions": [
+          {
+            "Name": "AutoScalingGroupName",
+            "Value": {
+              "Ref": "ASG1"
+            }
+          }
+        ],
+        "ComparisonOperator": "GreaterThanThreshold",
+        "MetricName": "MemoryUtilization"
+      }
+    },
+    "MemoryAlarmLow": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Condition": "MemorySelection",
+      "Properties": {
+        "EvaluationPeriods": "1",
+        "Statistic": "Average",
+        "Threshold": {
+          "Ref": "ScaleDownThreshold"
+        },
+        "AlarmDescription": "Alarm if CPU too low or metric disappears indicating instance is down",
+        "Period": {
+          "Ref": "ScalingPeriod"
+        },
+        "AlarmActions": [
+          {
+            "Ref": "ScaleInPolicy"
+          }
+        ],
+        "Namespace": "EC2",
+        "Dimensions": [
+          {
+            "Name": "AutoScalingGroupName",
+            "Value": {
+              "Ref": "ASG1"
+            }
+          }
+        ],
+        "ComparisonOperator": "LessThanThreshold",
+        "MetricName": "MemoryUtilization"
+      }
+    },
+    "ConcurrentAlarmHigh": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Condition": "ConcurrentSessionsSelection",
+      "Properties": {
+        "EvaluationPeriods": "1",
+        "Statistic": "Average",
+        "Threshold": {
+          "Ref": "ScaleUpThreshold"
+        },
+        "AlarmDescription": "Alarm if CPU too high or metric disappears indicating instance is down",
+        "Period": {
+          "Ref": "ScalingPeriod"
+        },
+        "AlarmActions": [
+          {
+            "Ref": "ScaleOutPolicy"
+          }
+        ],
+        "Namespace": "EC2",
+        "Dimensions": [
+          {
+            "Name": "AutoScalingGroupName",
+            "Value": {
+              "Ref": "ASG1"
+            }
+          }
+        ],
+        "ComparisonOperator": "GreaterThanThreshold",
+        "MetricName": "ConcurrentSessions"
+      }
+    },
+    "ConcurrentAlarmLow": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Condition": "ConcurrentSessionsSelection",
+      "Properties": {
+        "EvaluationPeriods": "1",
+        "Statistic": "Average",
+        "Threshold": {
+          "Ref": "ScaleDownThreshold"
+        },
+        "AlarmDescription": "Alarm if CPU too low or metric disappears indicating instance is down",
+        "Period": {
+          "Ref": "ScalingPeriod"
+        },
+        "AlarmActions": [
+          {
+            "Ref": "ScaleInPolicy"
+          }
+        ],
+        "Namespace": "EC2",
+        "Dimensions": [
+          {
+            "Name": "AutoScalingGroupName",
+            "Value": {
+              "Ref": "ASG1"
+            }
+          }
+        ],
+        "ComparisonOperator": "LessThanThreshold",
+        "MetricName": "ConcurrentSessions"
+      }
+    },
+    "SessionSetupRateAlarmHigh": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Condition": "SessionSetupRateSelection",
+      "Properties": {
+        "EvaluationPeriods": "1",
+        "Statistic": "Average",
+        "Threshold": {
+          "Ref": "ScaleUpThreshold"
+        },
+        "AlarmDescription": "Alarm if CPU too high or metric disappears indicating instance is down",
+        "Period": {
+          "Ref": "ScalingPeriod"
+        },
+        "AlarmActions": [
+          {
+            "Ref": "ScaleOutPolicy"
+          }
+        ],
+        "Namespace": "EC2",
+        "Dimensions": [
+          {
+            "Name": "AutoScalingGroupName",
+            "Value": {
+              "Ref": "ASG1"
+            }
+          }
+        ],
+        "ComparisonOperator": "GreaterThanThreshold",
+        "MetricName": "SessionSetupRate"
+      }
+    },
+    "SessionSetupRateAlarmLow": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Condition": "SessionSetupRateSelection",
+      "Properties": {
+        "EvaluationPeriods": "1",
+        "Statistic": "Average",
+        "Threshold": {
+          "Ref": "ScaleDownThreshold"
+        },
+        "AlarmDescription": "Alarm if CPU too low or metric disappears indicating instance is down",
+        "Period": {
+          "Ref": "ScalingPeriod"
+        },
+        "AlarmActions": [
+          {
+            "Ref": "ScaleInPolicy"
+          }
+        ],
+        "Namespace": "EC2",
+        "Dimensions": [
+          {
+            "Name": "AutoScalingGroupName",
+            "Value": {
+              "Ref": "ASG1"
+            }
+          }
+        ],
+        "ComparisonOperator": "LessThanThreshold",
+        "MetricName": "SessionSetupRate"
+      }
+    },
+    "SecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPCID"
+        },
+        "GroupDescription": "Allow All Traffic",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "-1",
+            "FromPort": "0",
+            "ToPort": "65535",
+            "CidrIp": {
+              "Ref": "CIDRForFortiGateAccess"
+            }
+          }
+        ]
+      }
+    },
+    "ASSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPCID"
+        },
+        "GroupDescription": "Allow SSH",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "TCP",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "CIDRForASAccess"
+            }
+          }
+        ]
+      }
+    },
+    "OnDemandA": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": {
+          "Fn::FindInMap": [
+            "RegionMap",
+            {
+              "Ref": "AWS::Region"
+            },
+            "fgtodami"
+          ]
+        },
+        "InstanceType": {
+          "Ref": "InitialFortiGateInstanceType"
+        },
+        "IamInstanceProfile": {
+          "Ref": "BootEC2"
+        },
+        "DisableApiTermination": "True",
+        "KeyName": {
+          "Ref": "FortiGateKeyPair"
+        },
+        "NetworkInterfaces": [
+          {
+            "NetworkInterfaceId": {
+              "Ref": "OnDemandAENI0"
+            },
+            "DeviceIndex": "0"
+          },
+          {
+            "NetworkInterfaceId": {
+              "Ref": "OnDemandAENI1"
+            },
+            "DeviceIndex": "1"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "OnDemandA"
+                ]
+              ]
+            }
+          },
+          {
+			"Key": "Fortigate-State",
+			"Value": "UnConfigured"
+		  },
+          {
+            "Key": "Fortigate-License",
+            "Value": "OnDemand"
+          }
+        ]
+      }
+    },
+    "OnDemandAENI0": {
+      "Type": "AWS::EC2::NetworkInterface",
+      "Properties": {
+        "Description": "eth0",
+        "GroupSet": [
+          {
+            "Ref": "SecurityGroup"
+          }
+        ],
+        "SourceDestCheck": "true",
+        "SubnetId": {
+          "Ref": "Public1Subnet"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "OnDemandAENI0"
+                ]
+              ]
+            }
+          },
+          {
+            "Key": "Interface",
+            "Value": "eth0"
+          }
+        ]
+      }
+    },
+    "ASInstance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": {
+          "Fn::FindInMap": [
+            "RegionMap",
+            {
+              "Ref": "AWS::Region"
+            },
+            "workerami"
+          ]
+        },
+        "InstanceType": "t2.micro",
+        "KeyName": {
+          "Ref": "ASKeyPair"
+        },
+        "IamInstanceProfile": {
+          "Ref": "WorkerInstanceProfile"
+        },
+        "NetworkInterfaces": [
+          {
+            "NetworkInterfaceId": {
+              "Ref": "ASInstanceENI0"
+            },
+            "DeviceIndex": "0"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "ASInstance"
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "ASInstanceENI0": {
+      "Type": "AWS::EC2::NetworkInterface",
+      "Properties": {
+        "Description": "eth0",
+        "GroupSet": [
+          {
+            "Ref": "ASSecurityGroup"
+          }
+        ],
+        "SourceDestCheck": "true",
+        "SubnetId": {
+          "Ref": "Public1Subnet"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "AS Instance ENI0"
+                ]
+              ]
+            }
+          },
+          {
+            "Key": "Interface",
+            "Value": "eth0"
+          }
+        ]
+      }
+    },
+    "ASEIP": {
+      "Type": "AWS::EC2::EIP",
+      "Properties": {
+        "Domain": "vpc"
+      },
+      "DependsOn": "ASInstance"
+    },
+    "ASEEIPASSOCIATION": {
+      "Type": "AWS::EC2::EIPAssociation",
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "ASEIP",
+            "AllocationId"
+          ]
+        },
+        "NetworkInterfaceId": {
+          "Ref": "ASInstanceENI0"
+        }
+      },
+      "DependsOn": "ASEIP"
+    },
+    "OnDemandAEIP": {
+      "Type": "AWS::EC2::EIP",
+      "Properties": {
+        "Domain": "vpc"
+      },
+      "DependsOn": "OnDemandA"
+    },
+    "OnDemandAEIPASSOCIATION": {
+      "Type": "AWS::EC2::EIPAssociation",
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "OnDemandAEIP",
+            "AllocationId"
+          ]
+        },
+        "NetworkInterfaceId": {
+          "Ref": "OnDemandAENI0"
+        }
+      },
+      "DependsOn": "OnDemandAEIP"
+    },
+    "OnDemandAENI1": {
+      "Type": "AWS::EC2::NetworkInterface",
+      "Properties": {
+        "Description": "Secondary Interface",
+        "GroupSet": [
+          {
+            "Ref": "SecurityGroup"
+          }
+        ],
+        "SourceDestCheck": "false",
+        "SubnetId": {
+          "Ref": "Private1Subnet"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "OnDemandBENI1"
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "OnDemandB": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": {
+          "Fn::FindInMap": [
+            "RegionMap",
+            {
+              "Ref": "AWS::Region"
+            },
+            "fgtodami"
+          ]
+        },
+        "InstanceType": {
+          "Ref": "InitialFortiGateInstanceType"
+        },
+        "KeyName": {
+          "Ref": "FortiGateKeyPair"
+        },
+        "IamInstanceProfile": {
+          "Ref": "BootEC2"
+        },
+        "DisableApiTermination": "True",
+        "NetworkInterfaces": [
+          {
+            "NetworkInterfaceId": {
+              "Ref": "OnDemandBENI0"
+            },
+            "DeviceIndex": "0"
+          },
+          {
+            "NetworkInterfaceId": {
+              "Ref": "OnDemandBENI1"
+            },
+            "DeviceIndex": "1"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "OnDemandB"
+                ]
+              ]
+            }
+          },
+          {
+            "Key": "Fortigate-State",
+            "Value": "UnConfigured"
+          },
+          {
+            "Key": "Fortigate-License",
+            "Value": "OnDemand"
+          }
+        ]
+      }
+    },
+    "OnDemandBENI0": {
+      "Type": "AWS::EC2::NetworkInterface",
+      "Properties": {
+        "Description": "eth0",
+        "GroupSet": [
+          {
+            "Ref": "SecurityGroup"
+          }
+        ],
+        "SourceDestCheck": "true",
+        "SubnetId": {
+          "Ref": "Public2Subnet"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "OnDemandBENI0"
+                ]
+              ]
+            }
+          },
+          {
+            "Key": "Interface",
+            "Value": "eth0"
+          }
+        ]
+      }
+    },
+    "OnDemandBEIP": {
+      "Type": "AWS::EC2::EIP",
+      "Properties": {
+        "Domain": "vpc"
+      },
+      "DependsOn": "OnDemandB"
+    },
+    "OnDemandBEIPASSOCIATION": {
+      "Type": "AWS::EC2::EIPAssociation",
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "OnDemandBEIP",
+            "AllocationId"
+          ]
+        },
+        "NetworkInterfaceId": {
+          "Ref": "OnDemandBENI0"
+        }
+      },
+      "DependsOn": "OnDemandBEIP"
+    },
+    "OnDemandBENI1": {
+      "Type": "AWS::EC2::NetworkInterface",
+      "Properties": {
+        "Description": "Secondary Interface",
+        "GroupSet": [
+          {
+            "Ref": "SecurityGroup"
+          }
+        ],
+        "SourceDestCheck": "false",
+        "SubnetId": {
+          "Ref": "Private2Subnet"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "OnDemandBENI1"
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "IElasticLoadBalancer": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+        "Subnets": [
+          {
+            "Ref": "Private1Subnet"
+          },
+          {
+            "Ref": "Private2Subnet"
+          }
+        ],
+        "Scheme": "internal",
+        "LoadBalancerName": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Ref": "AWS::StackName"
+              },
+              "IELB"
+            ]
+          ]
+        },
+        "Listeners": [
+          {
+            "LoadBalancerPort": {
+              "Ref": "InternalListenerPort"
+            },
+            "InstancePort": {
+              "Ref": "InternalListenerPort"
+            },
+            "Protocol": "HTTP"
+          }
+        ],
+        "HealthCheck": {
+          "Target": {
+            "Fn::Join": [
+              "",
+              [
+                "TCP:",
+                {
+                  "Ref": "InternalHealthCheckPort"
+                }
+              ]
+            ]
+          },
+          "HealthyThreshold": "5",
+          "UnhealthyThreshold": "2",
+          "Interval": "5",
+          "Timeout": "2"
+        }
+      }
+    },
+    "EElasticLoadBalancer": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+        "Subnets": [
+          {
+            "Ref": "Public1Subnet"
+          },
+          {
+            "Ref": "Public2Subnet"
+          }
+        ],
+        "Scheme": "internet-facing",
+        "Instances": [
+          {
+            "Ref": "OnDemandA"
+          },
+          {
+            "Ref": "OnDemandB"
+          }
+        ],
+        "LoadBalancerName": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Ref": "AWS::StackName"
+              },
+              "EELB"
+            ]
+          ]
+        },
+        "Listeners": [
+          {
+            "LoadBalancerPort": {
+              "Ref": "ListenerPort"
+            },
+            "InstancePort": {
+              "Ref": "ListenerPort"
+            },
+            "Protocol": "HTTP"
+          }
+        ],
+        "HealthCheck": {
+          "Target": {
+            "Fn::Join": [
+              "",
+              [
+                "TCP:",
+                {
+                  "Ref": "HealthCheckPort"
+                }
+              ]
+            ]
+          },
+          "HealthyThreshold": "5",
+          "UnhealthyThreshold": "2",
+          "Interval": "5",
+          "Timeout": "2"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "ASInstance": {
+      "Value": {
+        "Ref": "ASEIP"
+      },
+      "Description": "Connect to Amazon Linux Worker Node instance using ssh to this IP"
+    },
+    "ExternalELB": {
+      "Value": {
+        "Fn::GetAtt": [
+          "EElasticLoadBalancer",
+          "DNSName"
+        ]
+      },
+      "Description": "External Elastic Load Balancer"
+    }
+  }
+}
