@@ -40,7 +40,7 @@
             "FortiGateInstanceType",
             "CIDRForFortiGateAccess",
             "FortiGateKeyPair",
-            "S3LicenseBucket"
+            "OnDemandAConfigObject"
           ]
         },
         {
@@ -109,14 +109,12 @@
     "Public1Subnet": {
       "Type": "String",
       "Default": "10.0.0.0/24",
-      "Description": "Enter the value of the Public1 subnet",
-      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+      "Description": "Enter the value of the Public1 subnet"
     },
     "Public2Subnet": {
       "Type": "String",
       "Default": "10.0.2.0/24",
-      "Description": "Enter the value of the Public2 subnet",
-      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+      "Description": "Enter the value of the Public2 subnet"
     },
     "CIDRForASAccess": {
       "Type": "String",
@@ -128,21 +126,15 @@
       "Description": "Enter the CIDR from which FortiGate instances needs to be accessed",
       "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     },
-    "S3LicenseBucket": {
-        "Type": "String",
-        "Description": "Enter the S3 Bucket for licenses"
-    },
     "Private1Subnet": {
       "Type": "String",
       "Default": "10.0.1.0/24",
-      "Description": "Enter the value of the Private1 subnet",
-      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+      "Description": "Enter the value of the Private1 subnet"
     },
     "Private2Subnet": {
       "Type": "String",
       "Default": "10.0.3.0/24",
-      "Description": "Enter the value of the Public1 subnet",
-      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+      "Description": "Enter the value of the Public1 subnet"
     },
     "ScalingPeriod": {
       "Type": "Number",
@@ -208,6 +200,10 @@
       ],
       "Description": "Enter the instance type and size that you want for the AutoScaled FortiGates"
     },
+    "OnDemandAConfigObject": {
+      "Type": "String",
+      "Description": "Initial Config file for OnDemandA instance"
+    },
     "ASKeyPair": {
       "Type": "AWS::EC2::KeyPair::KeyName",
       "Description": "Enter the keypair that you want to associate with the launch of the worker node"
@@ -250,78 +246,63 @@
     },
     "RegionMap": {
       "us-east-1": {
-        "fgtodami": "ami-bdc896c7",
-        "fgtbyolami": "ami-c43364be",
+        "fgtami": "ami-bdc896c7",
         "workerami": "ami-6245d474"
       },
       "us-east-2": {
-        "fgtodami": "ami-79b9921c",
-        "fgtbyolami": "ami-e4072c81",
+        "fgtami": "ami-79b9921c",
         "workerami": "ami-349db951"
       },
       "us-west-1": {
-        "fgtodami": "ami-1c8f8f7c",
-        "fgtbyolami": "ami-918584f1",
+        "fgtami": "ami-1c8f8f7c",
         "workerami": "ami-6480a504"
       },
       "us-west-2": {
-        "fgtodami": "ami-8f53e7f7",
-        "fgtbyolami": "ami-56913a2e",
+        "fgtami": "ami-8f53e7f7",
         "workerami": "ami-752ab815"
       },
       "ca-central-1": {
-        "fgtodami": "ami-04840160",
-        "fgtbyolami": "ami-dccd48b8",
+        "fgtami": "ami-04840160",
         "workerami": "ami-1ed16d7a"
       },
       "eu-central-1": {
-        "fgtodami": "ami-c2891bad",
-        "fgtbyolami": "ami-76801019",
+        "fgtami": "ami-c2891bad",
         "workerami": "ami-8869bbe7"
       },
       "eu-west-1": {
-        "fgtodami": "ami-693aaa10",
-        "fgtbyolami": "ami-7ce67205",
+        "fgtami": "ami-693aaa10",
         "workerami": "ami-dccbcfba"
       },
       "eu-west-2": {
-        "fgtodami": "ami-b5bba3d1",
-        "fgtbyolami": "ami-022e3666",
+        "fgtami": "ami-b5bba3d1",
         "workerami": "ami-04c4d060"
       },
       "eu-west-3": {
-        "fgtodami": "ami-9202b5ef",
-        "fgtbyolami": "ami-ff16a182",
+        "fgtami": "ami-9202b5ef",
         "workerami": "ami-aca91fd1"
       },
       "ap-southeast-1": {
-        "fgtodami": "ami-97384beb",
-        "fgtbyolami": "ami-a24532de",
+        "fgtami": "ami-97384beb",
         "workerami": "ami-4f52eb2c"
       },
       "ap-southeast-2": {
-        "fgtodami": "ami-1e877a7c",
-        "fgtbyolami": "ami-22bc4e40",
+        "fgtami": "ami-1e877a7c",
         "workerami": "ami-44262f27"
       },
       "ap-northeast-1": {
-        "fgtodami": "ami-2454cd42",
-        "fgtbyolami": "ami-4d31a32b",
+        "fgtami": "ami-2454cd42",
         "workerami": "ami-860926e1"
       },
       "ap-northeast-2": {
-        "fgtodami": "ami-57822239",
-        "fgtbyolami": "ami-c7e343a9",
+        "fgtami": "ami-57822239",
         "workerami": "ami-c818caa6"
       },
       "ap-south-1": {
-        "fgtodami": "ami-6cf3a703",
-        "fgtbyolami": "ami-4aefba25",
+        "fgtami": "ami-6cf3a703",
         "workerami": "ami-16c7b479"
       },
       "sa-east-1": {
-        "fgtodami": "ami-1c3f7d70",
-        "fgtbyolami": "ami-5a743736",
+        "fgtami": "ami-1c3f7d70",
         "workerami": "ami-b0d3b1dc"
       }
     }
@@ -615,38 +596,78 @@
             {
               "Effect": "Allow",
               "Action": [
-  				"elasticloadbalancing:DescribeLoadBalancers",
+                "elasticloadbalancing:DescribeLoadBalancers",
                 "elasticloadbalancing:RegisterInstancesWithLoadBalancer"
               ],
-                "Resource": { "Fn::Join": ["",["arn:aws:elasticloadbalancing:",{ "Ref" : "AWS::Region" },":",{"Ref":"AWS::AccountId"},":","loadbalancer","/",{"Ref":"EElasticLoadBalancer"}]]}
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:elasticloadbalancing:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    "loadbalancer",
+                    "/",
+                    {
+                      "Ref": "EElasticLoadBalancer"
+                    }
+                  ]
+                ]
+              }
             },
             {
               "Effect": "Allow",
               "Action": [
-  				"elasticloadbalancing:DescribeLoadBalancers",
+                "elasticloadbalancing:DescribeLoadBalancers",
                 "elasticloadbalancing:RegisterInstancesWithLoadBalancer"
               ],
-                "Resource": { "Fn::Join": ["",["arn:aws:elasticloadbalancing:",{ "Ref" : "AWS::Region" },":",{"Ref":"AWS::AccountId"},":","loadbalancer","/",{"Ref":"IElasticLoadBalancer"}]]}
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:elasticloadbalancing:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    "loadbalancer",
+                    "/",
+                    {
+                      "Ref": "IElasticLoadBalancer"
+                    }
+                  ]
+                ]
+              }
             },
             {
               "Effect": "Allow",
-            "Action": [
-              "ec2:CreateNetworkInterface",
-              "ec2:CreateTags",
-              "ec2:DescribeInstanceStatus",
-              "ec2:DescribeInstances",
-              "ec2:DescribeRouteTables",
-              "ec2:DescribeSubnets",
-              "ec2:AttachNetworkInterface",
-              "ec2:ReplaceRoute",
-              "ec2:ReplaceRouteTableAssociation",
-              "ec2:DescribeNetworkInterfaces",
-              "ec2:DescribeAvailabilityZones",
-              "ec2:DescribeVpcs",
-              "ec2:TerminateInstances",
-              "ec2:ModifyNetworkInterfaceAttribute",
-              "ec2:RebootInstances"
-            ],
+              "Action": [
+                "ec2:CreateNetworkInterface",
+                "ec2:CreateTags",
+                "ec2:DescribeInstanceStatus",
+                "ec2:DescribeInstances",
+                "ec2:DescribeRouteTables",
+                "ec2:DescribeSubnets",
+                "ec2:AttachNetworkInterface",
+                "ec2:ReplaceRoute",
+                "ec2:ReplaceRouteTableAssociation",
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DescribeAvailabilityZones",
+                "ec2:DescribeVpcs",
+                "ec2:TerminateInstances",
+                "ec2:ModifyNetworkInterfaceAttribute",
+                "ec2:RebootInstances"
+              ],
               "Resource": [
                 "*"
               ]
@@ -668,36 +689,57 @@
             },
             {
               "Effect": "Allow",
-            	"Action": [
+              "Action": [
                 "sqs:PurgeQueue",
                 "sqs:DeleteMessage",
                 "sqs:ListQueues",
                 "sqs:GetQueueAttributes",
                 "sqs:GetQueueUrl",
-                "sqs:ReceiveMessage"
-           		 ],
-                "Resource": { "Fn::GetAtt":
-                    ["MyQueue","Arn"]
-                  }
+                "sqs:ReceiveMessage",
+              ],
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MyQueue",
+                  "Arn"
+                ]
+              }
             },
-    		{
-    			"Effect": "Allow",
-      			"Action": [
-        		"s3:ListAllMyBuckets",
-        		"s3:CreateBucket"
-      			],
-      			"Resource": "arn:aws:s3:::*"
-    			},
-
             {
               "Effect": "Allow",
-            	"Action": [
+              "Action": [
+                "s3:ListAllMyBuckets",
+                "s3:CreateBucket",
                 "s3:GetObject",
                 "s3:ListBucket",
                 "s3:DeleteObject",
                 "s3:PutObject"
-            ],
-              "Resource": { "Fn::Join": ["",[{"Fn::GetAtt": ["S3Bucket","Arn"]},"/","*"]]}
+
+              ],
+              "Resource": "arn:aws:s3:::*"
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:GetObject",
+                "s3:ListBucket",
+                "s3:DeleteObject",
+                "s3:PutObject"
+              ],
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "S3Bucket",
+                        "Arn"
+                      ]
+                    },
+                    "/",
+                    "*"
+                  ]
+                ]
+              }
             },
             {
               "Effect": "Allow",
@@ -717,71 +759,117 @@
             },
             {
               "Effect": "Allow",
-            "Action": [
-              "autoscaling:DescribeAutoScalingGroups",
-              "autoscaling:DescribeAutoScalingInstances",
-              "autoscaling:DescribeAutoScalingNotificationTypes",
-              "autoscaling:DescribeLaunchConfigurations",
-              "autoscaling:DescribeLifecycleHooks",
-              "autoscaling:DescribeLoadBalancers",
-              "autoscaling:DescribePolicies",
-              "autoscaling:DescribeTags"
-            ],
+              "Action": [
+                "autoscaling:DescribeAutoScalingGroups",
+                "autoscaling:DescribeAutoScalingInstances",
+                "autoscaling:DescribeAutoScalingNotificationTypes",
+                "autoscaling:DescribeLaunchConfigurations",
+                "autoscaling:DescribeLifecycleHooks",
+                "autoscaling:DescribeLoadBalancers",
+                "autoscaling:DescribePolicies",
+                "autoscaling:DescribeTags"
+              ],
               "Resource": [
                 "*"
               ]
             },
             {
-            "Effect": "Allow",
-            "Action": [
-              "autoscaling:AttachInstances",
-              "autoscaling:AttachLoadBalancers",
-              "autoscaling:CompleteLifecycleAction",
-              "autoscaling:CreateOrUpdateTags",
-              "autoscaling:DeleteNotificationConfiguration",
-              "autoscaling:DescribeAutoScalingGroups",
-              "autoscaling:DescribeAutoScalingInstances",
-              "autoscaling:DescribeAutoScalingNotificationTypes",
-              "autoscaling:DescribeLaunchConfigurations",
-              "autoscaling:DescribeLifecycleHooks",
-              "autoscaling:DescribeLoadBalancers",
-              "autoscaling:DescribePolicies",
-              "autoscaling:DescribeTags",
-              "autoscaling:DetachInstances",
-              "autoscaling:DetachLoadBalancers",
-              "autoscaling:PutLifecycleHook",
-              "autoscaling:PutNotificationConfiguration",
-              "autoscaling:PutScalingPolicy",
-              "autoscaling:TerminateInstanceInAutoScalingGroup",
-              "autoscaling:UpdateAutoScalingGroup"
-            ],
-              "Resource": { "Fn::Join": ["",["arn:aws:autoscaling:",{ "Ref" : "AWS::Region" },":",{"Ref":"AWS::AccountId"},":","autoScalingGroup",":","*",":","autoScalingGroupName/",{"Ref": "ASG1"}]]}
+              "Effect": "Allow",
+              "Action": [
+                "autoscaling:AttachInstances",
+                "autoscaling:AttachLoadBalancers",
+                "autoscaling:CompleteLifecycleAction",
+                "autoscaling:CreateOrUpdateTags",
+                "autoscaling:DeleteNotificationConfiguration",
+                "autoscaling:DescribeAutoScalingGroups",
+                "autoscaling:DescribeAutoScalingInstances",
+                "autoscaling:DescribeAutoScalingNotificationTypes",
+                "autoscaling:DescribeLaunchConfigurations",
+                "autoscaling:DescribeLifecycleHooks",
+                "autoscaling:DescribeLoadBalancers",
+                "autoscaling:DescribePolicies",
+                "autoscaling:DescribeTags",
+                "autoscaling:DetachInstances",
+                "autoscaling:DetachLoadBalancers",
+                "autoscaling:PutLifecycleHook",
+                "autoscaling:PutNotificationConfiguration",
+                "autoscaling:PutScalingPolicy",
+                "autoscaling:TerminateInstanceInAutoScalingGroup",
+                "autoscaling:UpdateAutoScalingGroup"
+              ],
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:autoscaling:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    "autoScalingGroup",
+                    ":",
+                    "*",
+                    ":",
+                    "autoScalingGroupName/",
+                    {
+                      "Ref": "ASG1"
+                    }
+                  ]
+                ]
+              }
             },
             {
               "Effect": "Allow",
-            "Action": [
-              "autoscaling:AttachInstances",
-              "autoscaling:AttachLoadBalancers",
-              "autoscaling:CompleteLifecycleAction",
-              "autoscaling:CreateOrUpdateTags",
-              "autoscaling:DeleteNotificationConfiguration",
-              "autoscaling:DescribeAutoScalingGroups",
-              "autoscaling:DescribeAutoScalingInstances",
-              "autoscaling:DescribeAutoScalingNotificationTypes",
-              "autoscaling:DescribeLaunchConfigurations",
-              "autoscaling:DescribeLifecycleHooks",
-              "autoscaling:DescribeLoadBalancers",
-              "autoscaling:DescribePolicies",
-              "autoscaling:DescribeTags",
-              "autoscaling:DetachInstances",
-              "autoscaling:DetachLoadBalancers",
-              "autoscaling:PutLifecycleHook",
-              "autoscaling:PutNotificationConfiguration",
-              "autoscaling:PutScalingPolicy",
-              "autoscaling:TerminateInstanceInAutoScalingGroup",
-              "autoscaling:UpdateAutoScalingGroup"
-            ],
-              "Resource": { "Fn::Join": ["",["arn:aws:autoscaling:",{ "Ref" : "AWS::Region" },":",{"Ref":"AWS::AccountId"},":","autoScalingGroup",":","*",":","autoScalingGroupName/",{"Ref": "ASG2"}]]}
+              "Action": [
+                "autoscaling:AttachInstances",
+                "autoscaling:AttachLoadBalancers",
+                "autoscaling:CompleteLifecycleAction",
+                "autoscaling:CreateOrUpdateTags",
+                "autoscaling:DeleteNotificationConfiguration",
+                "autoscaling:DescribeAutoScalingGroups",
+                "autoscaling:DescribeAutoScalingInstances",
+                "autoscaling:DescribeAutoScalingNotificationTypes",
+                "autoscaling:DescribeLaunchConfigurations",
+                "autoscaling:DescribeLifecycleHooks",
+                "autoscaling:DescribeLoadBalancers",
+                "autoscaling:DescribePolicies",
+                "autoscaling:DescribeTags",
+                "autoscaling:DetachInstances",
+                "autoscaling:DetachLoadBalancers",
+                "autoscaling:PutLifecycleHook",
+                "autoscaling:PutNotificationConfiguration",
+                "autoscaling:PutScalingPolicy",
+                "autoscaling:TerminateInstanceInAutoScalingGroup",
+                "autoscaling:UpdateAutoScalingGroup"
+              ],
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:autoscaling:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    "autoScalingGroup",
+                    ":",
+                    "*",
+                    ":",
+                    "autoScalingGroupName/",
+                    {
+                      "Ref": "ASG2"
+                    }
+                  ]
+                ]
+              }
             }
           ]
         },
@@ -985,64 +1073,6 @@
         }
       }
     },
-    "AS0LaunchConfig": {
-      "Type": "AWS::AutoScaling::LaunchConfiguration",
-      "Properties": {
-        "ImageId": {
-          "Fn::FindInMap": [
-            "RegionMap",
-            {
-              "Ref": "AWS::Region"
-            },
-            "fgtbyolami"
-          ]
-        },
-        "SecurityGroups": [
-          {
-            "Ref": "SecurityGroup"
-          }
-        ],
-        "KeyName": {
-          "Ref": "FortiGateKeyPair"
-        },
-        "IamInstanceProfile": {
-          "Ref": "BootEC2"
-        },
-        "InstanceType": {
-          "Ref": "FortiGateInstanceType"
-        },
-        "AssociatePublicIpAddress": "true"
-      }
-    },
-    "ASG0": {
-      "Type": "AWS::AutoScaling::AutoScalingGroup",
-      "Properties": {
-        "DesiredCapacity": "0",
-        "LaunchConfigurationName": {
-          "Ref": "AS0LaunchConfig"
-        },
-        "MaxSize": "2",
-        "MinSize": "0",
-        "TerminationPolicies": [
-          "Default"
-        ],
-        "Tags" : [
-            {
-                "Key" : "Fortigate-License",
-                "Value" : "BYOL",
-                "PropagateAtLaunch" : "true"
-            }
-        ],
-        "VPCZoneIdentifier": [
-          {
-            "Ref": "Subnet1"
-          },
-          {
-            "Ref": "Subnet2"
-          }
-        ]
-      }
-    },
     "ASLaunchConfig": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Properties": {
@@ -1052,8 +1082,18 @@
             {
               "Ref": "AWS::Region"
             },
-            "fgtodami"
+            "fgtami"
           ]
+        },
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "\"product\": \"2wqkpek696qhdeo7lbbjncqli\",\n"
+              ]
+            ]
+          }
         },
         "SecurityGroups": [
           {
@@ -1077,7 +1117,11 @@
       "DependsOn": "SQSRole",
       "Properties": {
         "DesiredCapacity": "0",
-        "LoadBalancerNames" : [{ "Ref":  "EElasticLoadBalancer"}],
+        "LoadBalancerNames": [
+          {
+            "Ref": "EElasticLoadBalancer"
+          }
+        ],
         "LaunchConfigurationName": {
           "Ref": "ASLaunchConfig"
         },
@@ -1127,7 +1171,6 @@
     },
     "ASG2": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
-      "DependsOn": "SQSRole",
       "Properties": {
         "DesiredCapacity": "0",
         "LaunchConfigurationName": {
@@ -1160,28 +1203,6 @@
       "Properties": {
         "AutoScalingGroupName": {
           "Ref": "ASG1"
-        },
-        "LifecycleTransition": "autoscaling:EC2_INSTANCE_LAUNCHING",
-        "NotificationTargetARN": {
-          "Fn::GetAtt": [
-            "MyQueue",
-            "Arn"
-          ]
-        },
-        "DefaultResult": "CONTINUE",
-        "RoleARN": {
-          "Fn::GetAtt": [
-            "SQSRole",
-            "Arn"
-          ]
-        }
-      }
-    },
-    "ASLifecycleHook0": {
-      "Type": "AWS::AutoScaling::LifecycleHook",
-      "Properties": {
-        "AutoScalingGroupName": {
-          "Ref": "ASG0"
         },
         "LifecycleTransition": "autoscaling:EC2_INSTANCE_LAUNCHING",
         "NotificationTargetARN": {
@@ -1601,6 +1622,42 @@
         ]
       }
     },
+    "EELBSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "GroupDescription": "Allow HTTP from Internet",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "TCP",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": "0.0.0.0/0"
+          }
+        ]
+      }
+    },
+    "IELBSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "GroupDescription": "Allow HTTP from VPC",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "TCP",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": {
+              "Ref": "VPCCIDR"
+            }
+          }
+        ]
+      }
+    },
     "OnDemandA": {
       "Type": "AWS::EC2::Instance",
       "Properties": {
@@ -1610,8 +1667,18 @@
             {
               "Ref": "AWS::Region"
             },
-            "fgtbyolami"
+            "fgtami"
           ]
+        },
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "\"product\": \"2wqkpek696qhdeo7lbbjncqli\",\n"
+              ]
+            ]
+          }
         },
         "InstanceType": {
           "Ref": "InitialFortiGateInstanceType"
@@ -1619,7 +1686,7 @@
         "IamInstanceProfile": {
           "Ref": "BootEC2"
         },
-        "DisableApiTermination": "True",
+        "DisableApiTermination": "False",
         "KeyName": {
           "Ref": "FortiGateKeyPair"
         },
@@ -1652,13 +1719,13 @@
               ]
             }
           },
-		  {
-			"Key": "Fortigate-State",
-			"Value": "UnConfigured"
-		  },
+          {
+            "Key": "Fortigate-State",
+            "Value": "UnConfigured"
+          },
           {
             "Key": "Fortigate-License",
-            "Value": "BYOL"
+            "Value": "OnDemand"
           }
         ]
       }
@@ -1862,8 +1929,18 @@
             {
               "Ref": "AWS::Region"
             },
-            "fgtbyolami"
+            "fgtami"
           ]
+        },
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "\"product\": \"2wqkpek696qhdeo7lbbjncqli\",\n"
+              ]
+            ]
+          }
         },
         "InstanceType": {
           "Ref": "InitialFortiGateInstanceType"
@@ -1874,7 +1951,7 @@
         "IamInstanceProfile": {
           "Ref": "BootEC2"
         },
-        "DisableApiTermination": "True",
+        "DisableApiTermination": "False",
         "NetworkInterfaces": [
           {
             "NetworkInterfaceId": {
@@ -1905,12 +1982,12 @@
             }
           },
           {
-			"Key": "Fortigate-State",
-			"Value": "UnConfigured"
-		  },
+            "Key": "Fortigate-State",
+            "Value": "UnConfigured"
+          },
           {
             "Key": "Fortigate-License",
-            "Value": "BYOL"
+            "Value": "OnDemand"
           }
         ]
       }
@@ -2014,6 +2091,11 @@
             "Ref": "Subnet4"
           }
         ],
+        "SecurityGroups": [
+          {
+            "Ref": "IELBSecurityGroup"
+          }
+        ],
         "Scheme": "internal",
         "LoadBalancerName": {
           "Fn::Join": [
@@ -2065,6 +2147,11 @@
           },
           {
             "Ref": "Subnet2"
+          }
+        ],
+        "SecurityGroups": [
+          {
+            "Ref": "EELBSecurityGroup"
           }
         ],
         "Scheme": "internet-facing",

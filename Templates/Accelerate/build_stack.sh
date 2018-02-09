@@ -127,3 +127,35 @@ then
                         ParameterKey=ScalingPeriod,ParameterValue=300 \
                         ParameterKey=VPCID,ParameterValue="$VPC"
 fi
+
+
+
+    aws cloudformation create-stack --stack-name "$stack4" --region "$region" --capabilities CAPABILITY_IAM \
+        --template-body file://ExistingVPC_Fortigate542_Autoscale_ELB_WorkerNode.template \
+        --parameters    ParameterKey=ASGroupMaxSize,ParameterValue=5 \
+                        ParameterKey=ASKeyPair,ParameterValue="$key" \
+                        ParameterKey=ASQueue,ParameterValue="$stack4"q \
+                        ParameterKey=AZForFirewall1,ParameterValue="$AZ1" \
+                        ParameterKey=AZForFirewall2,ParameterValue="$AZ2" \
+                        ParameterKey=CIDRForASAccess,ParameterValue="$access" \
+                        ParameterKey=CIDRForFortiGateAccess,ParameterValue="$access" \
+                        ParameterKey=FortiGateInstanceType,ParameterValue="$instance_type" \
+                        ParameterKey=FortiGateKeyPair,ParameterValue="$key" \
+                        ParameterKey=DomainName,ParameterValue="$domain" \
+                        ParameterKey=FGTDNSPrefix,ParameterValue="$fgtdns" \
+                        ParameterKey=HTTPSDNSPrefix,ParameterValue="$httpsdns" \
+                        ParameterKey=HealthCheckPort,ParameterValue=541 \
+                        ParameterKey=HealthCheckPort,ParameterValue=541 \
+                        ParameterKey=InitialFortiGateInstanceType,ParameterValue="$instance_type" \
+                        ParameterKey=InternalHealthCheckPort,ParameterValue=80 \
+                        ParameterKey=InternalListenerPort,ParameterValue=80 \
+                        ParameterKey=ListenerPort,ParameterValue=80 \
+                        ParameterKey=Private1Subnet,ParameterValue="$SUBNET2" \
+                        ParameterKey=Private2Subnet,ParameterValue="$SUBNET4" \
+                        ParameterKey=Public1Subnet,ParameterValue="$SUBNET1" \
+                        ParameterKey=Public2Subnet,ParameterValue="$SUBNET3" \
+                        ParameterKey=ScaleDownThreshold,ParameterValue=40 \
+                        ParameterKey=ScaleUpThreshold,ParameterValue=80 \
+                        ParameterKey=ScalingParameter,ParameterValue=CPUUtilization \
+                        ParameterKey=ScalingPeriod,ParameterValue=300 \
+                        ParameterKey=VPCID,ParameterValue="$VPC"

@@ -39,7 +39,8 @@
             "InitialFortiGateInstanceType",
             "FortiGateInstanceType",
             "CIDRForFortiGateAccess",
-            "FortiGateKeyPair"
+            "FortiGateKeyPair",
+            "OnDemandAConfigObject"
           ]
         },
         {
@@ -196,6 +197,10 @@
     "ASKeyPair": {
       "Type": "AWS::EC2::KeyPair::KeyName",
       "Description": "Enter the keypair that you want to associate with the launch of the worker node"
+    },
+    "OnDemandAConfigObject": {
+      "Type": "String",
+      "Description": "Initial Config file for OnDemandA instance"
     },
     "FortiGateKeyPair": {
       "Type": "AWS::EC2::KeyPair::KeyName",
@@ -489,15 +494,19 @@
                     ["MyQueue","Arn"]
                   }
             },
-    		{
-    			"Effect": "Allow",
-      			"Action": [
-        		"s3:ListAllMyBuckets",
-        		"s3:CreateBucket"
-      			],
-      			"Resource": "arn:aws:s3:::*"
-    			},
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:ListAllMyBuckets",
+                "s3:CreateBucket",
+                "s3:GetObject",
+                "s3:ListBucket",
+                "s3:DeleteObject",
+                "s3:PutObject"
 
+              ],
+              "Resource": "arn:aws:s3:::*"
+            },
             {
               "Effect": "Allow",
             	"Action": [
