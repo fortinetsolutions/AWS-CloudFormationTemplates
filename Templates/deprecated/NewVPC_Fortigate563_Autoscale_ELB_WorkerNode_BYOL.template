@@ -1064,16 +1064,6 @@
             "fgtodami"
           ]
         },
-        "UserData": {
-          "Fn::Base64": {
-            "Fn::Join": [
-              "",
-              [
-                "\"product\": \"2wqkpek696qhdeo7lbbjncqli\",\n"
-              ]
-            ]
-          }
-        },
         "SecurityGroups": [
           {
             "Ref": "SecurityGroup"
