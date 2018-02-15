@@ -236,7 +236,7 @@ Resources:
           Fn::Join:
           - ''
           - - Ref: AWS::StackName
-            - WebLinux1-Instance
+            - "-WebLinux1-Instance"
   WebLinux2Instance:
     Type: AWS::EC2::Instance
     Properties:
@@ -305,7 +305,7 @@ Resources:
           Fn::Join:
           - ''
           - - Ref: AWS::StackName
-            - WebLinux2-Instance
+            - "-WebLinux2-Instance"
   WebElasticLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
@@ -313,11 +313,18 @@ Resources:
         Fn::Join:
         - ''
         - - Ref: AWS::StackName
-          - WebELB
+          - "-WebELB"
       Scheme: internal
       Subnets:
       - Ref: Private1Subnet
       - Ref: Private2Subnet
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-WebELB"
       Type: network
   WebTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -327,18 +334,18 @@ Resources:
         - ''
         - - Ref: AWS::StackName
           - "-WebTargetGroup"
-      Port: 443
+      Port: 80
       Protocol: TCP
-      HealthCheckProtocol: TCP
-      HealthCheckPort: '22'
+      HealthCheckProtocol: HTTP
+      HealthCheckPort: 80
       TargetType: instance
       Targets:
       - Id:
           Ref: WebLinux1Instance
-        Port: 443
+        Port: 80
       - Id:
           Ref: WebLinux2Instance
-        Port: 443
+        Port: 80
       Tags:
       - Key: Name
         Value:
@@ -357,7 +364,7 @@ Resources:
           Ref: WebTargetGroup
       LoadBalancerArn:
         Ref: WebElasticLoadBalancer
-      Port: '443'
+      Port: 80
       Protocol: TCP
   RecordWebELB:
     Type: AWS::Route53::RecordSetGroup

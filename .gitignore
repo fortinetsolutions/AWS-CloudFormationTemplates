@@ -9,3 +9,4 @@ Notes.txt
 .idea/*
 venv/*
 .repo_conf/*.retry
+.idea/

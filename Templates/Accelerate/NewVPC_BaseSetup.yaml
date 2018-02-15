@@ -55,7 +55,7 @@ Resources:
           Fn::Join:
           - ''
           - - Ref: AWS::StackName
-            - VPCID
+            - "-VPCID"
   Subnet1:
     Type: AWS::EC2::Subnet
     Properties:
@@ -71,7 +71,7 @@ Resources:
           Fn::Join:
           - ''
           - - Ref: AWS::StackName
-            - PublicSubnet1
+            - "-PublicSubnet1"
   Subnet2:
     Type: AWS::EC2::Subnet
     Properties:
@@ -87,7 +87,7 @@ Resources:
           Fn::Join:
           - ''
           - - Ref: AWS::StackName
-            - PrivateSubnet1
+            - "-PrivateSubnet2"
   Subnet3:
     Type: AWS::EC2::Subnet
     Properties:
@@ -103,7 +103,7 @@ Resources:
           Fn::Join:
           - ''
           - - Ref: AWS::StackName
-            - PublicSubnet2
+            - "-PublicSubnet3"
   Subnet4:
     Type: AWS::EC2::Subnet
     Properties:
@@ -119,7 +119,7 @@ Resources:
           Fn::Join:
           - ''
           - - Ref: AWS::StackName
-            - PrivateSubnet2
+            - "-PrivateSubnet4"
   RouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -131,7 +131,7 @@ Resources:
           Fn::Join:
           - ''
           - - Ref: AWS::StackName
-            - PublicRT
+            - "-PublicRT"
   RouteTable1:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -143,7 +143,7 @@ Resources:
           Fn::Join:
           - ''
           - - Ref: AWS::StackName
-            - InternalRouteTable1
+            - "-InternalRouteTable1"
   RouteTable2:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -155,7 +155,7 @@ Resources:
           Fn::Join:
           - ''
           - - Ref: AWS::StackName
-            - InternalRouteTable2
+            - "-InternalRouteTable2"
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
@@ -165,7 +165,7 @@ Resources:
           Fn::Join:
           - ''
           - - Ref: AWS::StackName
-            - IGW
+            - "-IGW"
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:

@@ -11,6 +11,8 @@ domain=fortidevelopment.com
 fgtdns=fortias
 webdns=httpserver
 access="0.0.0.0/0"
+config_bucket=accelerate-config
+config_object=current.conf
 
 #
 # deploy the stack if it doesn't already exist
@@ -121,7 +123,9 @@ if [ "${count}" -eq "0" ]
 then
     aws cloudformation create-stack --stack-name "$stack4" --region "$region" --capabilities CAPABILITY_IAM \
         --template-body file://ExistingVPC_AddFortigates.yaml \
-        --parameters    ParameterKey=CIDRForFortiGateAccess,ParameterValue="$access" \
+        --parameters    ParameterKey=S3ConfigObject,ParameterValue="$config_object" \
+                        ParameterKey=S3ConfigBucket,ParameterValue="$config_bucket" \
+                        ParameterKey=CIDRForFortiGateAccess,ParameterValue="$access" \
                         ParameterKey=FortiGateEC2Type,ParameterValue="$instance_type" \
                         ParameterKey=HealthCheckPort,ParameterValue=541 \
                         ParameterKey=DomainName,ParameterValue="$domain" \
@@ -132,6 +136,7 @@ then
                         ParameterKey=SubnetID3,ParameterValue="$SUBNET3" \
                         ParameterKey=AZForFirewall1,ParameterValue="$AZ1" \
                         ParameterKey=AZForFirewall2,ParameterValue="$AZ2" \
+                        ParameterKey=KeyPair,ParameterValue="$key" \
                         ParameterKey=VPCID,ParameterValue="$VPC"
 fi
 #
