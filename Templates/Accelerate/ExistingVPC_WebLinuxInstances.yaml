@@ -76,37 +76,37 @@ Parameters:
     Default: httpserver
     Description: Enter the Prefix for Web Server Route53 DNS Record Sets
 Mappings:
-  RegionMap:
-    ap-northeast-1:
-        ubuntuami: ami-860926e1
-    ap-northeast-2:
-        ubuntuami: ami-c818caa6
-    ap-south-1:
-        ubuntuami: ami-16c7b479
-    ap-southeast-1:
-        ubuntuami: ami-4f52eb2c
-    ap-southeast-2:
-        ubuntuami: ami-44262f27
-    ca-central-1:
-        ubuntuami: ami-1ed16d7a
-    eu-central-1:
-        ubuntuami: ami-8869bbe7
-    eu-west-1:
-        ubuntuami: ami-dccbcfba
-    eu-west-2:
-        ubuntuami: ami-04c4d060
-    eu-west-3:
-        ubuntuami: ami-aca91fd1
-    sa-east-1:
-        ubuntuami: ami-b0d3b1dc
-    us-east-1:
-        ubuntuami: ami-6245d474
-    us-east-2:
-        ubuntuami: ami-349db951
-    us-west-1:
-        ubuntuami: ami-6480a504
-    us-west-2:
-        ubuntuami: ami-752ab815
+    RegionMap:
+      ap-northeast-1:
+          ubuntuami: ami-adceb9cb
+      ap-northeast-2:
+          ubuntuami: ami-35a3015b
+      ap-south-1:
+          ubuntuami: ami-88d98ae7
+      ap-southeast-1:
+          ubuntuami: ami-a55c1dd9
+      ap-southeast-2:
+          ubuntuami: ami-e1c43f83
+      ca-central-1:
+          ubuntuami: ami-c7a622a3
+      eu-central-1:
+          ubuntuami: ami-714f2b1e
+      eu-west-1:
+          ubuntuami: ami-c1167eb8
+      eu-west-2:
+          ubuntuami: ami-e0bc5987
+      eu-west-3:
+          ubuntuami: ami-6bad1b16
+      sa-east-1:
+          ubuntuami: ami-9a2d63f6
+      us-east-1:
+          ubuntuami: ami-0b383171
+      us-east-2:
+          ubuntuami: ami-4f80b52a
+      us-west-1:
+          ubuntuami: ami-9cb2bdfc
+      us-west-2:
+          ubuntuami: ami-c62eaabe
 Conditions: {}
 Resources:
   InstanceRole:
