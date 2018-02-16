@@ -11,6 +11,7 @@ domain=fortidevelopment.com
 fgtdns=fortias
 webdns=httpserver
 access="0.0.0.0/0"
+privateaccess="10.0.0.0/16"
 config_bucket=accelerate-config
 config_object=current.conf
 
@@ -97,6 +98,7 @@ then
                     ParameterKey=Public1Subnet,ParameterValue="$SUBNET1" \
                     ParameterKey=Public2Subnet,ParameterValue="$SUBNET3" \
                     ParameterKey=CIDRForInstanceAccess,ParameterValue="$access" \
+                    ParameterKey=CIDRForInternalAccess,ParameterValue="$privateaccess" \
                     ParameterKey=InstanceType,ParameterValue="$instance_type" \
                     ParameterKey=KeyPair,ParameterValue="$key"
 fi

@@ -14,6 +14,7 @@ Metadata:
       - Public2Subnet
       - KeyPair
       - CIDRForInstanceAccess
+      - CIDRForInternalAccess
       - InstanceType
     ParameterLabels:
       VPCID:
@@ -38,6 +39,10 @@ Parameters:
     Type: String
     Default: 0.0.0.0/0
     Description: Enter the CIDR from which instance needs to be accessed
+  CIDRForInternalAccess:
+    Type: String
+    Default: 10.0.0.0/0
+    Description: Enter the VPCCIDR from which instance can access each other
   InstanceType:
     Type: String
     Default: c4.large
@@ -145,6 +150,9 @@ Resources:
         ToPort: '3389'
         CidrIp:
           Ref: CIDRForInstanceAccess
+      - IpProtocol: "-1"
+        CidrIp:
+          Ref: CIDRForInternalAccess
   TGLinux1Instance:
     Type: AWS::EC2::Instance
     Properties:
@@ -159,8 +167,8 @@ Resources:
            apt-get install -y xfce4
            apt-get install -y xfce4-goodies
            apt-get install -y tightvncserver
-           sed -i "/^exit 0/isudo ip link set dev ens3 mtu 1500" /etc/rc.local
-           sudo ip link set dev ens3 mtu 1500
+           apt-get install -y firefox
+           sed -i "/^exit 0/isudo /home/ubuntu/apache-jmeter-3.3/bin/jmeter-server" /etc/rc.local
            echo $'net.ipv4.tcp_tw_reuse = 1' >> /etc/sysctl.conf
            echo $'net.ipv4.tcp_tw_recycle = 1' >> /etc/sysctl.conf
            echo $'net.ipv4.ip_local_port_range = 1024 65535' >> /etc/sysctl.conf
@@ -174,7 +182,7 @@ Resources:
            wget https://s3.amazonaws.com/fortigym/jmetercluster.sh
            chmod +x ./jmetercluster.sh
            ./jmetercluster.sh
-           wget http://apache.mirrors.tds.net/jmeter/binaries/apache-jmeter-3.3.tgz
+           wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-3.3.tgz
            wget https://s3.amazonaws.com/fortigym/HTTP-44KB-Test1.jmx
            tar -xvf apache-jmeter-3.3.tgz
            sed -i 's@^HEAP="-Xms512m -Xmx512m"@'HEAP='\"-Xms512m -Xmx2048m'\"'@' /home/ubuntu/apache-jmeter-3.3/bin/jmeter
@@ -186,6 +194,7 @@ Resources:
            cp /home/ubuntu/.xsession /etc/skel
            sed -i '0,/-1/s//ask-1/' /etc/xrdp/xrdp.ini
            service xrdp restart
+           /home/ubuntu/apache-jmeter-3.3/bin/jmeter-server
       InstanceType:
         Ref: InstanceType
       KeyName:
@@ -220,8 +229,8 @@ Resources:
            apt-get install -y xfce4
            apt-get install -y xfce4-goodies
            apt-get install -y tightvncserver
-           sed -i "/^exit 0/isudo ip link set dev ens3 mtu 1500" /etc/rc.local
-           sudo ip link set dev ens3 mtu 1500
+           apt-get install -y firefox
+           sed -i "/^exit 0/isudo /home/ubuntu/apache-jmeter-3.3/bin/jmeter-server" /etc/rc.local
            echo $'net.ipv4.tcp_tw_reuse = 1' >> /etc/sysctl.conf
            echo $'net.ipv4.tcp_tw_recycle = 1' >> /etc/sysctl.conf
            echo $'net.ipv4.ip_local_port_range = 1024 65535' >> /etc/sysctl.conf
@@ -235,7 +244,7 @@ Resources:
            wget https://s3.amazonaws.com/fortigym/jmetercluster.sh
            chmod +x ./jmetercluster.sh
            ./jmetercluster.sh
-           wget http://apache.mirrors.tds.net/jmeter/binaries/apache-jmeter-3.3.tgz
+           wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-3.3.tgz
            wget https://s3.amazonaws.com/fortigym/HTTP-44KB-Test1.jmx
            tar -xvf apache-jmeter-3.3.tgz
            sed -i 's@^HEAP="-Xms512m -Xmx512m"@'HEAP='\"-Xms512m -Xmx2048m'\"'@' /home/ubuntu/apache-jmeter-3.3/bin/jmeter
@@ -247,6 +256,7 @@ Resources:
            cp /home/ubuntu/.xsession /etc/skel
            sed -i '0,/-1/s//ask-1/' /etc/xrdp/xrdp.ini
            service xrdp restart
+           /home/ubuntu/apache-jmeter-3.3/bin/jmeter-server
       InstanceType:
         Ref: InstanceType
       KeyName:

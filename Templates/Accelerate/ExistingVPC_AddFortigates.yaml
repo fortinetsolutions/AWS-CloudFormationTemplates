@@ -219,34 +219,35 @@ Resources:
         - fgtodami
       UserData:
         Fn::Base64:
-        Fn::Join:
-        - ''
-        - - "{\n"
-          - '"product"'
-          - " : "
-          - '"2wqkpek696qhdeo7lbbjncqli"'
-          - "\""
-          - ",\n"
-          - '"bucket"'
-          - " : "
-          - "\""
-          - Ref: S3ConfigBucket
-          - "\""
-          - ",\n"
-          - "\""
-          - '"region"'
-          - " : "
-          - '"us-west-1"'
-          - "\""
-          - ",\n"
-          - '"config"'
-          - " : "
-          - "\""
-          - "/"
-          - Ref: S3ConfigObject
-          - "\""
-          - ",\n"
-          - "}"
+          Fn::Join:
+          - ''
+          - - "{\n"
+            - '"product"'
+            - " : "
+            - '"2wqkpek696qhdeo7lbbjncqli"'
+            - ",\n"
+            - '"bucket"'
+            - " : "
+            - "\""
+            - Ref: S3ConfigBucket
+            - "\""
+            - ",\n"
+            - '"region"'
+            - " : "
+            - '"us-west-1"'
+            - ",\n"
+            - '"license"'
+            - " : "
+            - '"/"'
+            - ",\n"
+            - '"config"'
+            - " : "
+            - "\""
+            - "/"
+            - Ref: S3ConfigObject
+            - "\""
+            - ",\n"
+            - "}"
       InstanceType:
         Ref: FortiGateEC2Type
       KeyName:
@@ -331,34 +332,35 @@ Resources:
         - fgtodami
       UserData:
         Fn::Base64:
-        Fn::Join:
-        - ''
-        - - "{\n"
-          - '"product"'
-          - " : "
-          - '"2wqkpek696qhdeo7lbbjncqli"'
-          - "\""
-          - ",\n"
-          - '"bucket"'
-          - " : "
-          - "\""
-          - Ref: S3ConfigBucket
-          - "\""
-          - ",\n"
-          - "\""
-          - '"region"'
-          - " : "
-          - '"us-west-1"'
-          - "\""
-          - ",\n"
-          - '"config"'
-          - " : "
-          - "\""
-          - "/"
-          - Ref: S3ConfigObject
-          - "\""
-          - ",\n"
-          - "}"
+          Fn::Join:
+          - ''
+          - - "{\n"
+            - '"product"'
+            - " : "
+            - '"2wqkpek696qhdeo7lbbjncqli"'
+            - ",\n"
+            - '"bucket"'
+            - " : "
+            - "\""
+            - Ref: S3ConfigBucket
+            - "\""
+            - ",\n"
+            - '"region"'
+            - " : "
+            - '"us-west-1"'
+            - ",\n"
+            - '"license"'
+            - " : "
+            - '"/"'
+            - ",\n"
+            - '"config"'
+            - " : "
+            - "\""
+            - "/"
+            - Ref: S3ConfigObject
+            - "\""
+            - ",\n"
+            - "}"
       InstanceType:
         Ref: FortiGateEC2Type
       KeyName:

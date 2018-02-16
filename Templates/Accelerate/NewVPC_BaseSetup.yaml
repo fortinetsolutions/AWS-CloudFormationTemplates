@@ -49,6 +49,8 @@ Resources:
     Properties:
       CidrBlock:
         Ref: VPCCIDR
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
       Tags:
       - Key: Name
         Value:
