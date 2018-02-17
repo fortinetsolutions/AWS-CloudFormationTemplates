@@ -3,6 +3,7 @@ stack1=acceleratebase
 stack2=addprivatelinux
 stack3=addpubliclinux
 stack4=acceleratefgt
+stack5=accelerateautoscale
 region=us-west-1
 instance_type=c4.large
 key=ftntkey_californmia
@@ -14,6 +15,7 @@ access="0.0.0.0/0"
 privateaccess="10.0.0.0/16"
 config_bucket=accelerate-config
 config_object=current.conf
+asq=accelerateq
 
 #
 # deploy the stack if it doesn't already exist
@@ -41,14 +43,13 @@ do
     then
         break
     fi
-    echo $c
     sleep 30
 done
 
 #
-# Pull the outputs from the first template
+# Pull the outputs from the first template as environment variables that are used in the second and third templates
 #
-tfile=$(mktemp /tmp/foo.XXXXXXXXX)
+tfile=$(mktemp /tmp/foostack1.XXXXXXXXX)
 aws cloudformation --region "$region" describe-stacks --stack-name "$stack1" --output text --query 'Stacks[*].Outputs[*].{KEY:OutputKey,Value:OutputValue}' > $tfile
 VPC=`cat $tfile|grep ^VPCID|cut -f2 -d$'\t'`
 AZ1=`cat $tfile|grep ^AZ1|cut -f2 -d$'\t'`
@@ -113,7 +114,6 @@ do
     then
         break
     fi
-    echo $c
     sleep 30
 done
 
@@ -140,6 +140,102 @@ then
                         ParameterKey=AZForFirewall2,ParameterValue="$AZ2" \
                         ParameterKey=KeyPair,ParameterValue="$key" \
                         ParameterKey=VPCID,ParameterValue="$VPC"
+fi
+
+#
+# Wait for template above to CREATE_COMPLETE
+#
+for (( c=1; c<=10; c++ ))
+do
+    count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --region "$region" |grep "$stack1" |wc -l`
+    if [ ${count} -eq 1 ]
+    then
+        break
+    fi
+    sleep 30
+done
+
+
+#
+# Wait for template above to CREATE_COMPLETE
+#
+for (( c=1; c<=10; c++ ))
+do
+    count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --region "$region" |grep "$stack2" |wc -l`
+    if [ ${count} -eq 1 ]
+    then
+        break
+    fi
+    sleep 30
+done
+
+#
+# Wait for template above to CREATE_COMPLETE
+#
+for (( c=1; c<=10; c++ ))
+do
+    count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --region "$region" |grep "$stack3" |wc -l`
+    if [ ${count} -eq 1 ]
+    then
+        break
+    fi
+    sleep 30
+done
+
+#
+# Wait for template above to CREATE_COMPLETE
+#
+for (( c=1; c<=10; c++ ))
+do
+    count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --region "$region" |grep "$stack4" |wc -l`
+    if [ ${count} -eq 1 ]
+    then
+        break
+    fi
+    sleep 30
+done
+
+tfile=$(mktemp /tmp/foostack5.XXXXXXXXX)
+aws cloudformation --region "$region" describe-stacks --stack-name "$stack4" --output text --query 'Stacks[*].Outputs[*].{KEY:OutputKey,Value:OutputValue}' > $tfile
+arn=`cat $tfile|grep ^TargetGroupARN|cut -f2 -d$'\t'`
+nlb=`cat $tfile|grep ^PublicElasticLoadBalancer|cut -f2 -d$'\t'`
+oda=`cat $tfile|grep ^OnDemandA|cut -f2 -d$'\t'`
+odb=`cat $tfile|grep ^OnDemandB|cut -f2 -d$'\t'`
+
+#
+# Now deploy fortigate autoscaling instances in the public & private subnets on top of the existing VPC
+#
+count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --region "$region" |grep "$stack5" |wc -l`
+if [ "${count}" -eq "0" ]
+then
+    #
+    # The current worker node script wants OnDemandA and OnDemandB to be deployed within the same stack
+    # as the worker node. So change the TAG value for stack
+    #
+    #aws ec2 create-tags --resources $oda $odb --tags Key=aws:cloudformation:stack-name,Value=$stack4
+    aws cloudformation create-stack --stack-name "$stack5" --region "$region" --capabilities CAPABILITY_IAM \
+        --template-body file://ExistingVPC_AddAutoscale.json \
+        --parameters    ParameterKey=CIDRForFGTAccess,ParameterValue="$access" \
+                        ParameterKey=FortigateEC2Type,ParameterValue="$instance_type" \
+                        ParameterKey=Private1Subnet,ParameterValue="$SUBNET2" \
+                        ParameterKey=Private2Subnet,ParameterValue="$SUBNET4" \
+                        ParameterKey=Public1Subnet,ParameterValue="$SUBNET1" \
+                        ParameterKey=Public2Subnet,ParameterValue="$SUBNET3" \
+                        ParameterKey=FortigateKeyPair,ParameterValue="$key" \
+                        ParameterKey=ASQueue,ParameterValue="$asq" \
+                        ParameterKey=ASKeyPair,ParameterValue="$key" \
+                        ParameterKey=CIDRForASAccess,ParameterValue="$access" \
+                        ParameterKey=OnDemandA,ParameterValue="$oda" \
+                        ParameterKey=OnDemandB,ParameterValue="$odb" \
+                        ParameterKey=FortigateStack,ParameterValue="$stack4" \
+                        ParameterKey=NetworkLoadBalancer,ParameterValue="$nlb" \
+                        ParameterKey=FortigateTargetGroupARN,ParameterValue="$arn" \
+                        ParameterKey=VPCID,ParameterValue="$VPC"
+fi
+cat $tfile
+if [ -f $tfile ]
+then
+    rm -f $tfile
 fi
 #
 # End of the script

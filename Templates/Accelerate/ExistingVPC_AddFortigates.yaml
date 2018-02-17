@@ -270,7 +270,7 @@ Resources:
           - - Ref: AWS::StackName
             - "-OnDemandA"
       - Key: Fortigate-State
-        Value: UnConfigured
+        Value: Configured
       - Key: Fortigate-License
         Value: OnDemand
   OnDemandAENI0:
@@ -383,7 +383,7 @@ Resources:
           - - Ref: AWS::StackName
             - "-OnDemandB"
       - Key: Fortigate-State
-        Value: UnConfigured
+        Value: Configured
       - Key: Fortigate-License
         Value: OnDemand
   OnDemandBENI0:
@@ -523,6 +523,22 @@ Resources:
             - DNSName
     DependsOn: PublicElasticLoadBalancer
 Outputs:
+  PublicElasticLoadBalancer:
+    Value:
+      Ref: PublicElasticLoadBalancer
+    Description: Fortigate Load Balancer
+  TargetGroupARN:
+    Value:
+      Ref: PublicTargetGroup
+    Description: Public Target Group
+  OnDemandA:
+    Value:
+      Ref: OnDemandA
+    Description: Instance ID of OnDemandA
+  OnDemandB:
+    Value:
+      Ref: OnDemandB
+    Description: Instance ID of OnDemandB
   VPCID:
     Value:
       Ref: VPCID

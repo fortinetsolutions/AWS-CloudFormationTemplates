@@ -22,8 +22,8 @@
             "FortiGateInstanceType",
             "CIDRForFortiGateAccess"
           ]
-        },
-      ],
+        }
+      ]
     }
   },
   "Parameters": {
@@ -276,7 +276,7 @@
           }
         ]
       }
-    },
+    }
   },
   "Outputs": {
     "Fortigate1": {
