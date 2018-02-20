@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+#
+# Search string
+#
+# FortiManager 5.6.2 - "FortiManager*VM64-AWS build1631*5.6.2*GA-0ba08f70-6838-4190-9961-0b00d77b74fc*"
+# FortiAnalyzer 5.6.2 -  "FortiAnalyzer*VM64-AWS build1631*5.6.2*GA-a0cc1ba3-1642-429d-adfa-6b6c66dfacb9*"
 usage()
 {
 cat << EOF

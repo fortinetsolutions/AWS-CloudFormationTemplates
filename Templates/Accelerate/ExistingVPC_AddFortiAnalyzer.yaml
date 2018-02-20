@@ -1,0 +1,151 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation Template to launch FortiAnalyzer into a specified VPC
+  and Subnet.
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: FortiAnalyzer Configuration
+      Parameters:
+      - VPCID
+      - FortiAnalyzerSubnet
+      - FortiAnalyzerEC2Type
+      - FortiAnalyzerKeyPair
+      - CIDRForFazAccess
+      - DomainName
+      - FazPrefix
+Parameters:
+  VPCID:
+    Type: AWS::EC2::VPC::Id
+    Description: Enter the FortiAnalyzer VPC
+  FortiAnalyzerSubnet:
+    Type: AWS::EC2::Subnet::Id
+    Description: Enter the value of the Public1 subnet
+  FortiAnalyzerEC2Type:
+    Type: String
+    Default: m3.large
+    AllowedValues:
+    - m3.medium
+    - m3.large
+    - m3.xlarge
+    - m3.2xlarge
+    - c4.large
+    - c4.xlarge
+    - c4.2xlarge
+    - c3.large
+    - c3.xlarge
+    - c3.2xlarge
+    Description: Enter the instance type and size that you want for the FortiAnalyzer
+  FortiAnalyzerKeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Enter the keypair that you want to associate with the launch of the
+      FortiAnalyzer
+  CIDRForFazAccess:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: Enter the CIDR from which FortiGate instances needs to be accessed
+  DomainName:
+    Type: String
+    Default: fortidevelopment.com
+    Description: Enter the Hosted DNS Zone Name
+  FazPrefix:
+    Type: String
+    Default: FortiAnalyzer
+    Description: Enter the DNS Prefix for the FortiAnalyzer
+Mappings:
+  RegionMap:
+    ap-northeast-1:
+        fazami: ami-34fc9552
+    ap-northeast-2:
+        fazami: ami-5f268531
+    ap-south-1:
+        fazami: ami-7a6b3b15
+    ap-southeast-1:
+        fazami: ami-bd87c2c1
+    ap-southeast-2:
+        fazami: ami-6870890a
+    ca-central-1:
+        fazami: ami-30d15554
+    eu-central-1:
+        fazami: ami-4469f22b
+    eu-west-1:
+        fazami: ami-8dd4b7f4
+    eu-west-2:
+        fazami: ami-a7dac0c3
+    eu-west-3:
+        fazami: ami-69b50314
+    sa-east-1:
+        fazami: ami-c61b54aa
+    us-east-1:
+        fazami: ami-d44a70ae
+    us-east-2:
+        fazami: ami-f7122792
+    us-west-1:
+        fazami: ami-d5e1edb5
+    us-west-2:
+        fazami: ami-829c24fa
+Resources:
+  FortiAnalyzerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Ref: VPCID
+      GroupDescription: Allow SSH and HTTPS
+      SecurityGroupIngress:
+      - IpProtocol: TCP
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp:
+          Ref: CIDRForFazAccess
+      - IpProtocol: TCP
+        FromPort: '443'
+        ToPort: '443'
+        CidrIp:
+          Ref: CIDRForFazAccess
+  FortiAnalyzer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId:
+        Fn::FindInMap:
+        - RegionMap
+        - Ref: AWS::Region
+        - fazami
+      InstanceType:
+        Ref: FortiAnalyzerEC2Type
+      NetworkInterfaces:
+      - NetworkInterfaceId:
+          Ref: FazInstanceENI0
+        DeviceIndex: '0'
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - FortiAnalyzer
+      - Key: Fortinet-Role
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - FortiAnalyzer
+  FazInstanceENI0:
+    Type: AWS::EC2::NetworkInterface
+    Properties:
+      Description: eth0
+      GroupSet:
+      - Ref: FortiAnalyzerSecurityGroup
+      SourceDestCheck: 'true'
+      PrivateIpAddress: 10.0.1.252
+      SubnetId:
+        Ref: FortiAnalyzerSubnet
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - FazInstanceENI0
+      - Key: Interface
+        Value: eth0

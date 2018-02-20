@@ -1,0 +1,151 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation Template to launch FortiManager into a specified VPC
+  and Subnet.
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: FortiManager Configuration
+      Parameters:
+      - VPCID
+      - FortiManagerSubnet
+      - FortiManagerEC2Type
+      - FortiManagerKeyPair
+      - CIDRForFmgrAccess
+      - DomainName
+      - FmgrPrefix
+Parameters:
+  VPCID:
+    Type: AWS::EC2::VPC::Id
+    Description: Enter the FortiManager VPC
+  FortiManagerSubnet:
+    Type: AWS::EC2::Subnet::Id
+    Description: Enter the value of the Public1 subnet
+  FortiManagerEC2Type:
+    Type: String
+    Default: m3.large
+    AllowedValues:
+    - m3.medium
+    - m3.large
+    - m3.xlarge
+    - m3.2xlarge
+    - c4.large
+    - c4.xlarge
+    - c4.2xlarge
+    - c3.large
+    - c3.xlarge
+    - c3.2xlarge
+    Description: Enter the instance type and size that you want for the FortiManager
+  FortiManagerKeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Enter the keypair that you want to associate with the launch of the
+      FortiManager
+  CIDRForFmgrAccess:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: Enter the CIDR from which FortiGate instances needs to be accessed
+  DomainName:
+    Type: String
+    Default: fortidevelopment.com
+    Description: Enter the Hosted DNS Zone Name
+  FmgrPrefix:
+    Type: String
+    Default: fortimanager
+    Description: Enter the DNS Prefix for the FortiManager
+Mappings:
+  RegionMap:
+    ap-northeast-1:
+      fmgrami: ami-860926e1
+    ap-northeast-2:
+      fmgrami: ami-c818caa6
+    ap-south-1:
+      fmgrami: ami-16c7b479
+    ap-southeast-1:
+      fmgrami: ami-4f52eb2c
+    ap-southeast-2:
+      fmgrami: ami-44262f27
+    ca-central-1:
+      fmgrami: ami-1ed16d7a
+    eu-central-1:
+      fmgrami: ami-8869bbe7
+    eu-west-1:
+      fmgrami: ami-dccbcfba
+    eu-west-2:
+      fmgrami: ami-04c4d060
+    eu-west-3:
+      fmgrami: ami-aca91fd1
+    sa-east-1:
+      fmgrami: ami-b0d3b1dc
+    us-east-1:
+      fmgrami: ami-6245d474
+    us-east-2:
+      fmgrami: ami-349db951
+    us-west-1:
+      fmgrami: ami-6480a504
+    us-west-2:
+      fmgrami: ami-752ab815
+Resources:
+  FortiManagerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Ref: VPCID
+      GroupDescription: Allow SSH and HTTPS
+      SecurityGroupIngress:
+      - IpProtocol: TCP
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp:
+          Ref: CIDRForFmgrAccess
+      - IpProtocol: TCP
+        FromPort: '443'
+        ToPort: '443'
+        CidrIp:
+          Ref: CIDRForFmgrAccess
+  FortiManager:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId:
+        Fn::FindInMap:
+        - RegionMap
+        - Ref: AWS::Region
+        - fmgrami
+      InstanceType:
+        - Ref: FortiManagerEC2Type
+      NetworkInterfaces:
+      - NetworkInterfaceId:
+          Ref: FMGRInstanceENI0
+        DeviceIndex: '0'
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - FortiManager
+      - Key: Fortinet-Role
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - FortiManager
+  FMGRInstanceENI0:
+    Type: AWS::EC2::NetworkInterface
+    Properties:
+      Description: eth0
+      GroupSet:
+      - Ref: FortiManagerSecurityGroup
+      SourceDestCheck: 'true'
+      PrivateIpAddress: 10.0.1.253
+      SubnetId:
+        Ref: FortiManagerSubnet
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - FMGRInstanceENI0
+      - Key: Interface
+        Value: eth0
