@@ -1,0 +1,405 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation Template to launch a FortiSandbox instance into a new VPC with two subnets, NAT Gateway, Internet Gateway, Route53 A Record, Security Groups, DHCP Options, and Route Tables
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: VPC Configuration
+      Parameters:
+      - VPCCIDR
+      - AZForSubnets
+      - PublicSubnetCIDR
+      - PrivateSubnetCIDR
+    - Label:
+        default: FortiSandbox Instance Configuration
+      Parameters:
+      - FortiSandboxEC2Type
+      - FortiSandboxPublicENIip
+      - FortiSandboxPrivateENIip
+      - DomainName
+      - FSADNSPrefix
+      - KeyPair
+      - CIDRForInstanceAccess
+Parameters:
+  VPCCIDR:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: Enter the VPC CIDR that you want to use
+  AZForSubnets:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: us-west-2c
+    Description: Enter the AZ for the primary subnets
+  PublicSubnetCIDR:
+    Type: String
+    Default: 10.0.0.0/20
+    Description: Enter the value of the Public subnet
+  PrivateSubnetCIDR:
+    Type: String
+    Default: 10.0.16.0/20
+    Description: Enter the value of the Private1 subnet
+  FortiSandboxEC2Type:
+    Type: String
+    Default: m4.xlarge
+    Description: Enter the instance type to use for the FortiSandbox
+    AllowedValues:
+    - m4.xlarge
+    - c4.xlarge
+  FortiSandboxPublicENIip:
+    Type: String
+    Default: 10.0.0.100
+    Description: Enter the IP address for the internal interface of the FortiSandbox (IP from Public Subnet)
+  FortiSandboxPrivateENIip:
+    Type: String
+    Default: 10.0.16.100
+    Description: Enter the IP address for the internal interface of the FortiSandbox (IP from Private Subnet)
+  DomainName:
+    Type: String
+    Default: fortidevelopment.com
+    Description: Enter the Domain Name for Route53 DNS Record Sets
+  FSADNSPrefix:
+    Type: String
+    Default: fortiatp
+    Description: Enter the Prefix for the FortiSandbox Route53 DNS Record Sets
+  KeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Enter the keypair that you want to associate with the launch of the Instances
+  CIDRForInstanceAccess:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: Enter the CIDR from which FortiSandbox instance needs to be accessed
+
+Mappings:
+ RegionMap:
+   ap-northeast-1:
+     fsaond: ami-df1c91b9
+   ap-northeast-2:
+     fsaond: ami-f231979c
+   ap-south-1:
+     fsaond: ami-5002493f
+   ap-southeast-1:
+     fsaond: ami-a71b78db
+   ap-southeast-2:
+     fsaond: ami-f9c4329b
+   ca-central-1:
+     fsaond: ami-21ae1445
+   eu-central-1:
+     fsaond: ami-49189326
+   eu-west-1:
+     fsaond: ami-bf9710c6
+   eu-west-2:
+     fsaond: ami-bd6a73d9
+   eu-west-3:
+     fsaond: ami-725ceb0f
+   sa-east-1:
+     fsaond: ami-5fa8ee33
+   us-east-1:
+     fsaond: ami-cc9fe8b6
+   us-east-2:
+     fsaond: ami-345a7251
+   us-west-1:
+     fsaond: ami-6fcdc90f
+   us-west-2:
+     fsaond: ami-1b45e463
+
+Conditions: {}
+Resources:
+  VPCID:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock:
+        Ref: VPCCIDR
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - VPC
+  DHCPoptions:
+    Type: "AWS::EC2::DHCPOptions"
+    Properties: 
+      DomainNameServers: 
+        - Ref: FortiSandboxPrivateENIip
+      Tags: 
+      - Key: Name
+        Value: !Join [ "-", [ Ref: "AWS::StackName", DHCPoptions] ]
+  DHCPOptionsAssociation:
+    Type: AWS::EC2::VPCDHCPOptionsAssociation
+    Properties:
+      VpcId:
+        Ref: VPCID
+      DhcpOptionsId:
+        Ref: DHCPoptions
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: PublicSubnetCIDR
+      AvailabilityZone:
+        Ref: AZForSubnets
+      Tags:
+      - Key: Name
+        Value: PublicSubnet
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: PrivateSubnetCIDR
+      AvailabilityZone:
+        Ref: AZForSubnets
+      Tags:
+      - Key: Name
+        Value: PrivateSubnet
+  PublicSubnetRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - PublicRT
+  PrivateSubnetRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - PrivateRT
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - IGW
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: VPCID
+      InternetGatewayId:
+        Ref: InternetGateway
+  PublicSubnetRTroute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: PublicSubnetRT
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+  EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: AttachGateway
+    Properties:
+      Domain: vpc
+  NatGateway:
+    DependsOn: AttachGateway
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+        Fn::GetAtt:
+        - EIP
+        - AllocationId
+      SubnetId:
+        Ref: PublicSubnet
+  PrivateSubnetRTroute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: PrivateSubnetRT
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: NatGateway
+  PublicSubnetRTAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet
+      RouteTableId:
+        Ref: PublicSubnetRT
+  PrivateSubnetRTAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivateSubnet
+      RouteTableId:
+        Ref: PrivateSubnetRT
+  PublicSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Ref: VPCID
+      GroupDescription: Allow SSH and HTTPS Traffic
+      SecurityGroupIngress:
+      - IpProtocol: TCP
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp:
+          Ref: CIDRForInstanceAccess
+      - IpProtocol: TCP
+        FromPort: '443'
+        ToPort: '443'
+        CidrIp:
+          Ref: CIDRForInstanceAccess
+  PrivateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Ref: VPCID
+      GroupDescription: Allow All Traffic
+      SecurityGroupIngress:
+      - IpProtocol: "-1"
+        CidrIp: "0.0.0.0/0"
+  FortiSandboxPublicENI:
+    Type: "AWS::EC2::NetworkInterface"
+    Properties: 
+      Description: port1
+      GroupSet:
+      - !Ref PublicSecurityGroup
+      PrivateIpAddress: !Ref FortiSandboxPublicENIip
+      SourceDestCheck: true
+      SubnetId: !Ref PublicSubnet
+      Tags:
+      - Key: Name
+        Value: !Join [ "-", [ Ref: "AWS::StackName", FortiSandboxPort1] ]
+  FortiSandboxPrivateENI:
+    Type: "AWS::EC2::NetworkInterface"
+    Properties: 
+      Description: port2
+      GroupSet:
+      - !Ref PrivateSecurityGroup
+      PrivateIpAddress: !Ref FortiSandboxPrivateENIip
+      SourceDestCheck: false
+      SubnetId: !Ref PrivateSubnet
+      Tags:
+      - Key: Name
+        Value: !Join [ "-", [ Ref: "AWS::StackName", FortiSandboxPort2] ]
+  FortiSandboxEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: !Ref VPCID
+  FortiSandboxEIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: !GetAtt FortiSandboxEIP.AllocationId
+      NetworkInterfaceId: !Ref FortiSandboxPublicENI
+  Route53FSA:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName:
+        Fn::Join:
+        - ''
+        - - Ref: DomainName
+          - "."
+      RecordSets:
+      - Name:
+          Fn::Join:
+          - ''
+          - - Ref: FSADNSPrefix
+            - "."
+            - Ref: DomainName
+            - "."
+        Type: A
+        TTL: 300
+        ResourceRecords: 
+        - !Ref FortiSandboxEIP
+    DependsOn: FortiSandboxEIP
+  FortiSandboxEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId:
+        Fn::FindInMap:
+        - RegionMap
+        - Ref: AWS::Region
+        - fsaond
+      InstanceType:
+        Ref: FortiSandboxEC2Type
+      KeyName:
+        Ref: KeyPair
+      NetworkInterfaces:
+      - NetworkInterfaceId:
+          Ref: FortiSandboxPublicENI
+        DeviceIndex: '0'
+      - NetworkInterfaceId:
+          Ref: FortiSandboxPrivateENI
+        DeviceIndex: '1'
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - FortiSandbox
+  FSAiamuser:
+    Type: "AWS::IAM::User"
+    Properties: 
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/IAMFullAccess 
+        - arn:aws:iam::aws:policy/AWSConfigUserAccess
+        - arn:aws:iam::aws:policy/IAMUserChangePassword
+        - arn:aws:iam::aws:policy/IAMUserSSHKeys
+        - arn:aws:iam::aws:policy/PowerUserAccess
+      UserName: FSAiamuser
+  FSAiampolicy:
+    Type: "AWS::IAM::Policy"
+    Properties: 
+      PolicyName: "FortiSandboxInlinePolicy"
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: "Allow"
+            Action: 
+              - "iam:CreateRole"
+              - "iam:PutRolePolicy"
+              - "iam:ListRoles"
+            Resource: "*"
+      Users: 
+        - !Ref FSAiamuser
+
+Outputs:
+  URLforFortiSandbox:
+    Value:
+      Fn::Join:
+      - ''
+      - - https://
+        - Ref: FSADNSPrefix
+        - "."
+        - Ref: DomainName
+    Description: URL for connecting to the FortiSandbox GUI
+  FortiSandboxEC2PublicIP:
+    Value:
+      Ref: FortiSandboxEIP
+    Description: Public IP assigned to FortiSandbox
+  UsernameforFortiSandbox:
+    Value: admin
+    Description: Username to access the FortiSandbox
+  PasswordforFortiSandbox:
+    Value:
+      Ref: FortiSandboxEC2
+    Description: Password to access the FortiSandbox
+  IAMuserforFortiSandbox:
+    Value:
+      Ref: FSAiamuser
+    Description: IAM Username for configuring the FortiSandbox AWS API access
