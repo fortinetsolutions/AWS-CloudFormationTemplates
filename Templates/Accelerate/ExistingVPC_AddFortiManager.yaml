@@ -112,7 +112,7 @@ Resources:
         - Ref: AWS::Region
         - fmgrami
       InstanceType:
-        - Ref: FortiManagerEC2Type
+        Ref: FortiManagerEC2Type
       NetworkInterfaces:
       - NetworkInterfaceId:
           Ref: FMGRInstanceENI0

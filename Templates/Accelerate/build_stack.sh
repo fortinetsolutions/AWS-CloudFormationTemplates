@@ -211,6 +211,12 @@ else
     echo "Deploying "$stack4" Template"
 fi
 
+bucket=`aws s3api list-buckets  --query "Buckets[?contains(Name, '$config_bucket')].Name"`
+if [ "$bucket" != "$config_bucket" ]
+then
+    aws s3 mb s3://"$config_bucket" --region "$region"
+fi
+aws s3 cp "$config_object" s3://"$config_bucket"/"$config_object"
 #
 # Now deploy fortigate autoscaling instances in the public & private subnets on top of the existing VPC
 #
@@ -333,7 +339,6 @@ then
                         ParameterKey=FortigateTargetGroupARN,ParameterValue="$arn" \
                         ParameterKey=VPCID,ParameterValue="$VPC" >/dev/null
 fi
-cat $tfile
 if [ -f $tfile ]
 then
     rm -f $tfile
@@ -391,6 +396,23 @@ do
     sleep 30
 done
 
+tfile=$(mktemp /tmp/foostack6.XXXXXXXXX)
+aws ec2 allocate-address --domain vpc > $tfile
+eip=`cat $tfile|grep ^eipalloc|cut -f1 -d$'\t'`
+if [ -f $tfile ]
+then
+    rm -f $tfile
+fi
+tfile=$(mktemp /tmp/foostack7.XXXXXXXXX)
+aws ec2 describe-instances --instance-id "$oda" --output text --filter  \
+    --query 'Reservations[*].Instances[*].NetworkInterfaces[*].{Desc:Description,ID:NetworkInterfaceId}' >$tfile
+eni=`cat $tfile|grep ^eth0|cut -f2 -d$'\t'`
+if [ -f $tfile ]
+then
+    rm -f $tfile
+fi
+aws ec2 associate-address --network-interface-id "$eni" --allocation-id "$eip"
+
 if [ "${KI_SPECIFIED}" == true ]
 then
     read -n1 -r -p "Press space to deploy FortiAnalyzer..." keypress
@@ -417,6 +439,24 @@ then
                         ParameterKey=VPCID,ParameterValue="$VPC" >/dev/null
 fi
 
+tfile=$(mktemp /tmp/foostack7.XXXXXXXXX)
+aws ec2 allocate-address --domain vpc > $tfile
+eip=`cat $tfile|grep ^eipalloc|cut -f1 -d$'\t'`
+if [ -f $tfile ]
+then
+    rm -f $tfile
+fi
+tfile=$(mktemp /tmp/foostack7.XXXXXXXXX)
+echo "Describe interfaces for instance OnDemandA $oda"
+aws ec2 describe-instances --instance-id "$oda" --output text --filter  --query 'Reservations[*].Instances[*].NetworkInterfaces[*].{Desc:Description,ID:NetworkInterfaceId}' >$tfile
+cat $tfile
+eni=`cat $tfile|grep ^eth0|cut -f2 -d$'\t'`
+if [ -f $tfile ]
+then
+    rm -f $tfile
+fi
+echo "Associate EIP $eip instance id $oda interface $eni"
+aws ec2 associate-address --network-interface-id "$eni" --allocation-id "$eip"
 #
 # End of the script
 #
