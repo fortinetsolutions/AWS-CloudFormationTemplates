@@ -19,8 +19,8 @@ access="0.0.0.0/0"
 privateaccess="10.0.0.0/16"
 config_bucket=accelerate-config
 config_object=current.conf
+config_object_b=current-b.conf
 asq=accelerateq
-
 
 usage()
 {
@@ -47,10 +47,21 @@ do
      esac
 done
 
-if [ "${KI_SPECIFIED}" == true ]
+if [ "$KI_SPECIFIED" == true ]
 then
-    read -n1 -r -p "Press space to continue with VPC Base Template Deployment..." keypress
+    keypress_loop=true
+else
+    keypress_loop=false
 fi
+while [ $keypress_loop == true ]
+do
+    read -t 1 -n 10000 discard
+    read -n1 -r -p "Press enter to deploy base vpc..." keypress
+    if [[ "$keypress" == "" ]]
+    then
+        keypress_loop=false
+    fi
+done
 
 if [ "${KI_SPECIFIED}" == true ]
 then
@@ -89,11 +100,6 @@ do
     sleep 30
 done
 
-if [ "${KI_SPECIFIED}" == true ]
-then
-    read -n1 -r -p "Press space to continue with Web Server Deployment..." keypress
-fi
-
 #
 # Pull the outputs from the first template as environment variables that are used in the second and third templates
 #
@@ -110,6 +116,32 @@ if [ -f $tfile ]
 then
     rm -f $tfile
 fi
+
+echo
+echo "Created VPC = $VPC"
+echo "Availability Zone 1 = $AZ1"
+echo "Availability Zone 2 = $AZ2"
+echo "Subnet 1 = $SUBNET1"
+echo "Subnet 2 = $SUBNET2"
+echo "Subnet 3 = $SUBNET3"
+echo "Subnet 4 = $SUBNET4"
+echo
+
+if [ "$KI_SPECIFIED" == true ]
+then
+    keypress_loop=true
+else
+    keypress_loop=false
+fi
+while [ $keypress_loop == true ]
+do
+    read -t 1 -n 10000 discard
+    read -n1 -r -p "Press enter to deploy web servers..." keypress
+    if [[ "$keypress" == "" ]]
+    then
+        keypress_loop=false
+    fi
+done
 
 if [ "${KI_SPECIFIED}" == true ]
 then
@@ -155,10 +187,21 @@ then
     done
 fi
 
-if [ "${KI_SPECIFIED}" == true ]
+if [ "$KI_SPECIFIED" == true ]
 then
-    read -n1 -r -p "Press space to continue with Public Subnet deployments..." keypress
+    keypress_loop=true
+else
+    keypress_loop=false
 fi
+while [ $keypress_loop == true ]
+do
+    read -t 1 -n 10000 discard
+    read -n1 -r -p "Press enter to deploy traffic generators..." keypress
+    if [[ "$keypress" == "" ]]
+    then
+        keypress_loop=false
+    fi
+done
 
 if [ "${KI_SPECIFIED}" == true ]
 then
@@ -199,11 +242,33 @@ do
     sleep 30
 done
 
-if [ "${KI_SPECIFIED}" == true ]
+if [ "$KI_SPECIFIED" == true ]
 then
-    read -n1 -r -p "Press space to deploy Fortigates..." keypress
+    keypress_loop=true
+else
+    keypress_loop=false
 fi
+while [ $keypress_loop == true ]
+do
+    read -t 1 -n 10000 discard
+    read -n1 -r -p "Press enter to deploy non-autoscaled Fortigates..." keypress
+    if [[ "$keypress" == "" ]]
+    then
+        keypress_loop=false
+    fi
+done
 
+echo "Updating Fortigate configuration file used by bootstrapper"
+
+bucket=`aws s3api list-buckets  --query "Buckets[?contains(Name, '$config_bucket')].Name"`
+if [ "$bucket" != "$config_bucket" ]
+then
+    echo "Making bucket $config_bucket"
+    aws s3 mb s3://"$config_bucket" --region "$region"
+fi
+echo "Copying config file to s3://$config_bucket/$config_object"
+aws s3 cp "$config_object" s3://"$config_bucket"/"$config_object"
+aws s3 cp "$config_object_b" s3://"$config_bucket"/"$config_object_b"
 if [ "${KI_SPECIFIED}" == true ]
 then
     echo "Deploying "$stack4" Template and the script will pause when the create-stack is complete"
@@ -211,12 +276,6 @@ else
     echo "Deploying "$stack4" Template"
 fi
 
-bucket=`aws s3api list-buckets  --query "Buckets[?contains(Name, '$config_bucket')].Name"`
-if [ "$bucket" != "$config_bucket" ]
-then
-    aws s3 mb s3://"$config_bucket" --region "$region"
-fi
-aws s3 cp "$config_object" s3://"$config_bucket"/"$config_object"
 #
 # Now deploy fortigate autoscaling instances in the public & private subnets on top of the existing VPC
 #
@@ -226,6 +285,7 @@ then
     aws cloudformation create-stack --stack-name "$stack4" --region "$region" --capabilities CAPABILITY_IAM \
         --template-body file://ExistingVPC_AddFortigates.yaml \
         --parameters    ParameterKey=S3ConfigObject,ParameterValue="$config_object" \
+                        ParameterKey=S3ConfigObjectB,ParameterValue="$config_object_b" \
                         ParameterKey=S3ConfigBucket,ParameterValue="$config_bucket" \
                         ParameterKey=CIDRForFortiGateAccess,ParameterValue="$access" \
                         ParameterKey=FortiGateEC2Type,ParameterValue="$instance_type" \
@@ -295,10 +355,21 @@ do
     sleep 30
 done
 
-if [ "${KI_SPECIFIED}" == true ]
+if [ "$KI_SPECIFIED" == true ]
 then
-    read -n1 -r -p "Press space to deploy autoscaling..." keypress
+    keypress_loop=true
+else
+    keypress_loop=false
 fi
+while [ $keypress_loop == true ]
+do
+    read -t 1 -n 10000 discard
+    read -n1 -r -p "Press enter to deploy autoscaling..." keypress
+    if [[ "$keypress" == "" ]]
+    then
+        keypress_loop=false
+    fi
+done
 
 tfile=$(mktemp /tmp/foostack5.XXXXXXXXX)
 aws cloudformation --region "$region" describe-stacks --stack-name "$stack4" --output text --query 'Stacks[*].Outputs[*].{KEY:OutputKey,Value:OutputValue}' > $tfile
@@ -306,6 +377,13 @@ arn=`cat $tfile|grep ^TargetGroupARN|cut -f2 -d$'\t'`
 nlb=`cat $tfile|grep ^PublicElasticLoadBalancer|cut -f2 -d$'\t'`
 oda=`cat $tfile|grep ^OnDemandA|cut -f2 -d$'\t'`
 odb=`cat $tfile|grep ^OnDemandB|cut -f2 -d$'\t'`
+
+echo
+echo "TargetGroupARN = $arn"
+echo "Public Load Balancer = $nlb"
+echo "OnDemandA instance id = $oda"
+echo "OnDemandB instance id = $odb"
+echo
 
 if [ "${KI_SPECIFIED}" == true ]
 then
@@ -357,10 +435,21 @@ do
     sleep 30
 done
 
-if [ "${KI_SPECIFIED}" == true ]
+if [ "$KI_SPECIFIED" == true ]
 then
-    read -n1 -r -p "Press space to deploy FortiManager..." keypress
+    keypress_loop=true
+else
+    keypress_loop=false
 fi
+while [ $keypress_loop == true ]
+do
+    read -t 1 -n 10000 discard
+    read -n1 -r -p "Press enter to deploy FortiManager..." keypress
+    if [[ "$keypress" == "" ]]
+    then
+        keypress_loop=false
+    fi
+done
 
 if [ "${KI_SPECIFIED}" == true ]
 then
@@ -403,6 +492,7 @@ if [ -f $tfile ]
 then
     rm -f $tfile
 fi
+
 tfile=$(mktemp /tmp/foostack7.XXXXXXXXX)
 aws ec2 describe-instances --instance-id "$oda" --output text --filter  \
     --query 'Reservations[*].Instances[*].NetworkInterfaces[*].{Desc:Description,ID:NetworkInterfaceId}' >$tfile
@@ -411,12 +501,30 @@ if [ -f $tfile ]
 then
     rm -f $tfile
 fi
-aws ec2 associate-address --network-interface-id "$eni" --allocation-id "$eip"
 
-if [ "${KI_SPECIFIED}" == true ]
+echo
+echo "FortiManager Elastic IP allocation = $eip"
+echo "FortiManager Network Interface Id = $eni"
+echo
+echo "FortiManager - Associate EIP $eip instance id $oda interface $eni"
+
+aws ec2 associate-address --network-interface-id "$eni" --allocation-id "$eip" --private-ip-address 10.0.0.253
+
+if [ "$KI_SPECIFIED" == true ]
 then
-    read -n1 -r -p "Press space to deploy FortiAnalyzer..." keypress
+    keypress_loop=true
+else
+    keypress_loop=false
 fi
+while [ $keypress_loop == true ]
+do
+    read -t 1 -n 10000 discard
+    read -n1 -r -p "Press enter to deploy FortiAnalyzer..." keypress
+    if [[ "$keypress" == "" ]]
+    then
+        keypress_loop=false
+    fi
+done
 
 if [ "${KI_SPECIFIED}" == true ]
 then
@@ -455,8 +563,14 @@ if [ -f $tfile ]
 then
     rm -f $tfile
 fi
-echo "Associate EIP $eip instance id $oda interface $eni"
-aws ec2 associate-address --network-interface-id "$eni" --allocation-id "$eip"
+
+echo
+echo "FortiAnalyzer Elastic IP allocation = $eip"
+echo "FortiAnalyzer Network Interface Id = $eni"
+echo
+
+echo "FortiAnalyzer - Associate EIP $eip instance id $oda interface $eni"
+aws ec2 associate-address --network-interface-id "$eni" --allocation-id "$eip" --private-ip-address 10.0.0.252
 #
 # End of the script
 #

@@ -23,6 +23,7 @@ Metadata:
       - CIDRForFortiGateAccess
       - S3ConfigBucket
       - S3ConfigObject
+      - S3ConfigObjectB
     - Label:
         default: ELB Configuration
       Parameters:
@@ -83,6 +84,10 @@ Parameters:
     Type: String
     Default: accelerate-config
     Description: S3 Bucket for Fortigate Config Object
+  S3ConfigObjectB:
+    Type: String
+    Default: current-b.conf
+    Description: Fortigate Configuration Object File
   S3ConfigObject:
     Type: String
     Default: current.conf
@@ -282,6 +287,13 @@ Resources:
       SourceDestCheck: 'true'
       SubnetId:
         Ref: SubnetID1
+      PrivateIpAddresses:
+        - PrivateIpAddress: 10.0.0.254
+          Primary: 'true'
+        - PrivateIpAddress: 10.0.0.253
+          Primary: 'false'
+        - PrivateIpAddress: 10.0.0.252
+          Primary: 'false'
       Tags:
       - Key: Name
         Value:
@@ -357,7 +369,7 @@ Resources:
             - " : "
             - "\""
             - "/"
-            - Ref: S3ConfigObject
+            - Ref: S3ConfigObjectB
             - "\""
             - ",\n"
             - "}"
