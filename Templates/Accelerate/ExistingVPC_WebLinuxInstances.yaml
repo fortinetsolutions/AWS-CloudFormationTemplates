@@ -390,9 +390,17 @@ Resources:
             - DNSName
     DependsOn: WebElasticLoadBalancer
 Outputs:
-  WebLinux1Instance:
+  WebLinux1InstanceIP:
     Value: !GetAtt WebLinux1Instance.PublicIp
     Description: Connect to Linux 1 instance using ssh to this IP
-  WebLinux2Instance:
+  WebLinux1InstanceID:
+    Value:
+      Ref: WebLinux1Instance
+    Description: Instance ID of WebLinux1Instance
+  WebLinux2InstanceIP:
     Value: !GetAtt WebLinux2Instance.PublicIp
     Description: Connect to Linux 2 instance using ssh to this IP
+  WebLinux2InstanceID:
+    Value:
+      Ref: WebLinux2Instance
+    Description: Instance ID of WebLinux2Instance

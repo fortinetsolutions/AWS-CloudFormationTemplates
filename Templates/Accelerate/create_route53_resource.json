@@ -1,0 +1,18 @@
+{
+  "Comment": "{COMMENT}",
+  "Changes": [
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "{DNSPREFIX}.{DOMAIN}.",
+        "Type": "A",
+        "TTL": 300,
+        "ResourceRecords": [
+          {
+            "Value": "{IPADDRESS}"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -882,7 +882,11 @@ Resources:
         Ref: ASInstanceENI0
     DependsOn: ASEIP
 Outputs:
-  ASInstance:
+  ASInstanceID:
+    Value:
+      Ref: ASInstance
+    Description: Worker Node Instance ID
+  ASInstanceIP:
     Value:
       Ref: ASEIP
     Description: Connect to Amazon Linux Worker Node instance using ssh to this IP

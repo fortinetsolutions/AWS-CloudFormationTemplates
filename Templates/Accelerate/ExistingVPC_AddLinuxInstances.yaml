@@ -290,3 +290,11 @@ Outputs:
   TGLinux2InstancePrivateIP:
     Value: !GetAtt TGLinux2Instance.PrivateIp
     Description: Connect to Linux 2 instance using ssh to this Private IP
+  TGLinux1InstanceID:
+    Value:
+      Ref: TGLinux1Instance
+    Description: Instance ID of TGLinux1Instance
+  TGLinux2InstanceID:
+    Value:
+      Ref: TGLinux2Instance
+    Description: Instance ID of TGLinux2Instance
