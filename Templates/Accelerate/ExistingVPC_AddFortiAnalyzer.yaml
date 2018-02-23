@@ -56,35 +56,35 @@ Parameters:
 Mappings:
   RegionMap:
     ap-northeast-1:
-        fazami: ami-34fc9552
+        fazami: ami-60fc9506
     ap-northeast-2:
-        fazami: ami-5f268531
+        fazami: ami-5026853e
     ap-south-1:
-        fazami: ami-7a6b3b15
+        fazami: ami-7e6b3b11
     ap-southeast-1:
-        fazami: ami-bd87c2c1
+        fazami: ami-ea81c496
     ap-southeast-2:
-        fazami: ami-6870890a
+        fazami: ami-5b718839
     ca-central-1:
-        fazami: ami-30d15554
+        fazami: ami-31d05455
     eu-central-1:
-        fazami: ami-4469f22b
+        fazami: ami-306ff45f
     eu-west-1:
-        fazami: ami-8dd4b7f4
+        fazami: ami-04d0b37d
     eu-west-2:
-        fazami: ami-a7dac0c3
+        fazami: ami-e0d8c284
     eu-west-3:
-        fazami: ami-69b50314
+        fazami: ami-29b50354
     sa-east-1:
-        fazami: ami-c61b54aa
+        fazami: ami-f21c539e
     us-east-1:
-        fazami: ami-d44a70ae
+        fazami: ami-844278fe
     us-east-2:
-        fazami: ami-f7122792
+        fazami: ami-1e12277b
     us-west-1:
-        fazami: ami-d5e1edb5
+        fazami: ami-dbe0ecbb
     us-west-2:
-        fazami: ami-829c24fa
+        fazami: ami-439e263b
 Resources:
   FortiAnalyzerSecurityGroup:
     Type: AWS::EC2::SecurityGroup

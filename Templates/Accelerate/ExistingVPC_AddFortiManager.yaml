@@ -56,35 +56,35 @@ Parameters:
 Mappings:
   RegionMap:
     ap-northeast-1:
-      fmgrami: ami-860926e1
+        fmgrami: ami-fa016b9c
     ap-northeast-2:
-      fmgrami: ami-c818caa6
+        fmgrami: ami-ec17b482
     ap-south-1:
-      fmgrami: ami-16c7b479
+        fmgrami: ami-60ffaf0f
     ap-southeast-1:
-      fmgrami: ami-4f52eb2c
+        fmgrami: ami-41ebaf3d
     ap-southeast-2:
-      fmgrami: ami-44262f27
+        fmgrami: ami-93c931f1
     ca-central-1:
-      fmgrami: ami-1ed16d7a
+        fmgrami: ami-91ef6bf5
     eu-central-1:
-      fmgrami: ami-8869bbe7
+        fmgrami: ami-7764fe18
     eu-west-1:
-      fmgrami: ami-dccbcfba
+        fmgrami: ami-1f721e66
     eu-west-2:
-      fmgrami: ami-04c4d060
+        fmgrami: ami-cae3f9ae
     eu-west-3:
-      fmgrami: ami-aca91fd1
+        fmgrami: ami-17be086a
     sa-east-1:
-      fmgrami: ami-b0d3b1dc
+        fmgrami: ami-ca7837a6
     us-east-1:
-      fmgrami: ami-6245d474
+        fmgrami: ami-427e7f38
     us-east-2:
-      fmgrami: ami-349db951
+        fmgrami: ami-44e8dd21
     us-west-1:
-      fmgrami: ami-6480a504
+        fmgrami: ami-9e616efe
     us-west-2:
-      fmgrami: ami-752ab815
+        fmgrami: ami-7ad86202
 Resources:
   FortiManagerSecurityGroup:
     Type: AWS::EC2::SecurityGroup

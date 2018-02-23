@@ -568,6 +568,8 @@ then
     fi
 fi
 
+#curl -H "Content-Type: application/json" -X POST -d '{"fortimanager":"10.0.","password":"xyz"}' http://localhost:3000/api/login
+
 if [ "$KI_SPECIFIED" == true ]
 then
     keypress_loop=true
