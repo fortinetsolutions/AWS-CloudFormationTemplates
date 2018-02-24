@@ -149,3 +149,8 @@ Resources:
             - FazInstanceENI0
       - Key: Interface
         Value: eth0
+Outputs:
+  FortiAnalyzer:
+    Value:
+      Ref: FortiAnalyzer
+    Description: Instance ID of FortiManager

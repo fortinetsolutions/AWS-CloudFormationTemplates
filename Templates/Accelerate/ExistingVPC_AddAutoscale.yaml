@@ -544,7 +544,7 @@ Resources:
           - - "{\n"
             - '"product"'
             - " : "
-            - ''
+            - '"2wqkpek696qhdeo7lbbjncqli"'
             - ",\n"
             - "}"
       SecurityGroups:

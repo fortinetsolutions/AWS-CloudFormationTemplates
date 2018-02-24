@@ -149,4 +149,9 @@ Resources:
             - FMGRInstanceENI0
       - Key: Interface
         Value: eth0
+Outputs:
+  FortiManager:
+    Value:
+      Ref: FortiManager
+    Description: Instance ID of FortiManager
 

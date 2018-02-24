@@ -238,8 +238,9 @@ Resources:
             - "\""
             - ",\n"
             - '"region"'
-            - " : "
-            - '"us-west-1"'
+            - ' : "'
+            - Ref: AWS::Region
+            - '"'
             - ",\n"
             - '"license"'
             - " : "
@@ -358,8 +359,9 @@ Resources:
             - "\""
             - ",\n"
             - '"region"'
-            - " : "
-            - '"us-west-1"'
+            - ' : "'
+            - Ref: AWS::Region
+            - '"'
             - ",\n"
             - '"license"'
             - " : "
@@ -543,11 +545,17 @@ Outputs:
     Value:
       Ref: PublicTargetGroup
     Description: Public Target Group
-  OnDemandA:
+  OnDemandAIP:
+    Value: !GetAtt OnDemandA.PublicIp
+    Description: Public IP of OnDemandA
+  OnDemandBIP:
+    Value: !GetAtt OnDemandB.PublicIp
+    Description: Public IP of OnDemandB
+  OnDemandAID:
     Value:
       Ref: OnDemandA
     Description: Instance ID of OnDemandA
-  OnDemandB:
+  OnDemandBID:
     Value:
       Ref: OnDemandB
     Description: Instance ID of OnDemandB

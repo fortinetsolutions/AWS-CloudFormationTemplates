@@ -234,7 +234,7 @@ Resources:
           Fn::Join:
           - ''
           - - Ref: AWS::StackName
-            - "-WebLinux1-Instance"
+            - "-WebLinux1-EC2"
   WebLinux2Instance:
     Type: AWS::EC2::Instance
     Properties:
@@ -301,7 +301,7 @@ Resources:
           Fn::Join:
           - ''
           - - Ref: AWS::StackName
-            - "-WebLinux2-Instance"
+            - "-WebLinux2-EC2"
   WebElasticLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
@@ -329,7 +329,7 @@ Resources:
         Fn::Join:
         - ''
         - - Ref: AWS::StackName
-          - "-WebTargetGroup"
+          - "-WebTG"
       Port: 80
       Protocol: TCP
       HealthCheckProtocol: HTTP
@@ -348,7 +348,7 @@ Resources:
           Fn::Join:
           - ''
           - - Ref: AWS::StackName
-            - "-WebTargetGroup"
+            - "-WebTG"
       VpcId:
         Ref: VPCID
   WebListener:

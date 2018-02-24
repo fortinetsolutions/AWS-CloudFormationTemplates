@@ -214,7 +214,7 @@ Resources:
           Fn::Join:
           - ''
           - - Ref: AWS::StackName
-            - "-TGLinux1-Instance"
+            - "-TGLinux1-EC2"
   TGLinux2Instance:
     Type: AWS::EC2::Instance
     Properties:
@@ -276,7 +276,7 @@ Resources:
           Fn::Join:
           - ''
           - - Ref: AWS::StackName
-            - "-TGLinux2-Instance"
+            - "-TGLinux2-EC2"
 Outputs:
   TGLinux1InstancePublicIP:
     Value: !GetAtt TGLinux1Instance.PublicIp
