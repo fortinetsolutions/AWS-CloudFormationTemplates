@@ -48,11 +48,11 @@ wait_for_stack_deletion ()
     fi
     region=$3
 
-    delete_complete = 0
-    while [ $delete_complete -eq 0 ]
+    delete_complete=false
+    while [ "$delete_complete" == false ]
     do
         tfile=$(mktemp /tmp/foostack.XXXXXXXXX)
-        aws cloudformation list-stacks  --region $region" \
+        aws cloudformation list-stacks  --region "$region" \
            --query "StackSummaries[?contains(StackId, '$stack_id')].{Name:StackName,Id:StackId,Status:StackStatus}" >$tfile
         tname=`cat $tfile |grep "$stack_name"|cut -f2 -d$'\t'`
         tarn=`cat $tfile |grep "$stack_name"|cut -f1 -d$'\t'`
@@ -63,7 +63,7 @@ wait_for_stack_deletion ()
         fi
         if [ "$tname" == "$stack_name" ] && [ "$tarn" == "$stack_id" ] && [ "$tstatus" == "DELETE_COMPLETE" ]
         then
-            delete_complete = true
+            delete_complete=true
         else
             sleep 15
         fi
