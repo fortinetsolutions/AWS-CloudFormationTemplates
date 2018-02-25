@@ -722,10 +722,10 @@ then
     #
     tfile=$(mktemp /tmp/foostack53.XXXXXXXXX)
     cp create_route53_resource.json $tfile
-    sed -i -- "s/{COMMENT}/FortiAnalyzer DNS Name/g" $tfile
-    sed -i -- "s/{DOMAIN}/$domain/g" $tfile
-    sed -i -- "s/{DNSPREFIX}/$fazprefix/g" $tfile
-    sed -i -- "s/{IPADDRESS}/$publicip/g" $tfile
+    sed -i "" "s/{COMMENT}/FortiAnalyzer DNS Name/g" $tfile
+    sed -i "" "s/{DOMAIN}/$domain/g" $tfile
+    sed -i "" "s/{DNSPREFIX}/$fazprefix/g" $tfile
+    sed -i "" "s/{IPADDRESS}/$publicip/g" $tfile
 
     echo
     echo "Change record set batch file"
