@@ -457,7 +457,7 @@ Resources:
         - ''
         - - Ref: AWS::StackName
           - "-PublicELB"
-      Scheme: internal
+      Scheme: internet-facing
       Subnets:
       - Ref: SubnetID1
       - Ref: SubnetID3

@@ -1,27 +1,19 @@
 #!/usr/bin/env bash
-stack_prefix=mdw
-stack1=$stack_prefix-base
-stack2=$stack_prefix-addprivatelinux
-stack3=$stack_prefix-addpubliclinux
-stack4=$stack_prefix-fgt
-stack5=$stack_prefix-autoscale
-stack6=$stack_prefix-fortimanager
-stack7=$stack_prefix-fortianalyzer
-region=us-east-1
+
+source $(dirname $0)/stack_parameters.sh
+
+#
+# Extra variables
+#
+
 linux_instance_type=c4.large
 fgt_instance_type=c4.large
 key=mdw_virginia
 health_check_port=22
-domain=fortidevelopment.com
-fgtdns=fortias_mdw
-fmgrprefix=fortimanagermdw
-fazprefix=fortianalyzermdw
-webdns=httpservermdw
+
 access="0.0.0.0/0"
 privateaccess="10.0.0.0/16"
-config_bucket=$stack_prefix-config
-config_object=current.conf
-config_object_b=current-b.conf
+
 asq=$stack_prefix-q
 pause=15
 
@@ -72,6 +64,7 @@ else
 fi
 while [ $keypress_loop == true ]
 do
+    echo
     read -t 1 -n 10000 discard
     read -n1 -r -p "Press enter to deploy base vpc..." keypress
     if [[ "$keypress" == "" ]]
@@ -80,7 +73,9 @@ do
     fi
 done
 
+echo
 echo "Updating Fortigate configuration file used by bootstrapper"
+echo
 
 bucket=`aws s3api list-buckets  --output text --region "$region" \
     --query "Buckets[?contains(Name, '$config_bucket')].Name"`
@@ -89,9 +84,20 @@ then
     echo "Making bucket $config_bucket"
     aws s3 mb s3://"$config_bucket" --output text --region "$region"
 fi
+
+echo "Making http server substitions in fortigate config files for http server name: $webdns"
+
+cp base_current.conf "$config_object"
+sed -i '' "s/{WEB_DNS_NAME}/$webdns/g" $config_object
+
+cp base_current_b.conf "$config_object_b"
+sed -i '' "s/{WEB_DNS_NAME}/$webdns/g" $config_object_b
+
 echo "Copying config file to s3://$config_bucket/$config_object"
+echo
 aws s3 cp --output text --region "$region" "$config_object" s3://"$config_bucket"/"$config_object"
 aws s3 cp --output text --region "$region" "$config_object_b" s3://"$config_bucket"/"$config_object_b"
+echo
 
 if [ "${KI_SPECIFIED}" == true ]
 then
@@ -234,12 +240,6 @@ echo "WebLinux1 instance id = $wl1 public ip = $wl1_ip"
 echo "WebLinux2 instance id = $wl2 public ip = $wl2_ip"
 echo
 
-if [ "${KI_SPECIFIED}" == true ]
-then
-    echo "Deploying "$stack3" Template and the script will pause when the create-stack is complete"
-else
-    echo "Deploying "$stack3" Template"
-fi
 
 if [ "$KI_SPECIFIED" == true ]
 then
@@ -591,10 +591,10 @@ then
     #
     tfile=$(mktemp /tmp/foostack53.XXXXXXXXX)
     cp create_route53_resource.json $tfile
-    sed -i -- "s/{COMMENT}/FortiManager DNS Name/g" $tfile
-    sed -i -- "s/{DOMAIN}/$domain/g" $tfile
-    sed -i -- "s/{DNSPREFIX}/$fmgrprefix/g" $tfile
-    sed -i -- "s/{IPADDRESS}/$publicip/g" $tfile
+    sed -i '' "s/{COMMENT}/FortiManager DNS Name/g" $tfile
+    sed -i '' "s/{DOMAIN}/$domain/g" $tfile
+    sed -i '' "s/{DNSPREFIX}/$fmgrprefix/g" $tfile
+    sed -i '' "s/{IPADDRESS}/$publicip/g" $tfile
 
     echo
     echo "Change record set batch file"
@@ -743,7 +743,7 @@ curl -vik --request POST --url https://lambda.fortiengineering.com/faz \
 --data '{
 "fgtName": "fgt-OnDemandA",
 "fgtIp": "'$fgtpip'",
-"fmgIp": "fortimanager.'$domain'",
+"fmgIp": "$fmgrprefix.'$domain'",
 "fmgAdmin": "admin",
 "fmgPass": "'$fmgrid'",
 "fazIp": "'$fazprefix'.'$domain'",

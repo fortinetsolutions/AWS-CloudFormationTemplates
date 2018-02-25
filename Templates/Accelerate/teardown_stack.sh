@@ -1,12 +1,6 @@
-#!/usr/bin/env bash -vx
-stack1=acceleratebase
-stack2=addprivatelinux
-stack3=addpubliclinux
-stack4=acceleratefgt
-stack5=accelerateautoscale
-stack6=acceleratefortimanager
-stack7=acceleratefortianalyzer
-region=us-west-1
+#!/usr/bin/env bash
+
+source $(dirname $0)/stack_parameters.sh
 
 delete_stack ()
 {
@@ -29,7 +23,7 @@ delete_stack ()
     tregion=$3
     if [ "$stack_name" != "" ] && [ "$tregion" != "" ]
     then
-        aws cloudformation delete-stack --stack-name "$stack_name" --region "$tregion" > /dev/null
+        aws cloudformation delete-stack --stack-name "$stack_name" --region "$region" > /dev/null
     fi
 }
 
@@ -53,11 +47,12 @@ wait_for_stack_deletion ()
         return -1
     fi
     region=$3
-    wait_for_delete_complete=false
-    while [ ${wait_for_delete_complete} == false ]
+
+    delete_complete = 0
+    while [ $delete_complete -eq 0 ]
     do
         tfile=$(mktemp /tmp/foostack.XXXXXXXXX)
-        aws cloudformation list-stacks  --region "$region" \
+        aws cloudformation list-stacks  --region $region" \
            --query "StackSummaries[?contains(StackId, '$stack_id')].{Name:StackName,Id:StackId,Status:StackStatus}" >$tfile
         tname=`cat $tfile |grep "$stack_name"|cut -f2 -d$'\t'`
         tarn=`cat $tfile |grep "$stack_name"|cut -f1 -d$'\t'`
@@ -68,7 +63,7 @@ wait_for_stack_deletion ()
         fi
         if [ "$tname" == "$stack_name" ] && [ "$tarn" == "$stack_id" ] && [ "$tstatus" == "DELETE_COMPLETE" ]
         then
-            wait_for_delete_complete = true
+            delete_complete = true
         else
             sleep 15
         fi
@@ -95,7 +90,7 @@ wait_for_stack_deletion ()
 #done
 
 tfile=$(mktemp /tmp/foostack.XXXXXXXXX)
-aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --region us-west-1 \
+aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --region "$region" \
     --query "StackSummaries[*].{name:StackName,id:StackId}" >$tfile
 stack7_name=`cat $tfile |grep "$stack7"|cut -f2 -d$'\t'`
 stack7_id=`cat $tfile |grep "$stack7"|cut -f1 -d$'\t'`
@@ -116,30 +111,64 @@ then
     rm -f $tfile
 fi
 
+echo "Deleting $stack7_name id $stack7_id region $region"
+
 delete_stack $stack7_id $stack7_name $region $stack7
+
+echo "Deleting $stack6_name id $stack6_id region $region"
 
 delete_stack $stack6_id $stack6_name $region $stack6
 
-aws s3 rb s3://$stack5-fortigate-configs
+echo "Deleting bucket s3://$stack5-fortigate-configs"
+
+aws s3 rb s3://$stack5-fortigate-configs --force
+
+echo "Deleting $stack5_name id $stack5_id region $region"
 
 delete_stack $stack5_id $stack5_name $region $stack5
 
+echo "Waiting for $stack7 deletion"
+
 wait_for_stack_deletion $stack7_id $stack7_name $region
+
+echo "Waiting for $stack5 deletion"
 
 wait_for_stack_deletion $stack6_id $stack6_name $region
 
+echo "Waiting for $stack5 deletion"
+
 wait_for_stack_deletion $stack5_id $stack5_name $region
 
+echo "Deleting $stack4_name id $stack4_id region $region"
+
 delete_stack $stack4_id $stack4_name $region $stack4
+
+echo "Deleting $stack3_name id $stack3_id region $region"
+
 delete_stack $stack3_id $stack3_name $region $stack3
+
+echo "Deleting $stack2_name id $stack2_id region $region"
+
 delete_stack $stack2_id $stack2_name $region $stack2
+
+echo "Waiting for $stack4 deletion"
 
 wait_for_stack_deletion $stack4_id $stack4_name $region
 
+echo "Waiting for $stack3 deletion"
+
 wait_for_stack_deletion $stack3_id $stack3_name $region
+
+echo "Waiting for $stack2 deletion"
 
 wait_for_stack_deletion $stack2_id $stack2_name $region
 
+echo "Deleting $stack1_name id $stack1_id region $region"
+
 delete_stack $stack1_id $stack1_name $region $stack1
 
+echo "Waiting for $stack1 deletion"
+
 wait_for_stack_deletion $stack1_id $stack1_name $region
+
+echo "Done"

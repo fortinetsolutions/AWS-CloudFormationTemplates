@@ -365,6 +365,7 @@ Resources:
   RecordWebELB:
     Type: AWS::Route53::RecordSetGroup
     Properties:
+      Comment: Hosted Zone Name for Public ELB
       HostedZoneName:
         Fn::Join:
         - ''
@@ -378,16 +379,10 @@ Resources:
             - "."
             - Ref: DomainName
             - "."
-        Type: A
-        AliasTarget:
-          HostedZoneId:
-            Fn::GetAtt:
-            - WebElasticLoadBalancer
-            - CanonicalHostedZoneID
-          DNSName:
-            Fn::GetAtt:
-            - WebElasticLoadBalancer
-            - DNSName
+        Type: CNAME
+        TTL: 300
+        ResourceRecords:
+        - !GetAtt WebElasticLoadBalancer.DNSName
     DependsOn: WebElasticLoadBalancer
 Outputs:
   WebLinux1InstanceIP:
