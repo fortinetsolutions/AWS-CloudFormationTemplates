@@ -543,11 +543,6 @@ then
     rm -f $tfile
 fi
 
-
-echo
-echo "FortiManager instance id = $fmgrid"
-echo
-
 tfile=$(mktemp /tmp/foostackeipalloc.XXXXXXXXX)
 aws ec2 allocate-address --output text --region "$region" --domain vpc > $tfile
 eip=`cat $tfile|grep ^eipalloc|cut -f1 -d$'\t'`
@@ -583,7 +578,7 @@ publicip=`aws ec2 describe-addresses --output text --region "$region" --allocati
 #
 
 hosted_zone_id=`aws route53 list-hosted-zones --output text --region "$region" --query "HostedZones[?contains(Name, '$domain.')].{Id:Id}"`
-echo "$publicip allocated for FortiManager for domain $domain hosted zone id $hosted_zone_id"
+echo "FortiManager public ip $publicip allocated for domain $fmgrprefix.$domain"
 if [ -e create_route53_resource.json ]
 then
     #
@@ -620,6 +615,9 @@ curl -vik --request POST --url https://lambda.fortiengineering.com/fmg \
 "fmgPass": "'$fmgrid'",
 "fmgAdom": "root"
 }'
+
+echo
+echo
 
 if [ "$KI_SPECIFIED" == true ]
 then
@@ -716,7 +714,7 @@ publicip=`aws ec2 describe-addresses --output text --region "$region" --allocati
 #
 
 hosted_zone_id=`aws route53 list-hosted-zones --output text --region "$region" --query "HostedZones[?contains(Name, '$domain.')].{Id:Id}"`
-echo "$publicip allocated for FortiAnalyzer for domain $domain hosted zone id $hosted_zone_id"
+echo "FortiAnalyzer public ip $publicip allocated for domain $fazprefix.$domain"
 if [ -e create_route53_resource.json ]
 then
     #
