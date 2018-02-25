@@ -14,9 +14,9 @@ key=mdw_virginia
 health_check_port=22
 domain=fortidevelopment.com
 fgtdns=fortias_mdw
-fmgrprefix=fortimanager_mdw
-fazprefix=fortianalyzer_mdw
-webdns=httpserver_mdw
+fmgrprefix=fortimanagermdw
+fazprefix=fortianalyzermdw
+webdns=httpservermdw
 access="0.0.0.0/0"
 privateaccess="10.0.0.0/16"
 config_bucket=$stack_prefix-config
@@ -593,7 +593,7 @@ then
     cp create_route53_resource.json $tfile
     sed -i -- "s/{COMMENT}/FortiManager DNS Name/g" $tfile
     sed -i -- "s/{DOMAIN}/$domain/g" $tfile
-    sed -i -- "s/{DNSPREFIX}/fortimanager/g" $tfile
+    sed -i -- "s/{DNSPREFIX}/$fmgrprefix/g" $tfile
     sed -i -- "s/{IPADDRESS}/$publicip/g" $tfile
 
     echo
@@ -605,7 +605,6 @@ then
     fi
 fi
 
-set +x
 fgtpip=`aws ec2 describe-instances --instance-id $oda \
     --region $region --output text --query "Reservations[*].Instances[*].{PublicIp:PublicIpAddress}"`
 curl -vik --request POST --url https://lambda.fortiengineering.com/fmg \
@@ -613,15 +612,15 @@ curl -vik --request POST --url https://lambda.fortiengineering.com/fmg \
 --header 'Cache-Control: no-cache' \
 --data '{
 "fgtName": "fgt-OnDemandA",
-"fgtIp": "$fgtpip",
+"fgtIp": "'$fgtpip'",
 "fgtAdmin": "admin",
-"fgtPass": "$oda",
-"fmgIp": "fortimanager.$domain",
+"fgtPass": "'$oda'",
+"fmgIp": "'$fmgrprefix'.'$domain'",
 "fmgAdmin": "admin",
-"fmgPass": "$fmgrid",
+"fmgPass": "'$fmgrid'",
 "fmgAdom": "root"
 }'
-set -x
+
 if [ "$KI_SPECIFIED" == true ]
 then
     keypress_loop=true
@@ -727,7 +726,7 @@ then
     cp create_route53_resource.json $tfile
     sed -i -- "s/{COMMENT}/FortiAnalyzer DNS Name/g" $tfile
     sed -i -- "s/{DOMAIN}/$domain/g" $tfile
-    sed -i -- "s/{DNSPREFIX}/fortianalyzer/g" $tfile
+    sed -i -- "s/{DNSPREFIX}/$fazprefix/g" $tfile
     sed -i -- "s/{IPADDRESS}/$publicip/g" $tfile
 
     echo
@@ -743,13 +742,13 @@ curl -vik --request POST --url https://lambda.fortiengineering.com/faz \
 --header 'Cache-Control: no-cache' \
 --data '{
 "fgtName": "fgt-OnDemandA",
-"fgtIp": "$fgtpip",
-"fmgIp": "fortimanager.$domain",
+"fgtIp": "'$fgtpip'",
+"fmgIp": "fortimanager.'$domain'",
 "fmgAdmin": "admin",
-"fmgPass": "$fmgrid",
-"fazIp": "fortianalyzer.fortidevelopment.com",
+"fmgPass": "'$fmgrid'",
+"fazIp": "'$fazprefix'.'$domain'",
 "fazAdmin": "admin",
-"fazPass": "$fazid",
+"fazPass": "'$fazid'",
 "fazAdom": "root"
 }'
 #
