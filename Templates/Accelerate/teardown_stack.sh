@@ -89,9 +89,155 @@ wait_for_stack_deletion ()
 #     esac
 #done
 
+tfile=$(mktemp /tmp/foostack53.XXXXXXXXX)
+aws ec2 describe-addresses --output text --region "$region" --query 'Addresses[?AssociationId==null]' > $tfile
+for eipalloc in `cat "$tfile"|grep ^eipalloc |cut -f1 -d$'\t'`
+do
+    aws ec2 release-address --output text --region "$region" --allocation-id "$eipalloc"
+done
+if [ -f $tfile ]
+then
+    rm -f $tfile
+fi
+
+#
+# Find the hosted zone id for the FortiManager domain we are using
+#
+
+publicip=`aws ec2 describe-addresses --output text --region "$region" --query "Addresses[?contains(PrivateIpAddress,'10.0.0.253')].{Public:PublicIp}"`
+
+hosted_zone_id=`aws route53 list-hosted-zones --output text --region "$region" \
+    --query "HostedZones[?contains(Name, '$domain.')].{Id:Id}"`
+
+dns_name=`aws route53 list-resource-record-sets --output text --region "$region" \
+    --hosted-zone-id "$hosted_zone_id" \
+    --query "ResourceRecordSets[?contains(Name,'$fmgrprefix.$domain')].{Name:Name}"`
+
+if [ "$dns_name" == ""$fmgrprefix"."$domain"." ]
+then
+    echo
+    echo "Deleting FortiManager route53 record set for $publicip allocated for domain $fmgrprefix.$domain"
+    echo
+    tfile=$(mktemp /tmp/foostack53.XXXXXXXXX)
+    aws route53 list-resource-record-sets --output text --region "$region" \
+        --hosted-zone-id "$hosted_zone_id" \
+        --query "ResourceRecordSets[?contains(Name,'$fmgrprefix.$domain')].{ResourceRecords:ResourceRecords}" >$tfile
+    publicip=`cat $tfile|grep ^RESOURCERECORDS|cut -f2 -d$'\t'`
+    if [ -f $tfile ]
+    then
+        rm -f $tfile
+    fi
+    if [ -e create_route53_resource.json ]
+    then
+        #
+        # Create a route53 resource batch file to create an ALIAS record set for the FortiManager Public IP
+        #
+        tfile=$(mktemp /tmp/foostack53.XXXXXXXXX)
+        cp create_route53_resource.json $tfile
+        sed -i "" "s/{ACTION}/DELETE/g" $tfile
+        sed -i "" "s/{COMMENT}/FortiManager DNS Name/g" $tfile
+        sed -i "" "s/{DOMAIN}/$domain/g" $tfile
+        sed -i "" "s/{DNSPREFIX}/$fmgrprefix/g" $tfile
+        sed -i "" "s/{IPADDRESS}/$publicip/g" $tfile
+
+        echo $hosted_zone_id
+        cat $tfile
+        aws route53 change-resource-record-sets --output text --region "$region" --hosted-zone-id $hosted_zone_id --change-batch file://$tfile
+        if [ -f $tfile ]
+        then
+            rm -f $tfile
+        fi
+    fi
+fi
+
+assoc_id=`aws ec2 describe-addresses --output text --region "$region" --query "Addresses[?contains(PrivateIpAddress, '10.0.0.253')].{id:AssociationId}"`
+alloc_id=`aws ec2 describe-addresses --output text --region "$region" --query "Addresses[?contains(PrivateIpAddress, '10.0.0.253')].{id:AllocationId}"`
+if [ -n "$assoc_id" ]
+then
+    aws ec2 disassociate-address --region "$region" --association-id "$assoc_id"
+    aws ec2 release-address --region "$region" --allocation-id "$alloc_id"
+fi
+
+#
+# FortiAnalyzer Starts Here
+#
+tfile=$(mktemp /tmp/foostack53.XXXXXXXXX)
+aws ec2 describe-addresses --output text --region "$region" --query 'Addresses[?AssociationId==null]' > $tfile
+for eipalloc in `cat "$tfile"|grep ^eipalloc |cut -f1 -d$'\t'`
+do
+    aws ec2 release-address --output text --region "$region" --allocation-id "$eipalloc"
+done
+if [ -f $tfile ]
+then
+    rm -f $tfile
+fi
+
+#
+# Find the hosted zone id for the domain we are using
+#
+
+publicip=`aws ec2 describe-addresses --output text --region "$region" --query "Addresses[?contains(PrivateIpAddress,'10.0.0.252')].{Public:PublicIp}"`
+
+hosted_zone_id=`aws route53 list-hosted-zones --output text --region "$region" \
+    --query "HostedZones[?contains(Name, '$domain.')].{Id:Id}"`
+
+dns_name=`aws route53 list-resource-record-sets --output text --region "$region" \
+    --hosted-zone-id "$hosted_zone_id" \
+    --query "ResourceRecordSets[?contains(Name,'$fazprefix.$domain')].{Name:Name}"`
+
+if [ "$dns_name" == ""$fazprefix"."$domain"." ]
+then
+    echo
+    echo "Deleting FortiAnalyzer route53 record set for $publicip allocated for domain $fazprefix.$domain"
+    echo
+    if [ -e create_route53_resource.json ]
+    then
+        #
+        # Create a route53 resource batch file to create an ALIAS record set for the FortiManager Public IP
+        #
+
+        tfile=$(mktemp /tmp/foostack53.XXXXXXXXX)
+        aws route53 list-resource-record-sets --output text --region "$region" \
+            --hosted-zone-id "$hosted_zone_id" \
+            --query "ResourceRecordSets[?contains(Name,'$fazprefix.$domain')].{ResourceRecords:ResourceRecords}" >$tfile
+        publicip=`cat $tfile|grep ^RESOURCERECORDS|cut -f2 -d$'\t'`
+        if [ -f $tfile ]
+        then
+            rm -f $tfile
+        fi
+        tfile=$(mktemp /tmp/foostack53.XXXXXXXXX)
+        cp create_route53_resource.json $tfile
+        sed -i "" "s/{ACTION}/DELETE/g" $tfile
+        sed -i "" "s/{COMMENT}/FortiAnalyzer DNS Name/g" $tfile
+        sed -i "" "s/{DOMAIN}/$domain/g" $tfile
+        sed -i "" "s/{DNSPREFIX}/$fazprefix/g" $tfile
+        sed -i "" "s/{IPADDRESS}/$publicip/g" $tfile
+
+        echo $hosted_zone_id
+
+        aws route53 change-resource-record-sets --output text --region "$region" --hosted-zone-id $hosted_zone_id --change-batch file://$tfile
+        if [ -f $tfile ]
+        then
+            rm -f $tfile
+        fi
+    fi
+fi
+
+assoc_id=`aws ec2 describe-addresses --output text --region "$region" --query "Addresses[?contains(PrivateIpAddress, '10.0.0.252')].{id:AssociationId}"`
+alloc_id=`aws ec2 describe-addresses --output text --region "$region" --query "Addresses[?contains(PrivateIpAddress, '10.0.0.252')].{id:AllocationId}"`
+if [ -n "$assoc_id" ]
+then
+    aws ec2 disassociate-address --region "$region" --association-id "$assoc_id"
+    aws ec2 release-address --region "$region" --allocation-id "$alloc_id"
+fi
+
+
 tfile=$(mktemp /tmp/foostack.XXXXXXXXX)
 aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --region "$region" \
     --query "StackSummaries[*].{name:StackName,id:StackId}" >$tfile
+#
+# break here
+#
 stack7_name=`cat $tfile |grep "$stack7"|cut -f2 -d$'\t'`
 stack7_id=`cat $tfile |grep "$stack7"|cut -f1 -d$'\t'`
 stack6_name=`cat $tfile |grep "$stack6"|cut -f2 -d$'\t'`
@@ -111,64 +257,94 @@ then
     rm -f $tfile
 fi
 
-echo "Deleting $stack7_name id $stack7_id region $region"
+if [ -n "$stack7_name" ]
+then
+    echo "Deleting $stack7_name id $stack7_id region $region"
+    delete_stack $stack7_id $stack7_name $region $stack7
+fi
 
-delete_stack $stack7_id $stack7_name $region $stack7
+if [ -n "$stack6_name" ]
+then
+    echo "Deleting $stack6_name id $stack6_id region $region"
+    delete_stack $stack6_id $stack6_name $region $stack6
+fi
 
-echo "Deleting $stack6_name id $stack6_id region $region"
+aws s3api head-bucket  --bucket $stack5-fortigate-config  2>/dev/null
+if [ $? -eq 0 ]
+then
+    echo "Deleting bucket s3://$stack5-fortigate-configs"
+    aws s3 rb s3://$stack5-fortigate-configs --force
+fi
 
-delete_stack $stack6_id $stack6_name $region $stack6
+if [ -n "$stack5_name" ]
+then
+    echo "Deleting $stack5_name id $stack5_id region $region"
+    delete_stack $stack5_id $stack5_name $region $stack5
+fi
 
-echo "Deleting bucket s3://$stack5-fortigate-configs"
+if [ -n "$stack7_name" ]
+then
+    echo "Waiting for $stack7 deletion"
+    wait_for_stack_deletion $stack7_id $stack7_name $region
+fi
 
-aws s3 rb s3://$stack5-fortigate-configs --force
+if [ -n "$stack6_name" ]
+then
+    echo "Waiting for $stack5 deletion"
+    wait_for_stack_deletion $stack6_id $stack6_name $region
+fi
 
-echo "Deleting $stack5_name id $stack5_id region $region"
+if [ -n "$stack5_name" ]
+then
+    echo "Waiting for $stack5 deletion"
+    wait_for_stack_deletion $stack5_id $stack5_name $region
+fi
 
-delete_stack $stack5_id $stack5_name $region $stack5
+if [ -n "$stack4_name" ]
+then
+    echo "Deleting $stack4_name id $stack4_id region $region"
+    delete_stack $stack4_id $stack4_name $region $stack4
+fi
 
-echo "Waiting for $stack7 deletion"
+if [ -n "$stack3_name" ]
+then
+    echo "Deleting $stack3_name id $stack3_id region $region"
+    delete_stack $stack3_id $stack3_name $region $stack3
+fi
 
-wait_for_stack_deletion $stack7_id $stack7_name $region
+if [ -n "$stack2_name" ]
+then
+    echo "Deleting $stack2_name id $stack2_id region $region"
+    delete_stack $stack2_id $stack2_name $region $stack2
+fi
 
-echo "Waiting for $stack5 deletion"
+if [ -n "$stack4_name" ]
+then
+    echo "Waiting for $stack4 deletion"
+    wait_for_stack_deletion $stack4_id $stack4_name $region
+fi
 
-wait_for_stack_deletion $stack6_id $stack6_name $region
+if [ -n "$stack3_name" ]
+then
+    echo "Waiting for $stack3 deletion"
+    wait_for_stack_deletion $stack3_id $stack3_name $region
+fi
 
-echo "Waiting for $stack5 deletion"
+if [ -n "$stack2_name" ]
+then
+    echo "Waiting for $stack2 deletion"
+    wait_for_stack_deletion $stack2_id $stack2_name $region
+fi
 
-wait_for_stack_deletion $stack5_id $stack5_name $region
-
-echo "Deleting $stack4_name id $stack4_id region $region"
-
-delete_stack $stack4_id $stack4_name $region $stack4
-
-echo "Deleting $stack3_name id $stack3_id region $region"
-
-delete_stack $stack3_id $stack3_name $region $stack3
-
-echo "Deleting $stack2_name id $stack2_id region $region"
-
-delete_stack $stack2_id $stack2_name $region $stack2
-
-echo "Waiting for $stack4 deletion"
-
-wait_for_stack_deletion $stack4_id $stack4_name $region
-
-echo "Waiting for $stack3 deletion"
-
-wait_for_stack_deletion $stack3_id $stack3_name $region
-
-echo "Waiting for $stack2 deletion"
-
-wait_for_stack_deletion $stack2_id $stack2_name $region
-
-echo "Deleting $stack1_name id $stack1_id region $region"
-
-delete_stack $stack1_id $stack1_name $region $stack1
-
-echo "Waiting for $stack1 deletion"
-
-wait_for_stack_deletion $stack1_id $stack1_name $region
+if [ -n "$stack1_name" ]
+then
+    echo "Deleting $stack1_name id $stack1_id region $region"
+    delete_stack $stack1_id $stack1_name $region $stack1
+fi
+if [ -n "$stack1_name" ]
+then
+    echo "Waiting for $stack1 deletion"
+    wait_for_stack_deletion $stack1_id $stack1_name $region
+fi
 
 echo "Done"

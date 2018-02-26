@@ -586,6 +586,7 @@ then
     #
     tfile=$(mktemp /tmp/foostack53.XXXXXXXXX)
     cp create_route53_resource.json $tfile
+    sed -i "" "s/{ACTION}/UPSERT/g" $tfile
     sed -i '' "s/{COMMENT}/FortiManager DNS Name/g" $tfile
     sed -i '' "s/{DOMAIN}/$domain/g" $tfile
     sed -i '' "s/{DNSPREFIX}/$fmgrprefix/g" $tfile
@@ -713,6 +714,7 @@ publicip=`aws ec2 describe-addresses --output text --region "$region" --allocati
 # Find the hosted zone id for the domain we are using
 #
 
+aws ec2 describe-addresses --output text --region "$region"
 hosted_zone_id=`aws route53 list-hosted-zones --output text --region "$region" --query "HostedZones[?contains(Name, '$domain.')].{Id:Id}"`
 echo "FortiAnalyzer public ip $publicip allocated for domain $fazprefix.$domain"
 if [ -e create_route53_resource.json ]
@@ -722,6 +724,7 @@ then
     #
     tfile=$(mktemp /tmp/foostack53.XXXXXXXXX)
     cp create_route53_resource.json $tfile
+    sed -i "" "s/{ACTION}/UPSERT/g" $tfile
     sed -i "" "s/{COMMENT}/FortiAnalyzer DNS Name/g" $tfile
     sed -i "" "s/{DOMAIN}/$domain/g" $tfile
     sed -i "" "s/{DNSPREFIX}/$fazprefix/g" $tfile

@@ -2,7 +2,7 @@
   "Comment": "{COMMENT}",
   "Changes": [
     {
-      "Action": "UPSERT",
+      "Action": "{ACTION}",
       "ResourceRecordSet": {
         "Name": "{DNSPREFIX}.{DOMAIN}.",
         "Type": "A",
