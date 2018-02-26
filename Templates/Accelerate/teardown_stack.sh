@@ -290,7 +290,7 @@ fi
 
 if [ -n "$stack6_name" ]
 then
-    echo "Waiting for $stack5 deletion"
+    echo "Waiting for $stack6 deletion"
     wait_for_stack_deletion $stack6_id $stack6_name $region
 fi
 

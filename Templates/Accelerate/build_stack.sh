@@ -240,7 +240,6 @@ echo "WebLinux1 instance id = $wl1 public ip = $wl1_ip"
 echo "WebLinux2 instance id = $wl2 public ip = $wl2_ip"
 echo
 
-
 if [ "$KI_SPECIFIED" == true ]
 then
     keypress_loop=true
@@ -714,7 +713,6 @@ publicip=`aws ec2 describe-addresses --output text --region "$region" --allocati
 # Find the hosted zone id for the domain we are using
 #
 
-aws ec2 describe-addresses --output text --region "$region"
 hosted_zone_id=`aws route53 list-hosted-zones --output text --region "$region" --query "HostedZones[?contains(Name, '$domain.')].{Id:Id}"`
 echo "FortiAnalyzer public ip $publicip allocated for domain $fazprefix.$domain"
 if [ -e create_route53_resource.json ]
