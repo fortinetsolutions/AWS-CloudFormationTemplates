@@ -606,7 +606,7 @@ echo "Sleeping for 30 seconds to allow FMG to boot."
 echo $fmgpip
 sleep 30
 
-curl -k --request POST --url https://lambda.fortiengineering.com/fmg \
+curl -sk --request POST --url https://lambda.fortiengineering.com/fmg \
 --header 'Accept: application/json' \
 --header 'Cache-Control: no-cache' \
 --data '{
@@ -746,7 +746,7 @@ echo $fmgpip
 echo $fazpip
 sleep 30
 
-curl -k --request POST --url https://lambda.fortiengineering.com/faz \
+curl -sk --request POST --url https://lambda.fortiengineering.com/faz \
 --header 'Accept: application/json' \
 --header 'Cache-Control: no-cache' \
 --data '{
