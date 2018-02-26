@@ -618,7 +618,7 @@ curl -sk --request POST --url https://lambda.fortiengineering.com/fmg \
 "fmgAdmin": "admin",
 "fmgPass": "'$fmgrid'",
 "fmgAdom": "root"
-}'
+}' > /dev/null
 
 echo
 echo
@@ -759,7 +759,7 @@ curl -sk --request POST --url https://lambda.fortiengineering.com/faz \
 "fazAdmin": "admin",
 "fazPass": "'$fazid'",
 "fazAdom": "root"
-}'
+}' > /dev/null
 #
 # End of the script
 #
