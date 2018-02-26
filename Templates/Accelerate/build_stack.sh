@@ -742,7 +742,7 @@ curl -vik --request POST --url https://lambda.fortiengineering.com/faz \
 --data '{
 "fgtName": "fgt-OnDemandA",
 "fgtIp": "'$fgtpip'",
-"fmgIp": "$fmgrprefix.'$domain'",
+"fmgIp": "'$fmgrprefix'.'$domain'",
 "fmgAdmin": "admin",
 "fmgPass": "'$fmgrid'",
 "fazIp": "'$fazprefix'.'$domain'",
