@@ -8,7 +8,7 @@ source $(dirname $0)/stack_parameters.sh
 
 linux_instance_type=c4.large
 fgt_instance_type=c4.large
-key=mdw_virginia
+key=ftntkey_californmia
 health_check_port=22
 
 access="0.0.0.0/0"
@@ -570,14 +570,13 @@ aws ec2 associate-address --output text --region "$region" --network-interface-i
     --allocation-id "$eip" --allow-reassociation --private-ip-address 10.0.0.253 >/dev/null
 
 publicip=`aws ec2 describe-addresses --output text --region "$region" --allocation-id $eip --query "Addresses[*].{PublicIp:PublicIp}"`
-
-
 #
 # Find the hosted zone id for the domain we are using
 #
 
 hosted_zone_id=`aws route53 list-hosted-zones --output text --region "$region" --query "HostedZones[?contains(Name, '$domain.')].{Id:Id}"`
 echo "FortiManager public ip $publicip allocated for domain $fmgrprefix.$domain"
+fmgpip=$publicip
 if [ -e create_route53_resource.json ]
 then
     #
@@ -601,8 +600,13 @@ then
 fi
 
 fgtpip=`aws ec2 describe-instances --instance-id $oda \
-    --region $region --output text --query "Reservations[*].Instances[*].{PublicIp:PublicIpAddress}"`
-curl -vik --request POST --url https://lambda.fortiengineering.com/fmg \
+    --region $region --output text --query "Reservations[*].Instances[*].[PrivateIpAddress]"`
+
+echo "Sleeping for 30 seconds to allow FMG to boot."
+echo $fmgpip
+sleep 30
+
+curl -k --request POST --url https://lambda.fortiengineering.com/fmg \
 --header 'Accept: application/json' \
 --header 'Cache-Control: no-cache' \
 --data '{
@@ -610,7 +614,7 @@ curl -vik --request POST --url https://lambda.fortiengineering.com/fmg \
 "fgtIp": "'$fgtpip'",
 "fgtAdmin": "admin",
 "fgtPass": "'$oda'",
-"fmgIp": "'$fmgrprefix'.'$domain'",
+"fmgIp": "'$fmgpip'",
 "fmgAdmin": "admin",
 "fmgPass": "'$fmgrid'",
 "fmgAdom": "root"
@@ -708,13 +712,13 @@ aws ec2 associate-address --network-interface-id --output text --region "$region
 
 publicip=`aws ec2 describe-addresses --output text --region "$region" --allocation-id $eip --query "Addresses[*].{PublicIp:PublicIp}"`
 
-
 #
 # Find the hosted zone id for the domain we are using
 #
 
 hosted_zone_id=`aws route53 list-hosted-zones --output text --region "$region" --query "HostedZones[?contains(Name, '$domain.')].{Id:Id}"`
 echo "FortiAnalyzer public ip $publicip allocated for domain $fazprefix.$domain"
+fazpip=$publicip
 if [ -e create_route53_resource.json ]
 then
     #
@@ -736,16 +740,22 @@ then
         rm -f $tfile
     fi
 fi
-curl -vik --request POST --url https://lambda.fortiengineering.com/faz \
+
+echo "Sleeping for 30 seconds to allow FAZ to boot."
+echo $fmgpip
+echo $fazpip
+sleep 30
+
+curl -k --request POST --url https://lambda.fortiengineering.com/faz \
 --header 'Accept: application/json' \
 --header 'Cache-Control: no-cache' \
 --data '{
 "fgtName": "fgt-OnDemandA",
 "fgtIp": "'$fgtpip'",
-"fmgIp": "'$fmgrprefix'.'$domain'",
+"fmgIp": "'$fmgpip'",
 "fmgAdmin": "admin",
 "fmgPass": "'$fmgrid'",
-"fazIp": "'$fazprefix'.'$domain'",
+"fazIp": "'$fazpip'",
 "fazAdmin": "admin",
 "fazPass": "'$fazid'",
 "fazAdom": "root"
