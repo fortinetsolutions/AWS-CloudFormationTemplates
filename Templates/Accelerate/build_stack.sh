@@ -88,10 +88,10 @@ fi
 echo "Making http server substitions in fortigate config files for http server name: $webdns"
 
 cp base_current.conf "$config_object"
-sed -i '' "s/{WEB_DNS_NAME}/$webdns/g" $config_object
+sed -i "s/{WEB_DNS_NAME}/$webdns/g" $config_object
 
 cp base_current_b.conf "$config_object_b"
-sed -i '' "s/{WEB_DNS_NAME}/$webdns/g" $config_object_b
+sed -i "s/{WEB_DNS_NAME}/$webdns/g" $config_object_b
 
 echo "Copying config file to s3://$config_bucket/$config_object"
 echo
@@ -585,11 +585,11 @@ then
     #
     tfile=$(mktemp /tmp/foostack53.XXXXXXXXX)
     cp create_route53_resource.json $tfile
-    sed -i "" "s/{ACTION}/UPSERT/g" $tfile
-    sed -i '' "s/{COMMENT}/FortiManager DNS Name/g" $tfile
-    sed -i '' "s/{DOMAIN}/$domain/g" $tfile
-    sed -i '' "s/{DNSPREFIX}/$fmgrprefix/g" $tfile
-    sed -i '' "s/{IPADDRESS}/$publicip/g" $tfile
+    sed -i "s/{ACTION}/UPSERT/g" $tfile
+    sed -i "s/{COMMENT}/FortiManager DNS Name/g" $tfile
+    sed -i "s/{DOMAIN}/$domain/g" $tfile
+    sed -i "s/{DNSPREFIX}/$fmgrprefix/g" $tfile
+    sed -i "s/{IPADDRESS}/$publicip/g" $tfile
 
     echo
     echo "Change record set batch file"
@@ -722,11 +722,11 @@ then
     #
     tfile=$(mktemp /tmp/foostack53.XXXXXXXXX)
     cp create_route53_resource.json $tfile
-    sed -i "" "s/{ACTION}/UPSERT/g" $tfile
-    sed -i "" "s/{COMMENT}/FortiAnalyzer DNS Name/g" $tfile
-    sed -i "" "s/{DOMAIN}/$domain/g" $tfile
-    sed -i "" "s/{DNSPREFIX}/$fazprefix/g" $tfile
-    sed -i "" "s/{IPADDRESS}/$publicip/g" $tfile
+    sed -i "s/{ACTION}/UPSERT/g" $tfile
+    sed -i "s/{COMMENT}/FortiAnalyzer DNS Name/g" $tfile
+    sed -i "s/{DOMAIN}/$domain/g" $tfile
+    sed -i "s/{DNSPREFIX}/$fazprefix/g" $tfile
+    sed -i "s/{IPADDRESS}/$publicip/g" $tfile
 
     echo
     echo "Change record set batch file"

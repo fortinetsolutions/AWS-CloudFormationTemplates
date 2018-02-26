@@ -134,11 +134,11 @@ then
         #
         tfile=$(mktemp /tmp/foostack53.XXXXXXXXX)
         cp create_route53_resource.json $tfile
-        sed -i "" "s/{ACTION}/DELETE/g" $tfile
-        sed -i "" "s/{COMMENT}/FortiManager DNS Name/g" $tfile
-        sed -i "" "s/{DOMAIN}/$domain/g" $tfile
-        sed -i "" "s/{DNSPREFIX}/$fmgrprefix/g" $tfile
-        sed -i "" "s/{IPADDRESS}/$publicip/g" $tfile
+        sed -i "s/{ACTION}/DELETE/g" $tfile
+        sed -i "s/{COMMENT}/FortiManager DNS Name/g" $tfile
+        sed -i "s/{DOMAIN}/$domain/g" $tfile
+        sed -i "s/{DNSPREFIX}/$fmgrprefix/g" $tfile
+        sed -i "s/{IPADDRESS}/$publicip/g" $tfile
 
         echo $hosted_zone_id
         cat $tfile
@@ -207,11 +207,11 @@ then
         fi
         tfile=$(mktemp /tmp/foostack53.XXXXXXXXX)
         cp create_route53_resource.json $tfile
-        sed -i "" "s/{ACTION}/DELETE/g" $tfile
-        sed -i "" "s/{COMMENT}/FortiAnalyzer DNS Name/g" $tfile
-        sed -i "" "s/{DOMAIN}/$domain/g" $tfile
-        sed -i "" "s/{DNSPREFIX}/$fazprefix/g" $tfile
-        sed -i "" "s/{IPADDRESS}/$publicip/g" $tfile
+        sed -i "s/{ACTION}/DELETE/g" $tfile
+        sed -i "s/{COMMENT}/FortiAnalyzer DNS Name/g" $tfile
+        sed -i "s/{DOMAIN}/$domain/g" $tfile
+        sed -i "s/{DNSPREFIX}/$fazprefix/g" $tfile
+        sed -i "s/{IPADDRESS}/$publicip/g" $tfile
 
         echo $hosted_zone_id
 
