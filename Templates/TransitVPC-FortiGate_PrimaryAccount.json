@@ -99,7 +99,7 @@
     "TagPrimaryOwner": {
       "Description": "Owner of the Product",
       "Type": "String",
-      "Default": "nvtuluva@sysgain.com"
+      "Default": "engineer@acme.com"
     },
     
     "TagStack": {
@@ -255,46 +255,49 @@
     },
     "CodeRegionMap": {
       "us-east-1": {
-        "LambdaCode": "forticodeuseast1"
+        "LambdaCode": "fortibucket-us-east-1"
       },
       "us-east-2": {
-        "LambdaCode": "forticodeuseast2"
+        "LambdaCode": "fortibucket-us-east-2"
       },
       "eu-west-1": {
-        "LambdaCode": "forticodeeuwest1"
+        "LambdaCode": "fortibucket-eu-west-1"
       },
       "eu-west-2": {
-        "LambdaCode": "forticodeeuwest2"
+        "LambdaCode": "fortibucket-eu-west-2"
+      },
+      "eu-west-3": {
+        "LambdaCode": "fortibucket-eu-west-3"
       },
       "eu-central-1": {
-        "LambdaCode": "forticodeeucentral1"
+        "LambdaCode": "fortibucket-eu-central-1"
       },
       "ap-northeast-1": {
-        "LambdaCode": "forticodeapnortheast1"
+        "LambdaCode": "fortibucket-ap-northeast-1"
       },
       "ap-northeast-2": {
-        "LambdaCode": "forticodeapnortheast2"
+        "LambdaCode": "fortibucket-ap-northeast-2"
       },
       "ap-southeast-1": {
-        "LambdaCode": "forticodeapsoutheast1"
+        "LambdaCode": "fortibucket-ap-southeast-1"
       },
       "ap-southeast-2": {
-        "LambdaCode": "forticodeapsoutheast2"
+        "LambdaCode": "fortibucket-ap-southeast-2"
       },
       "ap-south-1": {
-        "LambdaCode": "forticodeapsouth1"
+        "LambdaCode": "fortibucket-ap-south-1"
       },
       "sa-east-1": {
-        "LambdaCode": "forticodesaeast1"
+        "LambdaCode": "fortibucket-sa-east-1"
       },
       "us-west-1": {
-        "LambdaCode": "forticodeuswest1"
+        "LambdaCode": "fortibucket-us-west-1"
       },
       "us-west-2": {
-        "LambdaCode": "forticodeuswest2"
+        "LambdaCode": "fortibucket-us-west-2"
       },
       "ca-central-1": {
-        "LambdaCode": "forticacentral1"
+        "LambdaCode": "fortibucket-ca-central-1"
       }
     }
   },
