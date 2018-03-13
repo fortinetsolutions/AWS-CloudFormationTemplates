@@ -1,0 +1,141 @@
+﻿AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Parses AWS GD events and pushes dynamic address objects to FortiGates
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: VPC Configuration for Lambda function execution
+      Parameters:
+      - VPCID
+      - Subnet1
+      - Subnet2
+    - Label:
+        default: Environmental variables for Lambda function execution
+      Parameters:
+      - AddressGroupPrefix
+      - FortiGateLoginInfoList
+      - FortiosRestAPItimeout
+      - FortiosRestAPIdebug
+      - GDeventParsingdebug
+
+Parameters:
+  VPCID:
+    Type: AWS::EC2::VPC::Id
+    Description: Select the VPC to deploy the Lambda function within
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Description: Select the first subnet for the Lambda function to use for communication to FortiGates
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Description: Select the first subnet for the Lambda function to use for communication to FortiGates
+  AddressGroupPrefix:
+    Description: 'Provide a short prefix to append to the dynamic address groups used by the FortiGate'
+    Type: String
+    Default: AWS-GD-
+  FortiGateLoginInfoList:
+    Description: 'Provide a list of one or many FortiGate IP, admin account, and password to use in a comma delimited list format with a pipe sign used between each set of FortiGate entires.  (ie 10.0.0.10,admin,passwd|172.16.0.10,admin,i-123456abcdef)'
+    NoEcho: 'true'
+    Type: String
+    Default: 172.31.23.79,admin,i-03b6f80f35c26a453|172.31.21.1,admin,i-08d17019db332d46c
+  FortiosRestAPItimeout:
+    Type: String
+    Description: 'Specify the timeout value in seconds for the FortiOS REST API calls'
+    Default: 10
+  FortiosRestAPIdebug:
+    Type: String
+    Description: 'Select the debug level for the FortiOS REST API calls (Extremely Verbose)'
+    Default: 'off'
+    AllowedValues:
+    - 'on'
+    - 'off'
+  GDeventParsingdebug:
+    Type: String
+    Description: 'Select the debug level for the parsing of Guard Duty events (Not Verbose)'
+    Default: 'on'
+    AllowedValues:
+    - 'on'
+    - 'off'
+
+Mappings: 
+  CodeRegionMap: 
+    ap-northeast-1: 
+      LambdaCode: fortibucket-ap-northeast-1
+    ap-northeast-2: 
+      LambdaCode: fortibucket-ap-northeast-2
+    ap-south-1: 
+      LambdaCode: fortibucket-ap-south-1
+    ap-southeast-1: 
+      LambdaCode: fortibucket-ap-southeast-1
+    ap-southeast-2: 
+      LambdaCode: fortibucket-ap-southeast-2
+    ca-central-1: 
+      LambdaCode: fortibucket-ca-central-1
+    eu-central-1: 
+      LambdaCode: fortibucket-eu-central-1
+    eu-west-1: 
+      LambdaCode: fortibucket-eu-west-1
+    eu-west-2: 
+      LambdaCode: fortibucket-eu-west-2
+    eu-west-3: 
+      LambdaCode: fortibucket-eu-west-3
+    sa-east-1: 
+      LambdaCode: fortibucket-sa-east-1
+    us-east-1: 
+      LambdaCode: fortibucket-us-east-1
+    us-east-2: 
+      LambdaCode: fortibucket-us-east-2
+    us-west-1: 
+      LambdaCode: fortibucket-us-west-1
+    us-west-2: 
+      LambdaCode: fortibucket-us-west-2
+
+Resources:
+  SecGrp1:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Lambda SecGroup
+      VpcId:
+        Ref: VPCID
+      SecurityGroupIngress:
+      - IpProtocol: "-1"
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: "-1"
+        CidrIp: 0.0.0.0/0
+
+  LambdaFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: aws-gd-fgt.lambda_handler
+      Runtime: python2.7
+      CodeUri: 
+        Bucket: !FindInMap [CodeRegionMap, !Ref 'AWS::Region', LambdaCode]
+        Key: aws-gd-fgt-lambda.zip
+      Description: Parses AWS GD events and pushes dynamic address objects to FortiGates
+      MemorySize: 128
+      Timeout: 300
+      Policies: AWSLambdaVPCAccessExecutionRole
+      Events:
+        CloudWatchEvent1:
+          Type: CloudWatchEvent
+          Properties:
+            Pattern:
+              detail-type:
+                - GuardDuty Finding
+              source:
+                - aws.guardduty
+      VpcConfig:
+        SecurityGroupIds:
+          - Ref: SecGrp1
+        SubnetIds:
+          - Ref: Subnet1
+          - Ref: Subnet2
+      Environment:
+        Variables:
+          addrgrpPREFIX: !Ref AddressGroupPrefix
+          fgtLOGINinfo: !Ref FortiGateLoginInfoList
+          fgtapiTIMEOUT: !Ref FortiosRestAPItimeout
+          fgtapiDEBUG: !Ref FortiosRestAPIdebug
+          jsoneventDEBUG: !Ref GDeventParsingdebug
