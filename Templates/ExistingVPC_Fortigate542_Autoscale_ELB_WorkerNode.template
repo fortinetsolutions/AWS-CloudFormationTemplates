@@ -1214,7 +1214,17 @@
         "Tags": [
           {
             "Key": "Name",
-            "Value": "ASInstance"
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "ASInstance"
+                ]
+              ]
+            }
           }
         ]
       }
