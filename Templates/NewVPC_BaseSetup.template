@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "AWS CloudFormation Template to launch VPC with Three Subnets and Three instances in a VPC.",
+  "Description": "AWS CloudFormation Template to launch a VPC with 2 public subnets and 2 private subnets.",
   "Metadata": {
     "AWS::CloudFormation::Interface": {
       "ParameterGroups": [
@@ -65,6 +65,8 @@
         "CidrBlock": {
           "Ref": "VPCCIDR"
         },
+        "EnableDnsSupport": "true",
+        "EnableDnsHostnames": "true",
         "Tags": [
           {
             "Key": "Name",
