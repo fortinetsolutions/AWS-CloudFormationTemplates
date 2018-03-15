@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "AWS CloudFormation Template to FortiGate AutoScaling Solution -- AWSMP::3124a694-441c-4ff1-8bf7-4d153be424a6::b661b99c-17da-4b9e-a9fb-8a59da8e2d1e",
+  "Description": "AWS CloudFormation Template to deploy the FortiGate AutoScaling Solution -- AWSMP::3124a694-441c-4ff1-8bf7-4d153be424a6::b661b99c-17da-4b9e-a9fb-8a59da8e2d1e",
   "Metadata": {
     "AWS::CloudFormation::Interface": {
       "ParameterGroups": [
@@ -708,7 +708,7 @@
         },
         "SecurityGroups": [
           {
-            "Ref": "SecurityGroup"
+            "Ref": "FGTSecurityGroup"
           }
         ],
         "KeyName": {
@@ -769,7 +769,7 @@
         },
         "SecurityGroups": [
           {
-            "Ref": "SecurityGroup"
+            "Ref": "ASSecurityGroup"
           }
         ],
         "InstanceType": "t2.micro",
@@ -1147,13 +1147,13 @@
         "MetricName": "SessionSetupRate"
       }
     },
-    "SecurityGroup": {
+    "FGTSecurityGroup": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
         "VpcId": {
           "Ref": "VPCID"
         },
-        "GroupDescription": "Allow All Traffic",
+        "GroupDescription": "FGT secgrp for port1 and port2",
         "SecurityGroupIngress": [
           {
             "IpProtocol": "-1",
@@ -1162,6 +1162,39 @@
             "CidrIp": {
               "Ref": "CIDRForFortiGateAccess"
             }
+          },
+          {
+            "IpProtocol": "-1",
+            "FromPort": "0",
+            "ToPort": "65535",
+            "SourceSecurityGroupId": {
+              "Fn::GetAtt": [ "ASSecurityGroup", "GroupId" ]
+            }
+          },
+          {
+            "IpProtocol": "-1",
+            "FromPort": "0",
+            "ToPort": "65535",
+            "SourceSecurityGroupId": {
+              "Fn::GetAtt": [ "ELBSecurityGroup", "GroupId" ]
+            }
+          }
+        ]
+      }
+    },
+    "ELBSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPCID"
+        },
+        "GroupDescription": "ELB secgrp to allow all traffic",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "-1",
+            "FromPort": "0",
+            "ToPort": "65535",
+            "CidrIp": "0.0.0.0/0"
           }
         ]
       }
@@ -1172,7 +1205,7 @@
         "VpcId": {
           "Ref": "VPCID"
         },
-        "GroupDescription": "Allow SSH",
+        "GroupDescription": "AS secgrp to allow SSH",
         "SecurityGroupIngress": [
           {
             "IpProtocol": "TCP",
@@ -1253,7 +1286,7 @@
         "Description": "eth0",
         "GroupSet": [
           {
-            "Ref": "SecurityGroup"
+            "Ref": "FGTSecurityGroup"
           }
         ],
         "SourceDestCheck": "true",
@@ -1412,7 +1445,7 @@
         "Description": "Secondary Interface",
         "GroupSet": [
           {
-            "Ref": "SecurityGroup"
+            "Ref": "FGTSecurityGroup"
           }
         ],
         "SourceDestCheck": "false",
@@ -1505,7 +1538,7 @@
         "Description": "eth0",
         "GroupSet": [
           {
-            "Ref": "SecurityGroup"
+            "Ref": "FGTSecurityGroup"
           }
         ],
         "SourceDestCheck": "true",
@@ -1562,7 +1595,7 @@
         "Description": "Secondary Interface",
         "GroupSet": [
           {
-            "Ref": "SecurityGroup"
+            "Ref": "FGTSecurityGroup"
           }
         ],
         "SourceDestCheck": "false",
@@ -1590,6 +1623,11 @@
     "IElasticLoadBalancer": {
       "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
       "Properties": {
+        "SecurityGroups": [
+          { 
+            "Ref" : "ELBSecurityGroup"
+          }
+        ],
         "Subnets": [
           {
             "Ref": "Private1Subnet"
@@ -1621,6 +1659,7 @@
             "Protocol": "HTTP"
           }
         ],
+        "CrossZone": "true",
         "HealthCheck": {
           "Target": {
             "Fn::Join": [
@@ -1643,6 +1682,11 @@
     "EElasticLoadBalancer": {
       "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
       "Properties": {
+        "SecurityGroups": [
+          { 
+            "Ref" : "ELBSecurityGroup"
+          }
+        ],
         "Subnets": [
           {
             "Ref": "Public1Subnet"
@@ -1682,6 +1726,7 @@
             "Protocol": "HTTP"
           }
         ],
+        "CrossZone": "true",
         "HealthCheck": {
           "Target": {
             "Fn::Join": [
@@ -1717,6 +1762,54 @@
         ]
       },
       "Description": "External Elastic Load Balancer"
+    },
+    "Fortigate1": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "OnDemandAEIP"
+            }
+          ]
+        ]
+      },
+      "Description": "Connection to Fortigate1"
+    },
+    "UsernameforFortiGate1": {
+      "Value": "admin",
+      "Description": "Username to Access Fortigate"
+    },
+    "PasswordforFortiGate1": {
+      "Value": {
+        "Ref": "OnDemandA"
+      },
+      "Description": "Password to login to Fortigate is the instance id"
+    },
+    "Fortigate2": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "OnDemandBEIP"
+            }
+          ]
+        ]
+      },
+      "Description": "Connection to Fortigate2"
+    },
+    "UsernameforFortiGate2": {
+      "Value": "admin",
+      "Description": "Username to Access Fortigate"
+    },
+    "PasswordforFortiGate2": {
+      "Value": {
+        "Ref": "OnDemandB"
+      },
+      "Description": "Password to login to Fortigate is the instance id"
     }
   }
 }
