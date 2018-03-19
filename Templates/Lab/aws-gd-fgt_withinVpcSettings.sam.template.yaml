@@ -6,6 +6,12 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
+        default: VPC Configuration for Lambda function execution
+      Parameters:
+      - VPCID
+      - Subnet1
+      - Subnet2
+    - Label:
         default: Environmental variables for Lambda function execution
       Parameters:
       - IPAddrObjectPrefix
@@ -22,6 +28,15 @@ Metadata:
       - KeyAdministrator
 
 Parameters:
+  VPCID:
+    Type: AWS::EC2::VPC::Id
+    Description: Select the VPC to deploy the Lambda function within
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+    Description: Select the first subnet for the Lambda function to use for communication to FortiGates
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+    Description: Select the first subnet for the Lambda function to use for communication to FortiGates
   IPAddrObjectPrefix:
     Description: 'Provide a short prefix to append to the dynamic IPv4 based address objects used by the FortiGate.  Here is an example object if you use the default value (gdIp-1.2.3.4/32)'
     Type: String
@@ -44,7 +59,7 @@ Parameters:
   FortiGateLoginInfoList:
     Description: 'Provide a list of one or many FortiGate IP, admin account, and password in a comma delimited list format with a pipe sign used between each set of FortiGate entires.  (ie 10.0.0.10,admin,passwd|172.16.0.10,admin,i-123456abcdef)'
     Type: String
-    Default: 52.60.232.184,admin,i-0f39770c95a099070|52.60.138.57,admin,i-06fee8bd7beb35185
+    Default: 10.0.0.254,admin,i-0f39770c95a099070|10.0.2.254,admin,i-06fee8bd7beb35185
   FortiosRestAPItimeout:
     Type: String
     Description: 'Specify the timeout value in seconds for the FortiOS REST API calls'
@@ -102,6 +117,19 @@ Mappings:
       LambdaCode: fortibucket-us-west-2
 
 Resources:
+  LambdaSecGrp1:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Lambda SecGroup
+      VpcId:
+        Ref: VPCID
+      SecurityGroupIngress:
+      - IpProtocol: "-1"
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: "-1"
+        CidrIp: 0.0.0.0/0
+
   LambdaKmsKeyAlias:
     Type: AWS::KMS::Alias
     Properties:
@@ -264,6 +292,12 @@ Resources:
                 - GuardDuty Finding
               source:
                 - aws.guardduty
+      VpcConfig:
+        SecurityGroupIds:
+          - Ref: LambdaSecGrp1
+        SubnetIds:
+          - Ref: Subnet1
+          - Ref: Subnet2
       Environment:
         Variables:
           addripPREFIX: !Ref IPAddrObjectPrefix
