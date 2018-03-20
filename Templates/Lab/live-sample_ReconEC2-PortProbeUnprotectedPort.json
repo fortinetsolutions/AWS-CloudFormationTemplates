@@ -1,0 +1,123 @@
+{
+	"account": "123073262904",
+	"detail": {
+		"accountId": "123073262904",
+		"arn": "arn:aws:guardduty:ca-central-1:123073262904:detector/e0b0f494250d554901512384f84a887b/finding/cab100f890ff1525099c275a495f6855",
+		"createdAt": "2018-03-07T19:30:02.878Z",
+		"description": "EC2 instance has an unprotected port which is being probed by a known malicious host.",
+		"id": "cab100f890ff1525099c275a495f6855",
+		"partition": "aws",
+		"region": "ca-central-1",
+		"resource": {
+			"instanceDetails": {
+				"availabilityZone": "ca-central-1a",
+				"iamInstanceProfile": {
+					"arn": "arn:aws:iam::123073262904:instance-profile/aws-gd-tester-BastionHostProfile-14DIYBXIISXWR",
+					"id": "AIPAINJMG37HL7HV7NIWY"
+				},
+				"imageDescription": "Amazon Linux 2 LTS Candidate AMI 2017.12.0.20180115 x86_64 HVM GP2",
+				"imageId": "ami-7549cc11",
+				"instanceId": "i-0b1b4f424d5388e04",
+				"instanceState": "running",
+				"instanceType": "t2.small",
+				"launchTime": "2018-03-07T19:05:34Z",
+				"networkInterfaces": [{
+					"ipv6Addresses": [],
+					"privateDnsName": "ip-172-16-0-4.ca-central-1.compute.internal",
+					"privateIpAddress": "172.16.0.4",
+					"privateIpAddresses": [{
+						"privateDnsName": "ip-172-16-0-4.ca-central-1.compute.internal",
+						"privateIpAddress": "172.16.0.4"
+					}],
+					"publicDnsName": "ec2-35-182-42-137.ca-central-1.compute.amazonaws.com",
+					"publicIp": "35.182.42.137",
+					"securityGroups": [{
+						"groupId": "sg-ec4c6484",
+						"groupName": "aws-gd-tester-BastionSecurityGroup-618GCQOKXS28"
+					}],
+					"subnetId": "subnet-c006fba8",
+					"vpcId": "vpc-a853b9c0"
+				}],
+				"productCodes": [],
+				"tags": [{
+						"key": "aws:cloudformation:logical-id",
+						"value": "BastionAutoScalingGroup"
+					},
+					{
+						"key": "aws:cloudformation:stack-name",
+						"value": "aws-gd-tester"
+					},
+					{
+						"key": "aws:cloudformation:stack-id",
+						"value": "arn:aws:cloudformation:ca-central-1:123073262904:stack/aws-gd-tester/2a4dcef0-223a-11e8-bad0-504dce15559a"
+					},
+					{
+						"key": "Name",
+						"value": "LinuxBastion"
+					},
+					{
+						"key": "aws:autoscaling:groupName",
+						"value": "aws-gd-tester-BastionAutoScalingGroup-1I0M1U9GWPMQR"
+					}
+				]
+			},
+			"resourceType": "Instance"
+		},
+		"schemaVersion": "2.0",
+		"service": {
+			"action": {
+				"actionType": "PORT_PROBE",
+				"portProbeAction": {
+					"blocked": false,
+					"portProbeDetails": [{
+						"localPortDetails": {
+							"port": 22.0,
+							"portName": "SSH"
+						},
+						"remoteIpDetails": {
+							"city": {
+								"cityName": "Xining"
+							},
+							"country": {
+								"countryName": "China"
+							},
+							"geoLocation": {
+								"lat": 36.6167,
+								"lon": 101.7667
+							},
+							"ipAddressV4": "221.207.32.250",
+							"organization": {
+								"asn": "4837",
+								"asnOrg": "CHINA UNICOM China169 Backbone",
+								"isp": "China Unicom QingHai",
+								"org": "China Unicom QingHai"
+							}
+						}
+					}]
+				}
+			},
+			"additionalInfo": {
+				"threatListName": "ProofPoint",
+				"threatName": "Scanner"
+			},
+			"archived": false,
+			"count": 1.0,
+			"detectorId": "e0b0f494250d554901512384f84a887b",
+			"eventFirstSeen": "2018-03-07T19:19:01Z",
+			"eventLastSeen": "2018-03-07T19:19:46Z",
+			"resourceRole": "TARGET",
+			"serviceName": "guardduty"
+		},
+		"severity": 2.0,
+		"title": "Unprotected port on EC2 instance i-0b1b4f424d5388e04 is being probed.",
+		"type": "Recon:EC2/PortProbeUnprotectedPort",
+		"updatedAt": "2018-03-07T19:30:02.878Z"
+	},
+	"detail-type": "GuardDuty Finding",
+	"id": "bb285b67-f8b4-39b6-ef3d-12072a05f464",
+	"region": "ca-central-1",
+	"resources": [],
+	"source": "aws.guardduty",
+	"time": "2018-03-07T19:35:00Z",
+	"version": "0"
+}

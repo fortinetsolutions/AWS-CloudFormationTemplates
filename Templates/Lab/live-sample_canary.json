@@ -1,0 +1,114 @@
+{
+  "version": "0",
+  "id": "c8c4daa7-a20c-2f03-0070-b7393dd542ad",
+  "detail-type": "GuardDuty Finding",
+  "source": "aws.guardduty",
+  "account": "123456789012",
+  "time": "1970-01-01T00:00:00Z",
+  "region": "us-east-1",
+  "resources": [],
+  "detail": {
+    "schemaVersion": "2.0",
+    "accountId": "123456789012",
+    "region": "us-east-1",
+    "partition": "aws",
+    "id": "16afba5c5c43e07c9e3e5e2e544e95df",
+    "arn": "arn:aws:guardduty:us-east-1:123456789012:detector/123456789012/finding/16afba5c5c43e07c9e3e5e2e544e95df",
+    "type": "Canary:EC2/Stateless.IntegTest",
+    "resource": {
+      "resourceType": "Instance",
+      "instanceDetails": {
+        "instanceId": "i-05746eb48123455e0",
+        "instanceType": "t2.micro",
+        "launchTime": 1492735675000,
+        "productCodes": [],
+        "networkInterfaces": [
+          {
+            "ipv6Addresses": [],
+            "privateDnsName": "ip-172-31-36-156.us-east-1.compute.internal",
+            "privateIpAddress": "172.31.36.156",
+            "privateIpAddresses": [
+              {
+                "privateDnsName": "ip-172-31-36-156.us-east-1.compute.internal",
+                "privateIpAddress": "172.31.36.156"
+              }
+            ],
+            "subnetId": "subnet-d58b7123",
+            "vpcId": "vpc-34865123",
+            "securityGroups": [
+              {
+                "groupName": "launch-wizard-1",
+                "groupId": "sg-9918a123"
+              }
+            ],
+            "publicDnsName": "ec2-11-111-111-1.us-east-1.compute.amazonaws.com",
+            "publicIp": "11.111.111.1"
+          }
+        ],
+        "tags": [
+          {
+            "key": "Name",
+            "value": "ssh-22-open"
+          }
+        ],
+        "instanceState": "running",
+        "availabilityZone": "us-east-1b",
+        "imageId": "ami-4836a123",
+        "imageDescription": "Amazon Linux AMI 2017.03.0.20170417 x86_64 HVM GP2"
+      }
+    },
+    "service": {
+      "serviceName": "guardduty",
+      "detectorId": "3caf4e0aaa46ce4ccbcef949a8785353",
+      "action": {
+        "actionType": "NETWORK_CONNECTION",
+        "networkConnectionAction": {
+          "connectionDirection": "OUTBOUND",
+          "remoteIpDetails": {
+            "ipAddressV4": "198.51.100.0",
+            "organization": {
+              "asn": -1,
+              "isp": "GeneratedFindingISP",
+              "org": "GeneratedFindingORG"
+            },
+            "country": {
+              "countryName": "United States"
+            },
+            "city": {
+              "cityName": "GeneratedFindingCityName"
+            },
+            "geoLocation": {
+              "lat": 0,
+              "lon": 0
+            }
+          },
+          "remotePortDetails": {
+            "port": 22,
+            "portName": "SSH"
+          },
+          "localPortDetails": {
+            "port": 2000,
+            "portName": "Unknown"
+          },
+          "protocol": "TCP",
+          "blocked": false
+        }
+      },
+      "resourceRole": "TARGET",
+      "additionalInfo": {
+        "unusualProtocol": "UDP",
+        "threatListName": "GeneratedFindingCustomerListName",
+        "unusual": 22
+      },
+      "eventFirstSeen": "2017-10-31T23:16:23Z",
+      "eventLastSeen": "2017-10-31T23:16:23Z",
+      "archived": false,
+      "count": 1
+    },
+    "severity": 5,
+    "createdAt": "2017-10-31T23:16:23.824Z",
+    "updatedAt": "2017-10-31T23:16:23.824Z",
+    "title": "Canary:EC2/Stateless.IntegTest",
+    "description": "Canary:EC2/Stateless.IntegTest"
+  }
+}
