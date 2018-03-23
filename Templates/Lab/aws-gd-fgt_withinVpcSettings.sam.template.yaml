@@ -67,6 +67,7 @@ Parameters:
     - 'off'
   FortiGateLoginInfoList:
     Description: 'Provide a list of one or many FortiGate IP, admin account, and password in a comma delimited list format with a pipe sign used between each set of FortiGate entires.  (ie 10.0.0.1,admin,passwd|172.16.0.1,admin,i-123456abcdef)'
+    NoEcho: 'true'
     Type: String
     Default: 10.0.0.1,admin,passwd|172.16.0.1,admin,i-123456abcdef
   FortiosRestAPItimeout:
