@@ -14,12 +14,12 @@ Metadata:
     - Label:
         default: Environmental variables for Lambda function execution
       Parameters:
-      - IPAddrObjectPrefix
-      - FQDNAddrObjectPrefix
-      - AddrGroupPrefix
-      - PlaceholderAddrObjectName
-      - AggregateAddrGroupName
-      - AddrGroupBatchCreate
+      - IPAddrObjPrefix
+      - FQDNAddrObjPrefix
+      - AddrGrpPrefix
+      - PlaceholderAddrObjName
+      - AggregateAddrGrpName
+      - AddrGrpBatchCreate
       - FortiGateLoginInfoList
       - FortiosRestAPItimeout
       - FortiosRestAPIdebug
@@ -38,27 +38,27 @@ Parameters:
   Subnet2:
     Type: AWS::EC2::Subnet::Id
     Description: Select the first subnet for the Lambda function to use for communication to FortiGates
-  IPAddrObjectPrefix:
+  IPAddrObjPrefix:
     Description: 'Provide a short prefix to append to the dynamic IPv4 based address objects used by the FortiGate.  Here is an example object if you use the default value (gdIp-1.2.3.4/32)'
     Type: String
     Default: gdIp-
-  FQDNAddrObjectPrefix:
+  FQDNAddrObjPrefix:
     Description: 'Provide a short prefix to append to the dynamic FQDN based address objects used by the FortiGate.  Here is an example object if you use the default value (gdDns-www.baddns.com)'
     Type: String
     Default: gdDns-
-  AddrGroupPrefix:
+  AddrGrpPrefix:
     Description: 'Provide a short prefix to append to the dynamic address group objects used by the FortiGate.  Here is an example object if you use the default value (gdGrp-UnauthorizedAccessEC2-SSHBruteForce)'
     Type: String
     Default: gdGrp-
-  PlaceholderAddrObjectName:
+  PlaceholderAddrObjName:
     Description: 'Provide a name for the place holder address object which will be used when creating dynamic address groups used by the FortiGate.  Here is an example object if you use the default value (gdGrp-AggregateEvents)'
     Type: String
     Default: gd-placeholder
-  AggregateAddrGroupName:
+  AggregateAddrGrpName:
     Description: 'Provide a name for the dynamic aggregate address group which will contain all other dynamic address group objects used by the FortiGate.  Here is an example object if you use the default value (gdGrp-AggregateEvents)'
     Type: String
     Default: gdGrp-AggregateEvents
-  AddrGroupBatchCreate:
+  AddrGrpBatchCreate:
     Type: String
     Description: 'Select on if you want all known dynamic address group objects to be checked and created if they do not exist, each time the lambda function is triggered.  Select off to have the dynamic address group objects created only when a matching Guard Duty event type is seen.'
     Default: 'on'
@@ -303,12 +303,12 @@ Resources:
           - Ref: Subnet2
       Environment:
         Variables:
-          addripPREFIX: !Ref IPAddrObjectPrefix
-          addrfqdnPREFIX: !Ref FQDNAddrObjectPrefix
-          addrgrpPREFIX: !Ref AddrGroupPrefix
-          placeholderaddrNAME: !Ref PlaceholderAddrObjectName
-          aggaddrgrpNAME: !Ref AggregateAddrGroupName
-          addrgrpBATCHcreate: !Ref AddrGroupBatchCreate
+          addripPREFIX: !Ref IPAddrObjPrefix
+          addrfqdnPREFIX: !Ref FQDNAddrObjPrefix
+          addrgrpPREFIX: !Ref AddrGrpPrefix
+          placeholderaddrNAME: !Ref PlaceholderAddrObjName
+          aggaddrgrpNAME: !Ref AggregateAddrGrpName
+          addrgrpBATCHcreate: !Ref AddrGrpBatchCreate
           fgtLOGINinfo: !Ref FortiGateLoginInfoList
           fgtapiTIMEOUT: !Ref FortiosRestAPItimeout
           fgtapiDEBUG: !Ref FortiosRestAPIdebug
