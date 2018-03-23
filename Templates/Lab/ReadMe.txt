@@ -9,12 +9,13 @@ With either templates, you can stick with the defaults wherever they are present
 Once you have deployed the SAM\CF template of your choice, then go to the lambda console and scroll down to the environment variables and validate your 'fgtLOGINinfo' variable looks correct for the FGT(s) you are wanting to run this against.
 
 If your using the VPC bound template, then you can use private IPs like this
-# 10.0.0.254,admin,i-0f39770c95a099070|10.0.2.254,admin,i-06fee8bd7beb35185
+# 10.0.0.254,admin,i-abcdef123456|10.0.2.254,admin,i-abcdef123456
 
 If your using the non VPC bound template, then you need to use public IPs like this
-# 52.60.232.184,admin,i-0f39770c95a099070|52.60.138.57,admin,i-06fee8bd7beb35185
+# 1.1.1.1,admin,i-abcdef123456|2.2.2.2,admin,i-abcdef123456
 
 If you are only using one FGT, you do not need to use the pipe symbol, it would just be 'ip,admin.passwd'.
+# 1.1.1.1,admin,i-abcdef123456
 
 	
 Once you have this properly configured, then in the environment variables section, expand 'Encryption configuration'.
