@@ -11,11 +11,12 @@ Metadata:
       - IPAddrObjectPrefix
       - FQDNAddrObjectPrefix
       - AddrGroupPrefix
+      - PlaceholderAddrObjectName
+      - AggregateAddrGroupName
       - AddrGroupBatchCreate
       - FortiGateLoginInfoList
       - FortiosRestAPItimeout
       - FortiosRestAPIdebug
-      - GDeventParsingdebug
     - Label:
         default: KMS Key information for encyrpting environmental variables
       Parameters:
@@ -34,17 +35,25 @@ Parameters:
     Description: 'Provide a short prefix to append to the dynamic address group objects used by the FortiGate.  Here is an example object if you use the default value (gdGrp-UnauthorizedAccessEC2-SSHBruteForce)'
     Type: String
     Default: gdGrp-
+  PlaceholderAddrObjectName:
+    Description: 'Provide a name for the place holder address object which will be used when creating dynamic address groups used by the FortiGate.  Here is an example object if you use the default value (gdGrp-AggregateEvents)'
+    Type: String
+    Default: gd-placeholder
+  AggregateAddrGroupName:
+    Description: 'Provide a name for the dynamic aggregate address group which will contain all other dynamic address group objects used by the FortiGate.  Here is an example object if you use the default value (gdGrp-AggregateEvents)'
+    Type: String
+    Default: gdGrp-AggregateEvents
   AddrGroupBatchCreate:
     Type: String
-    Description: 'Select on if you want all known dynamic address group objects to be checked and created if they do not exist, each time the lambda function is triggers.  Select off to have the dynamic address group objects created when a matching Guard Duty event type is seen.'
+    Description: 'Select on if you want all known dynamic address group objects to be checked and created if they do not exist, each time the lambda function is triggered.  Select off to have the dynamic address group objects created only when a matching Guard Duty event type is seen.'
     Default: 'on'
     AllowedValues:
     - 'on'
     - 'off'
   FortiGateLoginInfoList:
-    Description: 'Provide a list of one or many FortiGate IP, admin account, and password in a comma delimited list format with a pipe sign used between each set of FortiGate entires.  (ie 10.0.0.10,admin,passwd|172.16.0.10,admin,i-123456abcdef)'
+    Description: 'Provide a list of one or many FortiGate IP, admin account, and password in a comma delimited list format with a pipe sign used between each set of FortiGate entires.  (ie 1.1.1.1,admin,passwd|2.2.2.2,otheradmin,i-123456abcdef)'
     Type: String
-    Default: 52.60.232.184,admin,i-0f39770c95a099070|52.60.138.57,admin,i-06fee8bd7beb35185
+    Default: 1.1.1.1,admin,passwd|2.2.2.2,otheradmin,i-abcdef
   FortiosRestAPItimeout:
     Type: String
     Description: 'Specify the timeout value in seconds for the FortiOS REST API calls'
@@ -56,17 +65,10 @@ Parameters:
     AllowedValues:
     - 'on'
     - 'off'
-  GDeventParsingdebug:
-    Type: String
-    Description: 'Select the debug level for the parsing of Guard Duty events (Not Verbose)'
-    Default: 'on'
-    AllowedValues:
-    - 'on'
-    - 'off'
   KeyAdministrator:
     Description: 'Provide the AWS username for your account to manage the KMS key created by the template'
     Type: String
-    Default: haberra
+    Default: johndoe
 
 Mappings: 
   CodeRegionMap: 
@@ -269,8 +271,9 @@ Resources:
           addripPREFIX: !Ref IPAddrObjectPrefix
           addrfqdnPREFIX: !Ref FQDNAddrObjectPrefix
           addrgrpPREFIX: !Ref AddrGroupPrefix
+          placeholderaddrNAME: !Ref PlaceholderAddrObjectName
+          aggaddrgrpNAME: !Ref AggregateAddrGroupName
           addrgrpBATCHcreate: !Ref AddrGroupBatchCreate
           fgtLOGINinfo: !Ref FortiGateLoginInfoList
           fgtapiTIMEOUT: !Ref FortiosRestAPItimeout
           fgtapiDEBUG: !Ref FortiosRestAPIdebug
-          jsoneventDEBUG: !Ref GDeventParsingdebug
