@@ -11,9 +11,11 @@ Once the solutions are ready for wide scale use, these will be moved to the main
 		
 	- The dynamic address objects are created as either IPv4 or DNS objects based on the Guard Duty event type seen.  
 	
-	- These address objects are then appended to dynamic address groups that map to each known Guard Duty finding type to provide selective use within firewall policy.
+	- These address objects are then appended to dynamic address groups that map to each known Guard Duty finding type
+		to provide selective use within your firewall policy.
 	
-	- There is also a nested aggregate address group created which contains all the dynamic address group objects created for each finding type.
+	- There is also a nested aggregate address group created which contains all the dynamic address group objects
+		created for each finding type.
 	
 	- Creates KMS keys for encypting Lambda environment variables that contain 
 		sensitive information such as FortiGate IPs and credentials.  Encyrption of
@@ -23,24 +25,23 @@ Once the solutions are ready for wide scale use, these will be moved to the main
 There are two templates which deploy the same solution set described above with a key difference in where the Lambda function runs.  Lambda functions by default run within an AWS owned VPC and will connect to AWS and other services it interacts with (including FortiGates) using any public AWS IP.  These functions can be configured to run within your own VPC which would allow you to use private IP addressing to reach your FortiGates as well as connect to other FortiGates using known public IPs as well.
 
 ## Lambda running within AWS VPCs
-Reference Diagram:
----
-
-![Example Diagram](https://raw.githubusercontent.com/fortinetclouddev/FortiGate-HA-for-Azure/EastWestHA2.1/diagram1.png)
-
----
-
 If you use the template which uses the default VPC settings (ie use AWS owned VPC), then keep in mind you will need to allow HTTPS (TCP 443) traffic from any public IP to your FortiGates you want the Lambda function to communicate with.  
 
-## Lambda running within your VPCs
-Reference Diagram:
+### Reference Diagram:
 ---
 
 ![Example Diagram](https://raw.githubusercontent.com/fortinetclouddev/FortiGate-HA-for-Azure/EastWestHA2.1/diagram1.png)
 
 ---
 
+## Lambda running within your VPCs
 If you use the other template which uses your VPC setting, then keep in mind that the subnets the Lambda function is set to initate traffic from will need to provide reachability to your FortiGate IPs provided (private or public).  Additionally if the Lambda environment variables are encrypted, either a VPC endpoint for KMS needs to be deployed within the same VPC or public internet access needs to be available for Lambda to interact with the KMS API.
+### Reference Diagram:
+---
+
+![Example Diagram](https://raw.githubusercontent.com/fortinetclouddev/FortiGate-HA-for-Azure/EastWestHA2.1/diagram1.png)
+
+---
 
 ## General template instructions
 
@@ -72,16 +73,14 @@ After confirming that the value provided for the 'fgtLOGINinfo' environment vari
 	- Select 'Encrypt' next to the 'fgtLOGINinfo' variable
 	- Finally click save in the upper right hand corner of the Lambda console
 
-If you want to decrypt the ciphertext at a later time, you can do this with the AWS CLI.  This will allow you to see the original clear text information.
+If you want to decrypt the ciphertext at a later time, you can do this with the AWS CLI.  This will allow you to see the original clear text information.  Make sure you are specifying the same region where the ciphertext was pulled from for proper decryption.
 
-	- Make sure you are specifying the same region where the ciphertext was pulled from for proper decryption.
-
-	- This is an example AWS CLi command where you can simply paste in your ciphertext and run this command on a linux host such as Ubuntu:
+This is an example AWS CLi command where you can simply paste in your ciphertext and run this command on a linux host such as Ubuntu:
 	
 	aws kms decrypt --ciphertext-blob fileb://<(echo '<paste-encrypted-string-here>' | base64 -d) --region <region-value-here> --output text --query Plaintext | base64 -d
 
-	- Here is a quick example of doing this with ciphertext from the ca-central-1 region:
+ Here is a quick example of doing this with ciphertext from the ca-central-1 region:
 
-	aws kms decrypt --ciphertext-blob fileb://<(echo 'AQICAHj7dXsqRQCihL+mMyEc0NPccA5sYyPSwRwMxzpnt0BFwwGUD4Tv/Wo95fa8UoDEASt+AAAAqzCBqAYJKoZIhvcNAQcGoIGaMIGXAgEAMIGRBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDF67d4Q7tiTt8PnmZwIBEIBklOTKrTm0EmV75X2mh0huprQHnFVgiHYw+6aLbT/Z6zqtcIfQYt1dPz4O70wpnK1Xs7gMmAOP9O1dRXgcF4T6WYN55ImzZG2l3lUDLJDFlNWL/GyztcmxPLX+9E83as0SF/aKhw==' | base64 -d) --region ca-central-1 --output text --query Plaintext | base64 -d
+	# aws kms decrypt --ciphertext-blob fileb://<(echo 'AQICAHj7dXsqRQCihL+mMyEc0NPccA5sYyPSwRwMxzpnt0BFwwGUD4Tv/Wo95fa8UoDEASt+AAAAqzCBqAYJKoZIhvcNAQcGoIGaMIGXAgEAMIGRBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDF67d4Q7tiTt8PnmZwIBEIBklOTKrTm0EmV75X2mh0huprQHnFVgiHYw+6aLbT/Z6zqtcIfQYt1dPz4O70wpnK1Xs7gMmAOP9O1dRXgcF4T6WYN55ImzZG2l3lUDLJDFlNWL/GyztcmxPLX+9E83as0SF/aKhw==' | base64 -d) --region ca-central-1 --output text --query Plaintext | base64 -d
 
-	10.0.0.254,admin,i-0f39770c95a099070|10.0.2.254,admin,i-06fee8bd7beb35185
+	# 10.0.0.254,admin,i-0f39770c95a099070|10.0.2.254,admin,i-06fee8bd7beb35185
