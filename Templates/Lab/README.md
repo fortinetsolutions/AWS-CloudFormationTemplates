@@ -17,10 +17,10 @@ Once the solutions are ready for wide scale use, these will be moved to the main
 	- There is also a nested aggregate address group created which contains all the dynamic address group objects
 		created for each finding type.
 	
-	- Creates KMS keys for encypting Lambda environment variables that contain 
-		sensitive information such as FortiGate IPs and credentials.  Encyrption of
+	- Creates KMS keys for encrypting Lambda environment variables that contain 
+		sensitive information such as FortiGate IPs and credentials.  Encryption of
 		the variables is optional and can be disabled at any time.  Decryption of
-		ciphertext can be acheived quickly with the use of AWS CLI and the KMS service.
+		cipher text can be achieved quickly with the use of AWS CLI and the KMS service.
 		
 There are two templates which deploy the same solution set described above with a key difference in where the Lambda function runs.  Lambda functions by default run within an AWS owned VPC and will connect to AWS and other services it interacts with (including FortiGates) using any public AWS IP.  These functions can be configured to run within your own VPC which would allow you to use private IP addressing to reach your FortiGates as well as connect to other FortiGates using known public IPs as well.
 
@@ -35,7 +35,7 @@ If you use the template which uses the default VPC settings (ie use AWS owned VP
 ---
 
 ## Lambda running within your VPCs
-If you use the other template which uses your VPC setting, then keep in mind that the subnets the Lambda function is set to initate traffic from will need to provide reachability to your FortiGate IPs provided (private or public).  Additionally if the Lambda environment variables are encrypted, either a VPC endpoint for KMS needs to be deployed within the same VPC or public internet access needs to be available for Lambda to interact with the KMS API.
+If you use the other template which uses your VPC setting, then keep in mind that the subnets the Lambda function is set to initiate traffic from will need to provide reachability to your FortiGate IPs provided (private or public).  Additionally if the Lambda environment variables are encrypted, either a VPC endpoint for KMS needs to be deployed within the same VPC or public internet access needs to be available for Lambda to interact with the KMS API.
 ### Reference Diagram:
 ---
 
@@ -59,7 +59,7 @@ Keep in mind, once you have deployed the template you can go to the Lambda conso
 		<fgt1-ip>,<fgt1-user>,<fgt1-password>|<fgt2-ip>,<fgt2-user>,<fgt2-password>
 		1.1.1.1,admin,i-abcdef123456|2.2.2.2,admin,i-abcdef123456
 
-The KeyAdministrator parameter should be your AWS username or the username of the individual that will be in charge of encrypt\decryptinging the variable containing the FortiGate login information above.  The username will be added to the KMS key policy as an administrator of the key and also be granted priveledges to use the key.
+The KeyAdministrator parameter should be your AWS username or the username of the individual that will be in charge of encrypt\decrypting the variable containing the FortiGate login information above.  The username will be added to the KMS key policy as an administrator of the key and also be granted priviledges to use the key.
 
 Once you deploy the template, you can trigger the function by generating sample events form the Guard Duty console, use one of the sample events provided as part of this solution set to create a test event for Lambda, or generate live events by running a port scan against some instances in the same region as this Lambda function.
 
@@ -73,9 +73,9 @@ After confirming that the value provided for the 'fgtLOGINinfo' environment vari
 	- Select 'Encrypt' next to the 'fgtLOGINinfo' variable
 	- Finally click save in the upper right hand corner of the Lambda console
 
-If you want to decrypt the ciphertext at a later time, you can do this with the AWS CLI.  This will allow you to see the original clear text information.  Make sure you are specifying the same region where the ciphertext was pulled from for proper decryption.
+If you want to decrypt the cipher text at a later time, you can do this with the AWS CLI.  This will allow you to see the original clear text information.  Make sure you are specifying the same region where the cipher text was pulled from for proper decryption.
 
-This is an example AWS CLi command where you can simply paste in your ciphertext and run this command on a linux host such as Ubuntu:
+This is an example AWS CLi command where you can simply paste in your cipher text and run this command on ubuntu:
 	
 	aws kms decrypt --ciphertext-blob fileb://<(echo '<paste-encrypted-string-here>' | base64 -d) --region <region-value-here> --output text --query Plaintext | base64 -d
 
