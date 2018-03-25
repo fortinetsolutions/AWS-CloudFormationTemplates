@@ -4,7 +4,7 @@ The solutions provided in this folder are currently a work in progress and shoul
 
 Once the solutions are ready for wide scale use, these will be moved to the main template directory in this repo (AWS-CloudFormationTemplates/Templates).
 
-# This solution set:
+## This solution set:
 	- Creates a Cloudwatch event that triggers when Guard Duty finding events are 
 		seen which triggers a lambda function to parse the event and push dynamic
 		address objects and address group objects to one or many FortiGates via the FortiOS REST API. 
@@ -30,7 +30,7 @@ If you use the template which uses the default VPC settings (ie use AWS owned VP
 ### Reference Diagram:
 ---
 
-![Example Diagram](https://raw.githubusercontent.com/fortinetclouddev/FortiGate-HA-for-Azure/EastWestHA2.1/diagram1.png)
+![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/Lab/net-diag-1.jpg)
 
 ---
 
@@ -39,7 +39,7 @@ If you use the other template which uses your VPC setting, then keep in mind tha
 ### Reference Diagram:
 ---
 
-![Example Diagram](https://raw.githubusercontent.com/fortinetclouddev/FortiGate-HA-for-Azure/EastWestHA2.1/diagram1.png)
+![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/Lab/net-diag-2.jpg)
 
 ---
 
@@ -75,7 +75,7 @@ After confirming that the value provided for the 'fgtLOGINinfo' environment vari
 
 If you want to decrypt the cipher text at a later time, you can do this with the AWS CLI.  This will allow you to see the original clear text information.  Make sure you are specifying the same region where the cipher text was pulled from for proper decryption.
 
-This is an example AWS CLi command where you can simply paste in your cipher text and run this command on ubuntu:
+This is an example AWS CLI command where you can simply paste in your cipher text and run this command on ubuntu:
 	
 	aws kms decrypt --ciphertext-blob fileb://<(echo '<paste-encrypted-string-here>' | base64 -d) --region <region-value-here> --output text --query Plaintext | base64 -d
 
