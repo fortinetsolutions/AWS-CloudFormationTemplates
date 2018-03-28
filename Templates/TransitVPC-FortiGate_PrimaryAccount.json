@@ -899,19 +899,10 @@
                 "s3:*"
               ],
               "Effect": "Allow",
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    "arn:aws:s3:::",
-                    {
-                      "Ref": "S3Bucket"
-                    },
-                    "/",
-                    "*"
-                  ]
-                ]
-              },
+              "Resource": [
+                {"Fn::Join": ["", [ "arn:aws:s3:::", {"Ref": "S3Bucket"}]]},
+                {"Fn::Join": ["", [ "arn:aws:s3:::", {"Ref": "S3Bucket"}, "/", "*"]]}
+              ],
              "Principal": {
 		        "AWS" : [{ "Fn::Join" : ["", ["arn:aws:iam::",{"Fn::If": ["AuthorizeAnotherAccount", {"Ref" : "SpokeAWSAccountId" }, { "Ref" : "AWS::AccountId" } ]}, ":root" ]]}]
 	         }
