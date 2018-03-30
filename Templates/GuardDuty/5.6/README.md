@@ -30,7 +30,7 @@ If you use the template which uses the default VPC settings (ie use AWS owned VP
 ### Reference Diagram:
 ---
 
-![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/Lab/net-diag-1.jpg)
+![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/GuardDuty/5.6/net-diag-1.jpg)
 
 ---
 
@@ -39,7 +39,7 @@ If you use the other template which uses your VPC setting, then keep in mind tha
 ### Reference Diagram:
 ---
 
-![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/Lab/net-diag-2.jpg)
+![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/GuardDuty/5.6/net-diag-2.jpg)
 
 ---
 
