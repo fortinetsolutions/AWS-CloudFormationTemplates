@@ -1,6 +1,6 @@
 ﻿AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
-Description: Parses AWS GD events and pushes dynamic address objects to FortiGates
+Description: 'Deploys a Lambda function (bound to your local VPC) that receives GuardDuty finding events from a local region processes the event or create dynamic address objects.'
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -20,6 +20,7 @@ Metadata:
       - PlaceholderAddrObjName
       - AggregateAddrGrpName
       - AddrGrpBatchCreate
+      - BlockInstance
       - FortiGateLoginInfoList
       - FortiosRestAPItimeout
       - FortiosRestAPIdebug
@@ -51,7 +52,7 @@ Parameters:
     Type: String
     Default: gdGrp-
   PlaceholderAddrObjName:
-    Description: 'Provide a name for the place holder address object which will be used when creating dynamic address groups used by the FortiGate.  Here is an example object if you use the default value (gdGrp-AggregateEvents)'
+    Description: 'Provide a name for the place holder address object which will be used when creating dynamic address groups used by the FortiGate.  Here is an example object if you use the default value (gd-placeholder)'
     Type: String
     Default: gd-placeholder
   AggregateAddrGrpName:
@@ -65,8 +66,15 @@ Parameters:
     AllowedValues:
     - 'on'
     - 'off'
+  BlockInstance:
+    Type: String
+    Description: 'Select on if you want to allow dynamic address objects to be created based on an instance's private IP address if it is the bad actor in a GuardDuty event.  Select off to skip processing the event so that no dynamic address object is created which could potentially block your instance.'
+    Default: 'off'
+    AllowedValues:
+    - 'on'
+    - 'off'
   FortiGateLoginInfoList:
-    Description: 'Provide a list of one or many FortiGate IP, admin account, and password in a comma delimited list format with a pipe sign used between each set of FortiGate entires.  (ie 10.0.0.1,admin,passwd|172.16.0.1,admin,i-123456abcdef)'
+    Description: 'Provide a list of one or many FortiGate IP, admin account, and password entries in a comma delimited list format with a pipe sign used between each set of FortiGate entires.  (ie 1.1.1.1,admin,passwd) OR (ie 1.1.1.1,admin,passwd|2.2.2.2,otheradmin,i-123456abcdef)'
     NoEcho: 'true'
     Type: String
     Default: 10.0.0.1,admin,passwd|172.16.0.1,admin,i-123456abcdef
@@ -309,6 +317,7 @@ Resources:
           placeholderaddrNAME: !Ref PlaceholderAddrObjName
           aggaddrgrpNAME: !Ref AggregateAddrGrpName
           addrgrpBATCHcreate: !Ref AddrGrpBatchCreate
+          instanceBLOCK: !Ref BlockInstance
           fgtLOGINinfo: !Ref FortiGateLoginInfoList
           fgtapiTIMEOUT: !Ref FortiosRestAPItimeout
           fgtapiDEBUG: !Ref FortiosRestAPIdebug
