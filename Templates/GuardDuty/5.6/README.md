@@ -1,31 +1,41 @@
-# FortiGate Guard Duty Integration
+# FortiGate GuardDuty Integration
 
 The solutions provided in this folder are currently a work in progress and should only be used to lab, demos, and beta testing.
 
-Once the solutions are ready for wide scale use, these will be moved to the main template directory in this repo (AWS-CloudFormationTemplates/Templates).
+The purpose of the solution set available in this folder is to deploy serverless applications in one or many regions that parse GuardDuty finding events and creates dynamic address and address group objects on FortiGates for use in blocking bad actor IP or DNS addresses seen in the findings event.
 
-## This solution set:
-	- Creates a Cloudwatch event that triggers when Guard Duty finding events are 
-		seen which triggers a lambda function to parse the event and push dynamic
-		address objects and address group objects to one or many FortiGates via the FortiOS REST API. 
-		
-	- The dynamic address objects are created as either IPv4 or DNS objects based on the Guard Duty event type seen.  
+## This solution set contains 3 templates:
+```
+	1. Main event parsing templates (ie 'aws-gd-processor...') that:
+
+	  - Creates a CloudWatch event rule that triggers when GuardDuty finding events are seen in the local region
+	    which triggers a local lambda function to parse the actual event and push dynamic address objects
+		and address group objects to one or many FortiGates via the FortiOS REST API (ie HTTPS). 
 	
-	- These address objects are then appended to dynamic address groups that map to each known Guard Duty finding type
-		to provide selective use within your firewall policy.
-	
-	- There is also a nested aggregate address group created which contains all the dynamic address group objects
+	  - The dynamic address objects are created as either IPv4 or DNS objects based on the GuardDuty event type seen.  
+
+	  - These address objects are then appended to dynamic address groups that map to each known GuardDuty finding
+		type to provide selective use within your firewall policy.
+
+	  - There is also a nested aggregate address group created which contains all the dynamic address group objects
 		created for each finding type.
 	
-	- Creates KMS keys for encrypting Lambda environment variables that contain 
-		sensitive information such as FortiGate IPs and credentials.  Encryption of
-		the variables is optional and can be disabled at any time.  Decryption of
-		cipher text can be achieved quickly with the use of AWS CLI and the KMS service.
-		
-There are two templates which deploy the same solution set described above with a key difference in where the Lambda function runs.  Lambda functions by default run within an AWS owned VPC and will connect to AWS and other services it interacts with (including FortiGates) using any public AWS IP.  These functions can be configured to run within your own VPC which would allow you to use private IP addressing to reach your FortiGates as well as connect to other FortiGates using known public IPs as well.
+	  - Creates KMS keys for encrypting Lambda environment variables that contain sensitive information such as
+	    FortiGate IPs and credentials.  Encryption of the variables is optional and can be disabled at any time.
+	    Decryption of cipher text can be achieved quickly with the use of AWS CLI and the KMS service.
+
+	2. Secondary event forwarding template (ie 'aws-gd-forwarder...') that:
+
+	  - Creates a CloudWatch event rule that triggers when GuardDuty finding events are seen in the local region
+        which triggers a local lambda function to forward the event data from the local region and invokes the remote
+        Lambda function (deployed by the previous templates above) to parse the actual event and create dynamic
+		address objects and address group objects to one or many FortiGates via the FortiOS REST API (HTTPS). 
+```
+
+There are two main event parsing templates which deploy the same solution set described above with a key difference in where the Lambda function runs.  Lambda functions by default run within an AWS owned VPC and will connect to AWS and other services it interacts with (including FortiGates) using any public AWS public IP within that local region.  These functions can be configured to run within your own VPC which would allow you to use private IP addressing to reach your FortiGates as well as connect to other FortiGates using known public IPs as well.
 
 ## Lambda running within AWS VPCs
-If you use the template which uses the default VPC settings (ie use AWS owned VPC), then keep in mind you will need to allow HTTPS (TCP 443) traffic from any public IP to your FortiGates you want the Lambda function to communicate with.  
+If you use the main template named **aws-gd-processor_defaultVpcSettings.sam.template.yaml**, this uses the default VPC settings (ie use AWS owned VPC) so keep in mind you will need to allow HTTPS (TCP 443) traffic from any AWS public IP to your FortiGates that you want the event parsing Lambda function to communicate with.  Below is a reference diagram showing this use case.
 
 ### Reference Diagram:
 ---
@@ -35,7 +45,8 @@ If you use the template which uses the default VPC settings (ie use AWS owned VP
 ---
 
 ## Lambda running within your VPCs
-If you use the other template which uses your VPC setting, then keep in mind that the subnets the Lambda function is set to initiate traffic from will need to provide reachability to your FortiGate IPs provided (private or public).  Additionally if the Lambda environment variables are encrypted, either a VPC endpoint for KMS needs to be deployed within the same VPC or public internet access needs to be available for Lambda to interact with the KMS API.
+If you use the main template named **aws-gd-processor_localVpcSettings.sam.template.yaml**, this uses your VPC setting so keep in mind that the subnets the Lambda function is set to initiate traffic from will need to provide reachability to your FortiGate IPs provided (private or public).  Additionally if the Lambda environment variables are encrypted, either a VPC endpoint for KMS needs to be deployed within the same VPC or public internet access needs to be available for Lambda to interact with the KMS API. Below is a reference diagram showing this use case.
+
 ### Reference Diagram:
 ---
 
@@ -43,9 +54,9 @@ If you use the other template which uses your VPC setting, then keep in mind tha
 
 ---
 
-## General template instructions
+## General main event parsing template instructions
 
-With either template you will be prompted for the same parameters for Lambda environment variables and user name for KMS key administration.  The default values can be used for all parameters except for FortiGateLoginInfoList and KeyAdministrator.
+With either of the main templates you will be prompted for the same parameters for Lambda environment variables and AWS user name principal for KMS key administration.  The default parameter values can be used for all parameters except for FortiGateLoginInfoList and KeyAdministrator.
 
 The FortiGateLoginInfoList parameter is where you enter in the list of FortiGates that you want Lambda to connect to in the relevant format.  The CloudFormation template has this parameter set to hide your input so this sensitive data can't be seen by other users via the AWS console, CLI, or API.  So it is recommended to prepare your input first and then paste it into this parameter field in the AWS console.
 
@@ -59,9 +70,21 @@ Keep in mind, once you have deployed the template you can go to the Lambda conso
 		<fgt1-ip>,<fgt1-user>,<fgt1-password>|<fgt2-ip>,<fgt2-user>,<fgt2-password>
 		1.1.1.1,admin,i-abcdef123456|2.2.2.2,admin,i-abcdef123456
 
-The KeyAdministrator parameter should be your AWS username or the username of the individual that will be in charge of encrypt\decrypting the variable containing the FortiGate login information above.  The username will be added to the KMS key policy as an administrator of the key and also be granted priviledges to use the key.
+The KeyAdministrator parameter should be your AWS username or the username of the individual that will be in charge of encrypt\decrypting the variable containing the FortiGate login information above.  The username will be added to the KMS key policy as an administrator of the key and also be granted privileges to use the key.
 
-Once you deploy the template, you can trigger the function by generating sample events form the Guard Duty console, use one of the sample events provided as part of this solution set to create a test event for Lambda, or generate live events by running a port scan against some instances in the same region as this Lambda function.
+Once you deploy the template, you can trigger the function by generating sample events form the GuardDuty console, use one of the sample events provided as part of this solution set to create a test event for Lambda, or generate live events by running a port scan against some instances in the same region as this Lambda function.
+
+You can view the resulting logs from execution of the Lambda function by looking at the relevant log group in the CloudWatch console.
+
+## (Optional) General secondary event forwarding template instructions
+
+With the secondary event forwarding templates you will be prompted for parameters for the remote Lambda function so that it can be invoked from the local region when GuardDuty events are seen in the local region.
+
+The TargetLambdaName parameter should be the name of the remote Lambda function deployed by one of the main event parsing templates.  This can be referenced by looking at the outputs from the main event parsing template.  An example value is 'stackname-LambdaFunction-ABC123XYZ'.
+
+The TargetLambdaRegion parameter should be the name of the remote region where one of the main event parsing templates is deployed.  This can be referenced by looking at the outputs from the main event parsing template.  An example value is 'us-east-1'.
+
+The TargetLambdaARN parameter should be the name of the remote Lambda function deployed by one of the main event parsing templates.  This can be referenced by looking at the outputs from the main event parsing template.  An example value is 'arn:aws:lambda:us-east-1:123456789012:function:stackname-LambdaFunction-ABC123XYZ'.
 
 ## (Optional) Encrypt Lambda environment variables
 
