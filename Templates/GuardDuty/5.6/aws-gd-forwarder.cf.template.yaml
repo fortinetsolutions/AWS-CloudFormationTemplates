@@ -1,0 +1,144 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Deploys a Lambda function that receives GuardDuty finding events from a local region and invokes a target Lambda function in another region to process the event.'
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Main Lambda function information for invocation from other regions
+      Parameters:
+      - TargetLambdaName
+      - TargetLambdaRegion
+      - TargetLambdaARN
+
+Parameters:
+  TargetLambdaName:
+    Description: 'Provide the Lambda Function name from the main template.  This can be referenced by looking at the main template outputs.'
+    Type: String
+    Default: 'stackname-LambdaFunction-ABC123XYZ'
+  TargetLambdaRegion:
+    Description: 'Provide the Lambda Function region from the main template.  This can be referenced by looking at the main template outputs.'
+    Type: String
+    Default: 'us-east-1'
+  TargetLambdaARN:
+    Description: 'Provide the full Lambda Function ARN from the main template.  This can be referenced by looking at the main template outputs.'
+    Type: String
+    Default: 'arn:aws:lambda:us-east-1:123456789012:function:stackname-LambdaFunction-ABC123XYZ'
+
+Mappings: 
+  CodeRegionMap: 
+    ap-northeast-1: 
+      LambdaCode: fortibucket-ap-northeast-1
+    ap-northeast-2: 
+      LambdaCode: fortibucket-ap-northeast-2
+    ap-south-1: 
+      LambdaCode: fortibucket-ap-south-1
+    ap-southeast-1: 
+      LambdaCode: fortibucket-ap-southeast-1
+    ap-southeast-2: 
+      LambdaCode: fortibucket-ap-southeast-2
+    ca-central-1: 
+      LambdaCode: fortibucket-ca-central-1
+    eu-central-1: 
+      LambdaCode: fortibucket-eu-central-1
+    eu-west-1: 
+      LambdaCode: fortibucket-eu-west-1
+    eu-west-2: 
+      LambdaCode: fortibucket-eu-west-2
+    eu-west-3: 
+      LambdaCode: fortibucket-eu-west-3
+    sa-east-1: 
+      LambdaCode: fortibucket-sa-east-1
+    us-east-1: 
+      LambdaCode: fortibucket-us-east-1
+    us-east-2: 
+      LambdaCode: fortibucket-us-east-2
+    us-west-1: 
+      LambdaCode: fortibucket-us-west-1
+    us-west-2: 
+      LambdaCode: fortibucket-us-west-2
+
+Resources:
+  LambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+
+  LambdaFunctionPolicy:
+    DependsOn:
+    - LambdaFunctionRole
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: LambdaFunctionPolicy
+      Roles: 
+        - Ref: LambdaFunctionRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - logs:CreateLogGroup
+          - logs:CreateLogStream
+          - logs:PutLogEvents
+          Resource:
+          - "*"
+        - Effect: Allow
+          Action:
+          - lambda:InvokeFunction
+          Resource:
+          - !Ref TargetLambdaARN
+        
+  LambdaCloudWatchEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Event rule triggers a local Lambda function"
+      EventPattern:
+        source:
+          - "aws.guardduty"
+        detail-type:
+          - "GuardDuty Finding"
+      State: "ENABLED"
+      Targets: 
+        - 
+          Arn: !GetAtt LambdaFunction.Arn
+          Id:  !Ref LambdaFunction
+          
+  PermissionForEventsToInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn:
+        Fn::GetAtt:
+        - LambdaCloudWatchEventRule
+        - Arn
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    DependsOn:
+    - LambdaFunctionRole
+    - LambdaFunctionPolicy
+    Properties:
+      Description: 'Lambda function receives GuardDuty finding events and invokes a target Lambda function in another region to process the event.'
+      Code:
+        S3Bucket: !FindInMap [CodeRegionMap, !Ref 'AWS::Region', LambdaCode]
+        S3Key: aws-gd-otherregion-lambda.zip
+      Environment:
+        Variables:
+          targetLambdaName: !Ref TargetLambdaName
+          targetLambdaRegion: !Ref TargetLambdaRegion
+      Role: !GetAtt LambdaFunctionRole.Arn
+      Timeout: 300
+      Handler: lambda_function.lambda_handler
+      Runtime: python2.7
+      MemorySize: 128
