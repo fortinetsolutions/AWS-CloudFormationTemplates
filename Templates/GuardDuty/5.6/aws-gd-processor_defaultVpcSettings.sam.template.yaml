@@ -53,7 +53,7 @@ Parameters:
     - 'off'
   BlockInstance:
     Type: String
-    Description: 'Select on if you want to allow dynamic address objects to be created based on an instance's private IP address if it is the bad actor in a GuardDuty event.  Select off to skip processing the event so that no dynamic address object is created which could potentially block your instance.'
+    Description: 'Select on if you want to allow dynamic address objects to be created based on an instance private IP address if it is the bad actor in a GuardDuty event.  Select off to skip processing the event so that no dynamic address object is created which could potentially block your instance.'
     Default: 'off'
     AllowedValues:
     - 'on'
@@ -287,3 +287,17 @@ Resources:
           fgtLOGINinfo: !Ref FortiGateLoginInfoList
           fgtapiTIMEOUT: !Ref FortiosRestAPItimeout
           fgtapiDEBUG: !Ref FortiosRestAPIdebug
+
+Outputs:
+  TargetLambdaName:
+    Value:
+      Ref: LambdaFunction
+    Description: This should be used as the TargetLambdaName parameter in the secondary event forwarding template
+  TargetLambdaRegion:
+    Value:
+      Ref: "AWS::Region"
+    Description: This should be used as the TargetLambdaRegion parameter in the secondary event forwarding template
+  TargetLambdaARN:
+    Value:
+      Fn::GetAtt: LambdaFunction.Arn
+    Description: This should be used as the TargetLambdaARN parameter in the secondary event forwarding template
