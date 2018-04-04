@@ -94,11 +94,11 @@ The TargetLambdaARN parameter should be the name of the remote Lambda function d
 
 After confirming that the value provided for the 'fgtLOGINinfo' environment variable is correct, you can encrypt this with the KMS key created by the template.  Navigate to the Lambda console and scroll down to the environment variables section and expand 'Encryption configuration'.
 
-	- Select 'Enable helpers for encryption in transit' 
-	- In 'KMS key to encrypt in transit', select the key created by the template '<stackname>-LambdaFunctionKey'
-	- Select 'Enter Value' to use that key
-	- Select 'Encrypt' next to the 'fgtLOGINinfo' variable
-	- Finally click save in the upper right hand corner of the Lambda console
+- Select 'Enable helpers for encryption in transit' 
+- In 'KMS key to encrypt in transit', select the key created by the template '<stackname>-LambdaFunctionKey'
+- Select 'Enter Value' to use that key
+- Select 'Encrypt' next to the 'fgtLOGINinfo' variable
+- Finally click save in the upper right hand corner of the Lambda console
 
 If you want to decrypt the cipher text at a later time, you can do this with the AWS CLI.  This will allow you to see the original clear text information.  Make sure you are specifying the same region where the cipher text was pulled from for proper decryption.
 
