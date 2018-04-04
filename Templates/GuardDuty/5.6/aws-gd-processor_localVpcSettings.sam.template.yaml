@@ -38,7 +38,7 @@ Parameters:
     Description: Select the first subnet for the Lambda function to use for communication to FortiGates
   Subnet2:
     Type: AWS::EC2::Subnet::Id
-    Description: Select the first subnet for the Lambda function to use for communication to FortiGates
+    Description: Select the second subnet in a different availability zone for the Lambda function to use for communication to FortiGates
   IPAddrObjPrefix:
     Description: 'Provide a short prefix to append to the dynamic IPv4 based address objects used by the FortiGate.  Here is an example object if you use the default value (gdIp-1.2.3.4/32)'
     Type: String

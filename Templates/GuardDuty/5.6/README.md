@@ -47,7 +47,9 @@ Below is a reference diagram showing this use case.
 ---
 
 ## Lambda running within your VPCs
-If you use the main template named **aws-gd-processor_localVpcSettings.sam.template.yaml**, this uses your VPC setting so keep in mind that the subnets the Lambda function is set to initiate traffic from will need to provide reachability to your FortiGate IPs provided (private or public).  Additionally if the Lambda environment variables are encrypted, either a VPC endpoint for KMS needs to be deployed within the same VPC or public internet access needs to be available for Lambda to interact with the KMS API.
+If you use the main template named **aws-gd-processor_localVpcSettings.sam.template.yaml**, this uses your VPC setting so keep in mind that the subnets the Lambda function is set to initiate traffic from will need to provide reachability to your FortiGate IPs provided (private or public).  AWS requires that two private subnets be provided in different availability zones for redundancy so the Lambda function should always be able to iniate traffic if one zone is down.
+
+Additionally if the Lambda environment variables are encrypted, either a VPC endpoint for KMS needs to be deployed within the same VPC or public internet access needs to be available for Lambda to interact with the KMS API.
 
 Below is a reference diagram showing this use case.
 
@@ -82,7 +84,7 @@ You can view the resulting logs from execution of the Lambda function by looking
 
 ## (Optional) General secondary event forwarding template instructions
 
-With the secondary event forwarding templates you will be prompted for parameters for the remote Lambda function so that it can be invoked from the local region when GuardDuty events are seen in the local region.
+With the secondary event forwarding template named **aws-gd-forwarder.cf.template.yaml**, you will be prompted for parameters for the remote Lambda function so that it can be invoked from the local region when GuardDuty events are seen in the local region.
 
 The TargetLambdaName parameter should be the name of the remote Lambda function deployed by one of the main event parsing templates.  This can be referenced by looking at the outputs from the main event parsing template.  An example value is 'stackname-LambdaFunction-ABC123XYZ'.
 
@@ -95,7 +97,7 @@ The TargetLambdaARN parameter should be the name of the remote Lambda function d
 After confirming that the value provided for the 'fgtLOGINinfo' environment variable is correct, you can encrypt this with the KMS key created by the template.  Navigate to the Lambda console and scroll down to the environment variables section and expand 'Encryption configuration'.
 
 - Select 'Enable helpers for encryption in transit' 
-- In 'KMS key to encrypt in transit', select the key created by the template '<stackname>-LambdaFunctionKey'
+- In 'KMS key to encrypt in transit', select the key created by the template 'stackname-LambdaFunctionKey'
 - Select 'Enter Value' to use that key
 - Select 'Encrypt' next to the 'fgtLOGINinfo' variable
 - Finally click save in the upper right hand corner of the Lambda console
