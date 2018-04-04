@@ -6,36 +6,38 @@ The purpose of the solution set available in this folder is to deploy serverless
 
 ## This solution set contains 3 templates:
 ```
-	1. Main event parsing templates (ie 'aws-gd-processor...') that:
+1. Main event parsing templates (ie 'aws-gd-processor...') that:
 
-	  - Creates a CloudWatch event rule that triggers when GuardDuty finding events are seen in the local region
-	    which triggers a local lambda function to parse the actual event and push dynamic address objects
-		and address group objects to one or many FortiGates via the FortiOS REST API (ie HTTPS). 
+  - Creates a CloudWatch event rule that triggers when GuardDuty finding events are seen in the local region
+    which triggers a local lambda function to parse the actual event and push dynamic address objects
+    and address group objects to one or many FortiGates via the FortiOS REST API (ie HTTPS). 
 	
-	  - The dynamic address objects are created as either IPv4 or DNS objects based on the GuardDuty event type seen.  
+  - The dynamic address objects are created as either IPv4 or DNS objects based on the GuardDuty event type seen.  
 
-	  - These address objects are then appended to dynamic address groups that map to each known GuardDuty finding
-		type to provide selective use within your firewall policy.
+  - These address objects are then appended to dynamic address groups that map to each known GuardDuty finding
+    type to provide selective use within your firewall policy.
 
-	  - There is also a nested aggregate address group created which contains all the dynamic address group objects
-		created for each finding type.
+  - There is also a nested aggregate address group created which contains all the dynamic address group objects
+    created for each finding type.
 	
-	  - Creates KMS keys for encrypting Lambda environment variables that contain sensitive information such as
-	    FortiGate IPs and credentials.  Encryption of the variables is optional and can be disabled at any time.
-	    Decryption of cipher text can be achieved quickly with the use of AWS CLI and the KMS service.
+  - Creates KMS keys for encrypting Lambda environment variables that contain sensitive information such as
+    FortiGate IPs and credentials.  Encryption of the variables is optional and can be disabled at any time.
+    Decryption of cipher text can be achieved quickly with the use of AWS CLI and the KMS service.
 
-	2. Secondary event forwarding template (ie 'aws-gd-forwarder...') that:
+2. Secondary event forwarding template (ie 'aws-gd-forwarder...') that:
 
-	  - Creates a CloudWatch event rule that triggers when GuardDuty finding events are seen in the local region
-        which triggers a local lambda function to forward the event data from the local region and invokes the remote
-        Lambda function (deployed by the previous templates above) to parse the actual event and create dynamic
-		address objects and address group objects to one or many FortiGates via the FortiOS REST API (HTTPS). 
+  - Creates a CloudWatch event rule that triggers when GuardDuty finding events are seen in the local region
+    which triggers a local lambda function to forward the event data from the local region and invokes the remote
+    Lambda function (deployed by the previous templates above) to parse the actual event and create dynamic
+    address objects and address group objects to one or many FortiGates via the FortiOS REST API (HTTPS). 
 ```
 
 There are two main event parsing templates which deploy the same solution set described above with a key difference in where the Lambda function runs.  Lambda functions by default run within an AWS owned VPC and will connect to AWS and other services it interacts with (including FortiGates) using any public AWS public IP within that local region.  These functions can be configured to run within your own VPC which would allow you to use private IP addressing to reach your FortiGates as well as connect to other FortiGates using known public IPs as well.
 
 ## Lambda running within AWS VPCs
-If you use the main template named **aws-gd-processor_defaultVpcSettings.sam.template.yaml**, this uses the default VPC settings (ie use AWS owned VPC) so keep in mind you will need to allow HTTPS (TCP 443) traffic from any AWS public IP to your FortiGates that you want the event parsing Lambda function to communicate with.  Below is a reference diagram showing this use case.
+If you use the main template named **aws-gd-processor_defaultVpcSettings.sam.template.yaml**, this uses the default VPC settings (ie use AWS owned VPC) so keep in mind you will need to allow HTTPS (TCP 443) traffic from any AWS public IP to your FortiGates that you want the event parsing Lambda function to communicate with.
+
+Below is a reference diagram showing this use case.
 
 ### Reference Diagram:
 ---
@@ -45,7 +47,9 @@ If you use the main template named **aws-gd-processor_defaultVpcSettings.sam.tem
 ---
 
 ## Lambda running within your VPCs
-If you use the main template named **aws-gd-processor_localVpcSettings.sam.template.yaml**, this uses your VPC setting so keep in mind that the subnets the Lambda function is set to initiate traffic from will need to provide reachability to your FortiGate IPs provided (private or public).  Additionally if the Lambda environment variables are encrypted, either a VPC endpoint for KMS needs to be deployed within the same VPC or public internet access needs to be available for Lambda to interact with the KMS API. Below is a reference diagram showing this use case.
+If you use the main template named **aws-gd-processor_localVpcSettings.sam.template.yaml**, this uses your VPC setting so keep in mind that the subnets the Lambda function is set to initiate traffic from will need to provide reachability to your FortiGate IPs provided (private or public).  Additionally if the Lambda environment variables are encrypted, either a VPC endpoint for KMS needs to be deployed within the same VPC or public internet access needs to be available for Lambda to interact with the KMS API.
+
+Below is a reference diagram showing this use case.
 
 ### Reference Diagram:
 ---
