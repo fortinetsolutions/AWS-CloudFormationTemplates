@@ -42,33 +42,39 @@
     },
 
     "SourceS3Bucket":{
-      "Description": " [Optional] - BYOL Enter the Source S3 Bucket name, where your license file and config files exists",
+      "Description": " [Optional - BYOL or OnDemand] Enter the Source S3 Bucket name, where your license files and config files exists",
       "Type": "String",
       "Default": ""
     },
     
     "SourceS3BucketRegion":{
-      "Description": "[Optional] - BYOL Enter the Source S3 Bucket Region",
+      "Description": "[Optional - BYOL or OnDemand] Enter the Source S3 Bucket Region",
       "Type": "String",
       "Default": ""
     },
     
-    "LicenseFile":{
-      "Description": "[Optional] - BYOL Enter the name of the license file",
+    "Fgt1LicenseFile":{
+      "Description": "[Optional - BYOL only] Enter the name of the license file for FortiGate1",
       "Type": "String",
       "Default": ""
     },
     
-    "ConfigFile":{
-      "Description": "[Optional] - BYOL Enter the name of the config file",
+    "Fgt1ConfigFile":{
+      "Description": "[Optional - BYOL or OnDemand] Enter the name of the config file for FortiGate1",
+      "Type": "String",
+      "Default": ""
+    },
+
+    "Fgt2LicenseFile":{
+      "Description": "[Optional - BYOL only] Enter the name of the license file for FortiGate2",
       "Type": "String",
       "Default": ""
     },
     
-    "FortigateIAMRole":{
-      "Description": "[Optional] - BYOL Enter the name of IAM Role to be associated with Fortigate BYOL Instance",
+    "Fgt2ConfigFile":{
+      "Description": "[Optional - BYOL or OnDemand] Enter the name of the config file for FortiGate2",
       "Type": "String",
-      "Default": "" 
+      "Default": ""
     },
     
     "TagCreated": {
@@ -177,7 +183,7 @@
       },
       {
         "Label" : { "default" : "License Configuration" },
-        "Parameters" : [ "LicenseType", "SourceS3Bucket", "SourceS3BucketRegion", "LicenseFile", "ConfigFile", "FortigateIAMRole" ]
+        "Parameters" : [ "LicenseType", "SourceS3Bucket", "SourceS3BucketRegion", "Fgt1LicenseFile", "Fgt1ConfigFile", "Fgt2LicenseFile", "Fgt2ConfigFile" ]
       },
       {
         "Label" : { "default" : "EC2 Configuration" },
@@ -552,6 +558,63 @@
         }
       }
     },
+    "BootfromS3": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ec2.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/"
+      }
+    },
+    "BootfromS3Policies": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "root",
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:*"
+              ],
+              "Resource": [
+                "*"
+              ]
+            }
+          ]
+        },
+        "Roles": [
+          {
+            "Ref": "BootfromS3"
+          }
+        ]
+      }
+    },
+    "BootEC2": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "BootfromS3"
+          }
+        ]
+      }
+    },
     "S3Endpoint": {
       "Type": "AWS::EC2::VPCEndpoint",
       "Properties": {
@@ -713,7 +776,7 @@
       "Type": "AWS::EC2::Instance",
       "Properties": {
         "DisableApiTermination": "FALSE",
-        "IamInstanceProfile": { "Ref": "FortigateIAMRole" },
+        "IamInstanceProfile": { "Ref": "BootEC2" },
         "ImageId": {
           "Fn::FindInMap": [
             "FortiRegionMap",
@@ -772,8 +835,8 @@
             "{\n",
             "\"bucket\"" , " : ", "\"", {"Ref" : "SourceS3Bucket"},"\"" , ",\n",
             "\"region\"" , " : ", "\"", {"Ref" : "SourceS3BucketRegion"}, "\"" , ",\n",
-            "\"license\"" , " : ", "\"", "/", {"Ref" : "LicenseFile"}, "\"" ,  ",\n",
-            "\"config\"", " : ",  "\"", "/", {"Ref" : "ConfigFile"},   "\"" , ",\n",
+            "\"license\"" , " : ", "\"", "/", {"Ref" : "Fgt1LicenseFile"}, "\"" ,  ",\n",
+            "\"config\"", " : ",  "\"", "/", {"Ref" : "Fgt1ConfigFile"},   "\"" , ",\n",
             "}"
            ]
           ]
@@ -800,7 +863,7 @@
       "Type": "AWS::EC2::Instance",
       "Properties": {
         "DisableApiTermination": "FALSE",
-        "IamInstanceProfile": { "Ref": "FortigateIAMRole" },
+        "IamInstanceProfile": { "Ref": "BootEC2" },
         "ImageId": {
           "Fn::FindInMap": [
             "FortiRegionMap",
@@ -859,8 +922,8 @@
             "{\n",
             "\"bucket\"" , " : ", "\"", {"Ref" : "SourceS3Bucket"},"\"" , ",\n",
             "\"region\"" , " : ", "\"", {"Ref" : "SourceS3BucketRegion"}, "\"" , ",\n",
-            "\"license\"" , " : ", "\"", "/", {"Ref" : "LicenseFile"}, "\"" ,  ",\n",
-            "\"config\"", " : ",  "\"", "/", {"Ref" : "ConfigFile"},   "\"" , ",\n",
+            "\"license\"" , " : ", "\"", "/", {"Ref" : "Fgt2LicenseFile"}, "\"" ,  ",\n",
+            "\"config\"", " : ",  "\"", "/", {"Ref" : "Fgt2ConfigFile"},   "\"" , ",\n",
             "}"
            ]
           ]
