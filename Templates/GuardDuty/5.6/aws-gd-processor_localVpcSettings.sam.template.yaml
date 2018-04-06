@@ -40,23 +40,23 @@ Parameters:
     Type: AWS::EC2::Subnet::Id
     Description: Select the second subnet in a different availability zone for the Lambda function to use for communication to FortiGates
   IPAddrObjPrefix:
-    Description: 'Provide a short prefix to append to the dynamic IPv4 based address objects used by the FortiGate.  Here is an example object if you use the default value (gdIp-1.2.3.4/32)'
+    Description: 'Provide a short prefix (max length of 6) to append to the dynamic IPv4 based address objects used by the FortiGate.  Here is an example object if you use the default value (gdIp-1.2.3.4/32)'
     Type: String
     Default: gdIp-
   FQDNAddrObjPrefix:
-    Description: 'Provide a short prefix to append to the dynamic FQDN based address objects used by the FortiGate.  Here is an example object if you use the default value (gdDns-www.baddns.com)'
+    Description: 'Provide a short prefix (max length of 6) to append to the dynamic FQDN based address objects used by the FortiGate.  Here is an example object if you use the default value (gdDns-www.baddns.com)'
     Type: String
     Default: gdDns-
   AddrGrpPrefix:
-    Description: 'Provide a short prefix to append to the dynamic address group objects used by the FortiGate.  Here is an example object if you use the default value (gdGrp-UnauthorizedAccessEC2-SSHBruteForce)'
+    Description: 'Provide a short prefix (max length of 6) to append to the dynamic address group objects used by the FortiGate.  Here is an example object if you use the default value (gdGrp-UnauthorizedAccessEC2-SSHBruteForce)'
     Type: String
     Default: gdGrp-
   PlaceholderAddrObjName:
-    Description: 'Provide a name for the place holder address object which will be used when creating dynamic address groups used by the FortiGate.  Here is an example object if you use the default value (gd-placeholder)'
+    Description: 'Provide a name (max length of 63) for the place holder address object which will be used when creating dynamic address groups used by the FortiGate.  Here is an example object if you use the default value (gd-placeholder)'
     Type: String
     Default: gd-placeholder
   AggregateAddrGrpName:
-    Description: 'Provide a name for the dynamic aggregate address group which will contain all other dynamic address group objects used by the FortiGate.  Here is an example object if you use the default value (gdGrp-AggregateEvents)'
+    Description: 'Provide a name (max length of 63) for the dynamic aggregate address group which will contain all other dynamic address group objects used by the FortiGate.  Here is an example object if you use the default value (gdGrp-AggregateEvents)'
     Type: String
     Default: gdGrp-AggregateEvents
   AddrGrpBatchCreate:

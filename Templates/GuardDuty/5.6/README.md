@@ -1,7 +1,5 @@
 # FortiGate GuardDuty Integration
 
-The solutions provided in this folder are currently a work in progress and should only be used to lab, demos, and beta testing.
-
 The purpose of the solution set available in this folder is to deploy serverless applications in one or many regions that parse GuardDuty finding events and creates dynamic address and address group objects on FortiGates for use in blocking bad actor IP or DNS addresses seen in the findings event.
 
 ## This solution set contains 3 templates:
