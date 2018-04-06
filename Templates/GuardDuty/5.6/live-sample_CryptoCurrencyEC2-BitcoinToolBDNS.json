@@ -1,0 +1,93 @@
+{
+	"account": "123456789012",
+	"detail": {
+		"accountId": "123456789012",
+		"arn": "arn:aws:guardduty:ca-central-1:123456789012:detector/e0b0f494250d554901512384f84a887b/finding/54b10119af40efed4e79bb57f487f86e",
+		"createdAt": "2018-03-07T20:42:23.745Z",
+		"description": "EC2 instance i-05f63e943a57f0f1b is querying a domain name that is associated with Bitcoin-related activity.",
+		"id": "54b10119af40efed4e79bb57f487f86e",
+		"partition": "aws",
+		"region": "ca-central-1",
+		"resource": {
+			"instanceDetails": {
+				"availabilityZone": "ca-central-1a",
+				"iamInstanceProfile": {
+					"arn": "arn:aws:iam::123456789012:instance-profile/aws-gd-tester-RedTeamInstanceProfile-1RRSKYIWAR8KZ",
+					"id": "AIPAI2JE3FS3YZMPH3G2W"
+				},
+				"imageDescription": "Amazon Linux 2 LTS Candidate AMI 2017.12.0.20180115 x86_64 HVM GP2",
+				"imageId": "ami-7549cc11",
+				"instanceId": "i-05f63e943a57f0f1b",
+				"instanceState": "running",
+				"instanceType": "m4.large",
+				"launchTime": "2018-03-07T19:06:11Z",
+				"networkInterfaces": [{
+					"ipv6Addresses": [],
+					"privateDnsName": "ip-172-16-0-21.ca-central-1.compute.internal",
+					"privateIpAddress": "172.16.0.21",
+					"privateIpAddresses": [{
+						"privateDnsName": "ip-172-16-0-21.ca-central-1.compute.internal",
+						"privateIpAddress": "172.16.0.21"
+					}],
+					"securityGroups": [{
+						"groupId": "sg-8c4b63e4",
+						"groupName": "aws-gd-tester-RedTeamSecurityGroup-E60DJ3AJ1GZE"
+					}],
+					"subnetId": "subnet-8e06fbe6",
+					"vpcId": "vpc-a853b9c0"
+				}],
+				"productCodes": [],
+				"tags": [{
+						"key": "aws:cloudformation:stack-name",
+						"value": "aws-gd-tester"
+					},
+					{
+						"key": "aws:cloudformation:stack-id",
+						"value": "arn:aws:cloudformation:ca-central-1:123456789012:stack/aws-gd-tester/2a4dcef0-223a-11e8-bad0-504dce15559a"
+					},
+					{
+						"key": "aws:cloudformation:logical-id",
+						"value": "RedTeam"
+					},
+					{
+						"key": "Name",
+						"value": "RedTeam"
+					}
+				]
+			},
+			"resourceType": "Instance"
+		},
+		"schemaVersion": "2.0",
+		"service": {
+			"action": {
+				"actionType": "DNS_REQUEST",
+				"dnsRequestAction": {
+					"blocked": false,
+					"domain": "xdn-xmr.pool.minergate.com",
+					"protocol": "UDP"
+				}
+			},
+			"additionalInfo": {
+				"threatListName": "ProofPoint"
+			},
+			"archived": false,
+			"count": 1.0,
+			"detectorId": "e0b0f494250d554901512384f84a887b",
+			"eventFirstSeen": "2018-03-07T19:29:24Z",
+			"eventLastSeen": "2018-03-07T19:29:24Z",
+			"resourceRole": "TARGET",
+			"serviceName": "guardduty"
+		},
+		"severity": 5.0,
+		"title": "Bitcoin-related domain name queried by EC2 instance i-05f63e943a57f0f1b.",
+		"type": "CryptoCurrency:EC2/BitcoinTool.B!DNS",
+		"updatedAt": "2018-03-07T20:42:23.745Z"
+	},
+	"detail-type": "GuardDuty Finding",
+	"id": "fc06274a-59a0-17e5-1830-5669d4e440cb",
+	"region": "ca-central-1",
+	"resources": [],
+	"source": "aws.guardduty",
+	"time": "2018-03-07T20:45:00Z",
+	"version": "0"
+}
