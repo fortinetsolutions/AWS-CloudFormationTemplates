@@ -51,7 +51,7 @@ config firewall policy
     next
 end
 config system ha
-    set group-name "test001”
+    set group-name "test001"
     set mode a-p
     set hbdev "port3" 50 
     set session-pickup enable
