@@ -1,32 +1,59 @@
-# AWS - Cloud Formation Templates
+# FortiGate Guard Duty Integration for FortiGate 6.0.0
 
-Cloud Formation Templates for getting you started in AWS with Fortinet.
+The solutions provided in this folder are currently a work in progress and should only be used to lab, demos, and beta testing.
 
-https://www.fortinet.com/aws/
+There is the Lambda script template that can be downloaded from this GitHub for your use.
 
-## Support
+## The first steps with AWS components to use the GuardDuty integration feature:
 
-Please contact your Fortinet representation for any comments, questions, considerations, and/or concerns.
+	- Deploy FortiGate 6.0.0
+    
+	- Sign up for AWS S3, GuardDuty, CloudWatch, and Lambda, and enable them for a initial set-up.
 
-# License
+	![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/GuardDuty/6.0/images/1-aws-gd.jpg)
+	![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/GuardDuty/6.0/images/2-aws-gd-log.jpg)
+	![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/GuardDuty/6.0/images/3-aws-lambda.jpg)
+    
+	- When findings occur in GuardDuty, the logs will get pushed to Cloudwatch.
 
-Copyright © 2017 Fortinet, Inc.
+	- Cloudwatch events will trigger the Lambda script for automated actions.
 
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
+	- If the following criteria is met:
+	  Either
+	  - connected direction is inbound  & 
+	    the finding contains an IP & 
+	    he severity is greater than the minimum score (configurable)
+	  Or
+	  - connection direction is unknown & 
+	    the finding contains an IP and matches certain known threat list (such as ProofPoint) that GuardDuty identifies & 
+	    the severity is greater than the minimum score (configurable)
+    
+	![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/GuardDuty/6.0/images/4-aws-lambda-param.jpg)
+ 
+    
+	then the IP will be considered black and appended to a file located in S3 bucket.
 
-The above copyright notice and this permission notice shall be included
-in all copies or substantial portions of the Software.
+	![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/GuardDuty/6.0/images/5-aws-s3-iplist.jpg)
+ 
+    
+## Configuration on FortiGate 6.0.0
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS OR FORTINET SUPPORT (TAC) 
-BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+After you deploy FortiGate 6.0.0, log in the admin console through HTTPS or connect with SSH.
+Configure External IP source either from GUI or CLI like the examples below.
+FortiGate will query the file as the external source of malicious IPs.
+
+	#GUI:
+
+	![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/GuardDuty/6.0/images/6-fgt-gui-externalIPsource.jpg)
+
+	#CLI:
+
+		config system external-resource
+		  edit "GuardDuty"
+		    set type address
+		    set resource "https://s3.us-east-2.amazonaws.com/ip-blacklist/ip.txt"
+		  next
+		end
+
+Then, you can create actions against those IPs (i.e. firewall rules) to protect resources
+
