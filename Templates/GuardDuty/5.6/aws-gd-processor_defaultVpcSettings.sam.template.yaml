@@ -6,6 +6,10 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
+        default: GuardDuty Service Enablement
+      Parameters:
+      - EnableGuardDuty
+    - Label:
         default: Environmental variables for Lambda function execution
       Parameters:
       - IPAddrObjPrefix
@@ -24,6 +28,13 @@ Metadata:
       - KeyAdministrator
 
 Parameters:
+  EnableGuardDuty:
+    Type: String
+    Description: 'Select yes if you want the template to enable GuardDuty in this region.  Select no if you already have GuardDuty enabled in this region.'
+    Default: 'no'
+    AllowedValues:
+    - 'yes'
+    - 'no'
   IPAddrObjPrefix:
     Description: 'Provide a short prefix (max length of 6) to append to the dynamic IPv4 based address objects used by the FortiGate.  Here is an example object if you use the default value (gdIp-1.2.3.4/32)'
     Type: String
@@ -112,7 +123,17 @@ Mappings:
     us-west-2: 
       LambdaCode: fortibucket-us-west-2
 
+Conditions:
+  CreateGuardDutyDetector:
+    !Equals [!Ref EnableGuardDuty, 'yes']
+
 Resources:
+  GuardDutyDetector:
+    Type: "AWS::GuardDuty::Detector"
+    Condition: CreateGuardDutyDetector
+    Properties:
+      Enable: True
+
   LambdaKmsKeyAlias:
     Type: AWS::KMS::Alias
     Properties:

@@ -6,6 +6,10 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
+        default: GuardDuty Service Enablement
+      Parameters:
+      - EnableGuardDuty
+    - Label:
         default: VPC Configuration for Lambda function execution
       Parameters:
       - VPCID
@@ -30,6 +34,13 @@ Metadata:
       - KeyAdministrator
 
 Parameters:
+  EnableGuardDuty:
+    Type: String
+    Description: 'Select yes if you want the template to enable GuardDuty in this region.  Select no if you already have GuardDuty enabled in this region.'
+    Default: 'no'
+    AllowedValues:
+    - 'yes'
+    - 'no'
   VPCID:
     Type: AWS::EC2::VPC::Id
     Description: Select the VPC to deploy the Lambda function within
@@ -127,7 +138,17 @@ Mappings:
     us-west-2: 
       LambdaCode: fortibucket-us-west-2
 
+Conditions:
+  CreateGuardDutyDetector:
+    !Equals [!Ref EnableGuardDuty, 'yes']
+
 Resources:
+  GuardDutyDetector:
+    Type: "AWS::GuardDuty::Detector"
+    Condition: CreateGuardDutyDetector
+    Properties:
+      Enable: True
+
   LambdaSecGrp1:
     Type: AWS::EC2::SecurityGroup
     Properties:
