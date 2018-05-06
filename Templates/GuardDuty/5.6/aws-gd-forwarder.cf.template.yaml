@@ -5,6 +5,10 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
+        default: GuardDuty Service Enablement
+      Parameters:
+      - EnableGuardDuty
+    - Label:
         default: Main Lambda function information for invocation from other regions
       Parameters:
       - TargetLambdaName
@@ -12,6 +16,13 @@ Metadata:
       - TargetLambdaARN
 
 Parameters:
+  EnableGuardDuty:
+    Type: String
+    Description: 'Select yes if you want the template to enable GuardDuty in this region.  Select no if you already have GuardDuty enabled in this region.'
+    Default: 'no'
+    AllowedValues:
+    - 'yes'
+    - 'no'
   TargetLambdaName:
     Description: 'Provide the Lambda Function name from the main template.  This can be referenced by looking at the main template outputs.'
     Type: String
@@ -58,7 +69,17 @@ Mappings:
     us-west-2: 
       LambdaCode: fortibucket-us-west-2
 
+Conditions:
+  CreateGuardDutyDetector:
+    !Equals [!Ref EnableGuardDuty, 'yes']
+
 Resources:
+  GuardDutyDetector:
+    Type: "AWS::GuardDuty::Detector"
+    Condition: CreateGuardDutyDetector
+    Properties:
+      Enable: True
+
   LambdaFunctionRole:
     Type: AWS::IAM::Role
     Properties:
