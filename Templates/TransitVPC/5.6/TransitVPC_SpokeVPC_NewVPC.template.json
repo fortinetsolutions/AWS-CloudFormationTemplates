@@ -1,0 +1,286 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS CloudFormation Template to launch a spoke VPC with 2 Private Subnets and an attached VPG with the transit tag set",
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": {
+            "default": "VPC Configuration"
+          },
+          "Parameters": [
+            "VPCCIDR",
+            "PrivateSubnet1AZ",
+            "PrivateSubnet2AZ",
+            "PrivateSubnet1CIDR",
+            "PrivateSubnet2CIDR",
+            "SpokeTag",
+            "SpokeTagValue"
+          ]
+        }
+      ]
+    }
+  },
+  "Parameters": {
+    "VPCCIDR": {
+      "Type": "String",
+      "Default": "172.16.0.0/16",
+      "Description": "Enter the VPC CIDR that you want to use"
+    },
+    "PrivateSubnet1AZ": {
+      "Type": "AWS::EC2::AvailabilityZone::Name",
+      "Description": "Select the AZ for private subnet 1"
+    },
+    "PrivateSubnet2AZ": {
+      "Type": "AWS::EC2::AvailabilityZone::Name",
+      "Description": "Select the AZ for the private subnet 2"
+    },
+    "PrivateSubnet1CIDR": {
+      "Type": "String",
+      "Default": "172.16.1.0/24",
+      "Description": "Enter the value of the private subnet 1"
+    },
+    "PrivateSubnet2CIDR": {
+      "Type": "String",
+      "Default": "172.16.2.0/24",
+      "Description": "Enter the value of the private subnet 2"
+    },
+    "SpokeTag": {
+      "Type": "String",
+      "Default": "transitvpc:spoke",
+      "Description": "Tag to use to identify spoke VGWs to connect to FortiGate Transit VPC."
+    },
+    "SpokeTagValue": {
+      "Type": "String",
+      "Default": "true",
+      "Description": "Tag value to use to identify spoke VGWs to connect to FortiGate Transit VPC."
+    }
+  },
+  "Resources": {
+    "VPCID": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": {
+          "Ref": "VPCCIDR"
+        },
+        "EnableDnsSupport": "true",
+        "EnableDnsHostnames": "true",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Ref": "AWS::StackName"
+            }
+          }
+        ]
+      }
+    },
+    "SpokeVPNGateway": {
+      "Type": "AWS::EC2::VPNGateway",
+      "Properties": {
+        "Type": "ipsec.1",
+        "Tags": [
+          {
+            "Key": {
+              "Ref": "SpokeTag"
+            },
+            "Value": {
+              "Ref": "SpokeTagValue"
+            }
+          }
+        ]
+      }
+    },
+    "SpokeVPNGatewayAttachment": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPCID"
+        },
+        "VpnGatewayId": {
+          "Ref": "SpokeVPNGateway"
+        }
+      },
+      "DependsOn": "SpokeVPNGateway"
+    },
+    "PrivateSubnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPCID"
+        },
+        "CidrBlock": {
+          "Ref": "PrivateSubnet1CIDR"
+        },
+        "AvailabilityZone": {
+          "Ref": "PrivateSubnet1AZ"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "PrivateSubnet1"
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "PrivateSubnet2": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPCID"
+        },
+        "CidrBlock": {
+          "Ref": "PrivateSubnet2CIDR"
+        },
+        "AvailabilityZone": {
+          "Ref": "PrivateSubnet2AZ"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "PrivateSubnet2"
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "PrivateSubnet1RT": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPCID"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "PrivateSubnet1RT"
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "PrivateSubnet2RT": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPCID"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName"
+                  },
+                  "PrivateSubnet2RT"
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "PrivateSubnet1RTassociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PrivateSubnet1"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateSubnet1RT"
+        }
+      }
+    },
+    "PrivateSubnet2RTassociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "PrivateSubnet2"
+        },
+        "RouteTableId": {
+          "Ref": "PrivateSubnet2RT"
+        }
+      }
+    },
+    "SpokeVPNGatewayRoutePropagation": {
+      "Type": "AWS::EC2::VPNGatewayRoutePropagation",
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "PrivateSubnet1RT"
+          },
+          {
+            "Ref": "PrivateSubnet2RT"
+          }
+        ],
+        "VpnGatewayId": {
+          "Ref": "SpokeVPNGateway"
+        }
+      },
+      "DependsOn": "SpokeVPNGatewayAttachment"
+    }
+  },
+  "Outputs": {
+    "SubnetID1": {
+      "Value": {
+        "Ref": "PrivateSubnet1"
+      },
+      "Description": "Subnet ID of Private Subnet 1"
+    },
+    "SubnetID2": {
+      "Value": {
+        "Ref": "PrivateSubnet2"
+      },
+      "Description": "Subnet ID of Private Subnet 2"
+    },
+    "AZ1": {
+      "Value": {
+        "Ref": "PrivateSubnet1AZ"
+      },
+      "Description": "AZ of Private Subnet 1"
+    },
+    "AZ2": {
+      "Value": {
+        "Ref": "PrivateSubnet2AZ"
+      },
+      "Description": "AZ of Private Subnet 2"
+    },
+    "VPCID": {
+      "Value": {
+        "Ref": "VPCID"
+      },
+      "Description": "VPC ID"
+    }
+  }
+}
