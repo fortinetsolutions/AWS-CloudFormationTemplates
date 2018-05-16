@@ -166,36 +166,38 @@
 		"InitialFortiGateInstanceType": {
 			"Type": "String",
 			"Default": "c4.large",
-			"AllowedValues": [
-				"m3.medium",
-				"m3.large",
-				"m3.xlarge",
-				"m3.2xlarge",
+			"Description": "Enter the instance type and size that you want for the Initial FortiGates",
+                        "AllowedValues": [
+				"t2.small",
 				"c4.large",
 				"c4.xlarge",
 				"c4.2xlarge",
-				"c3.large",
-				"c3.xlarge",
-				"c3.2xlarge"
-			],
-			"Description": "Enter the instance type and size that you want for the Initial FortiGates"
+				"c4.4xlarge",
+				"c4.8xlarge",
+				"c5.large",
+				"c5.xlarge",
+				"c5.2xlarge",
+				"c5.4xlarge",
+				"c5.9xlarge"
+                        ]
 		},
 		"FortiGateInstanceType": {
 			"Type": "String",
 			"Default": "c4.large",
-			"AllowedValues": [
-				"m3.medium",
-				"m3.large",
-				"m3.xlarge",
-				"m3.2xlarge",
+			"Description": "Enter the instance type and size that you want for the AutoScaled FortiGates",
+                        "AllowedValues": [
+				"t2.small",
 				"c4.large",
 				"c4.xlarge",
 				"c4.2xlarge",
-				"c3.large",
-				"c3.xlarge",
-				"c3.2xlarge"
-			],
-			"Description": "Enter the instance type and size that you want for the AutoScaled FortiGates"
+				"c4.4xlarge",
+				"c4.8xlarge",
+				"c5.large",
+				"c5.xlarge",
+				"c5.2xlarge",
+				"c5.4xlarge",
+				"c5.9xlarge"
+                        ]
 		},
 		"ASKeyPair": {
 			"Type": "AWS::EC2::KeyPair::KeyName",

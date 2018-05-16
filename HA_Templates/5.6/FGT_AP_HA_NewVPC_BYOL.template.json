@@ -126,8 +126,17 @@
 		"FortiGateInstanceType": {
 			"Type": "String",
 			"Default": "c4.xlarge",
-			"AllowedValues": ["c4.xlarge", "c4.2xlarge", "c4.4xlarge", "c4.8xlarge"],
-			"Description": "Enter the instance type and size for the FortiGates"
+			"Description": "Enter the instance type and size for the FortiGates",
+			"AllowedValues": [
+				"c4.xlarge",
+				"c4.2xlarge",
+				"c4.4xlarge",
+				"c4.8xlarge",
+				"c5.xlarge",
+				"c5.2xlarge",
+				"c5.4xlarge",
+				"c5.9xlarge"
+			]
 		},
 		"KeyPair": {
 			"Type": "AWS::EC2::KeyPair::KeyName",

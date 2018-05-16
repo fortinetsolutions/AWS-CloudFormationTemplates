@@ -9,24 +9,21 @@
 		"FortiGateInstanceType": {
 			"Type": "String",
 			"Default": "c4.xlarge",
+			"Description": "Enter the instance type of FortiGates",
+			"ConstraintDescription": "must be a valid EC2 instance type.",
 			"AllowedValues": [
-				"m3.medium",
-				"m3.large",
-				"m3.xlarge",
-				"m3.2xlarge",
+				"t2.small",
 				"c4.large",
 				"c4.xlarge",
 				"c4.2xlarge",
 				"c4.4xlarge",
 				"c4.8xlarge",
-				"c3.large",
-				"c3.xlarge",
-				"c3.2xlarge",
-				"c3.4xlarge",
-				"c3.8xlarge"
-			],
-			"Description": "Enter the instance type of FortiGates",
-			"ConstraintDescription": "must be a valid EC2 instance type."
+				"c5.large",
+				"c5.xlarge",
+				"c5.2xlarge",
+				"c5.4xlarge",
+				"c5.9xlarge"
+			]
 		},
 		"LicenseType": {
 			"Description": "Select the License Type for your Fortinet Gateway Instance, between BYOL and Pay As You Go AMI's: - (FortiGate OnDemand AMI - Pay As You Go & FortiGate BYOL AMI - BYOL )",
