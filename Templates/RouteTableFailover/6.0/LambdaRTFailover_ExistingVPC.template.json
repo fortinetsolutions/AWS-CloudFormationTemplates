@@ -1,0 +1,533 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "Launch a Lambda Function and API Gateway based Health Check solution",
+	"Metadata": {
+		"AWS::CloudFormation::Interface": {
+			"ParameterGroups": [{
+					"Label": {
+						"default": "Environmental variables for Lambda function execution"
+					},
+					"Parameters": [
+						"LambdaHealthCheckPort",
+						"InstanceIPs",
+						"InstanceENIs",
+						"az1RouteTables",
+						"az2RouteTables",
+						"BaseSecurityGroup"
+					]
+				},
+				{
+					"Label": {
+						"default": "VPC Configuration for Lambda function execution"
+					},
+					"Parameters": [
+						"VPCID",
+						"PrivateSubnet1",
+						"PrivateSubnet2"
+					]
+				}
+			]
+		}
+	},
+	"Parameters": {
+		"VPCID": {
+			"Type": "AWS::EC2::VPC::Id",
+			"Description": "Select the VPC to deploy the Lambda function within"
+		},
+		"PrivateSubnet1": {
+			"Type": "AWS::EC2::Subnet::Id",
+			"Description": "Select the first private subnet for the Lambda function to use"
+		},
+		"PrivateSubnet2": {
+			"Type": "AWS::EC2::Subnet::Id",
+			"Description": "Select the second private subnet in a different availability zone for the Lambda function"
+		},
+		"InstanceIPs": {
+			"Type": "String",
+			"Description": "Enter a comma delimited list of an AZ1 then AZ2 IP that will be monitored",
+			"Default": "10.0.1.254,10.0.3.254"
+		},
+		"InstanceENIs": {
+			"Type": "String",
+			"Description": "Enter a comma delimited list of an AZ1 then AZ2 ENI that will be monitored",
+			"Default": "eni-12345abcdef,eni-67890ghijkl"
+		},
+		"az1RouteTables": {
+			"Type": "String",
+			"Description": "Enter a single or comma delimited list of AZ1 Route Tables that will be monitored",
+			"Default": "rtb-12345abcdef"
+		},
+		"az2RouteTables": {
+			"Type": "String",
+			"Description": "Enter a single or comma delimited list of AZ2 Route Tables that will be monitored",
+			"Default": "rtb-67890ghijkl"
+		},
+		"LambdaHealthCheckPort": {
+			"Type": "String",
+			"Description": "Enter the health check port that will be monitored",
+			"Default": "541"
+		},
+		"BaseSecurityGroup": {
+			"Type": "AWS::EC2::SecurityGroup::Id",
+			"Description": "Select the security group used by your instances that will be monitored"
+		}
+	},
+	"Mappings": {
+		"RegionMap": {
+			"us-east-1": {
+				"LambdaCode": "fortibucket-us-east-1"
+			},
+			"us-east-2": {
+				"LambdaCode": "fortibucket-us-east-2"
+			},
+			"eu-west-1": {
+				"LambdaCode": "fortibucket-eu-west-1"
+			},
+			"eu-west-2": {
+				"LambdaCode": "fortibucket-eu-west-2"
+			},
+			"eu-west-3": {
+				"LambdaCode": "fortibucket-eu-west-3"
+			},
+			"eu-central-1": {
+				"LambdaCode": "fortibucket-eu-central-1"
+			},
+			"ap-northeast-1": {
+				"LambdaCode": "fortibucket-ap-northeast-1"
+			},
+			"ap-northeast-2": {
+				"LambdaCode": "fortibucket-ap-northeast-2"
+			},
+			"ap-southeast-1": {
+				"LambdaCode": "fortibucket-ap-southeast-1"
+			},
+			"ap-southeast-2": {
+				"LambdaCode": "fortibucket-ap-southeast-2"
+			},
+			"ap-south-1": {
+				"LambdaCode": "fortibucket-ap-south-1"
+			},
+			"sa-east-1": {
+				"LambdaCode": "fortibucket-sa-east-1"
+			},
+			"us-west-1": {
+				"LambdaCode": "fortibucket-us-west-1"
+			},
+			"us-west-2": {
+				"LambdaCode": "fortibucket-us-west-2"
+			},
+			"ca-central-1": {
+				"LambdaCode": "fortibucket-ca-central-1"
+			}
+		}
+	},
+	"Resources": {
+		"HealthCheckAPI": {
+			"Type": "AWS::ApiGateway::RestApi",
+			"Properties": {
+				"Name": {
+					"Fn::Join": [
+						"", [{
+								"Ref": "AWS::StackName"
+							},
+							"-HealthCheckAPI"
+						]
+					]
+				},
+				"Description": "API used for health check requests",
+				"ApiKeySourceType": "HEADER",
+				"FailOnWarnings": true
+			}
+		},
+		"HealthCheckAPIAccount": {
+			"Type": "AWS::ApiGateway::Account",
+			"Properties": {
+				"CloudWatchRoleArn": {
+					"Fn::GetAtt": ["HealthCheckAPIRole", "Arn"]
+				}
+			}
+		},
+		"HealthCheckAPIDeployment": {
+			"Type": "AWS::ApiGateway::Deployment",
+			"DependsOn": ["HealthCheckAPIMethodPOST"],
+			"Properties": {
+				"RestApiId": {
+					"Ref": "HealthCheckAPI"
+				},
+				"StageName": "prod"
+			}
+		},
+		"HealthCheckAPIResource": {
+			"Type": "AWS::ApiGateway::Resource",
+			"Properties": {
+				"RestApiId": {
+					"Ref": "HealthCheckAPI"
+				},
+				"ParentId": {
+					"Fn::GetAtt": ["HealthCheckAPI", "RootResourceId"]
+				},
+				"PathPart": "healthcheck"
+			}
+		},
+		"HealthCheckAPIMethodPOST": {
+			"DependsOn": "PermissionForAPIGatewayToEnvokeLambda",
+			"Type": "AWS::ApiGateway::Method",
+			"Properties": {
+				"AuthorizationType": "NONE",
+				"ApiKeyRequired": true,
+				"HttpMethod": "POST",
+				"Integration": {
+					"Type": "AWS",
+					"IntegrationHttpMethod": "POST",
+					"Uri": {
+						"Fn::Join": ["", ["arn:aws:apigateway:", {
+							"Ref": "AWS::Region"
+						}, ":lambda:path/2015-03-31/functions/", {
+							"Fn::GetAtt": ["HealthCheckLambda", "Arn"]
+						}, "/invocations"]]
+					},
+					"IntegrationResponses": [{
+						"StatusCode": 200
+					}]
+				},
+				"ResourceId": {
+					"Ref": "HealthCheckAPIResource"
+				},
+				"RestApiId": {
+					"Ref": "HealthCheckAPI"
+				},
+				"MethodResponses": [{
+					"StatusCode": 200
+				}]
+			}
+		},
+		"HealthCheckAPIUsagePlan": {
+			"DependsOn": ["HealthCheckAPIDeployment"],
+			"Type": "AWS::ApiGateway::UsagePlan",
+			"Properties": {
+				"ApiStages": [{
+					"ApiId": {
+						"Ref": "HealthCheckAPI"
+					},
+					"Stage": "prod"
+				}],
+				"Description": "HealthCheckAPIUsagePlan",
+				"UsagePlanName": {
+					"Fn::Join": [
+						"", [{
+								"Ref": "AWS::StackName"
+							},
+							"-HealthCheckAPIUsagePlan"
+						]
+					]
+				}
+			}
+		},
+		"HealthCheckAPIUsagePlanKey": {
+			"Type": "AWS::ApiGateway::UsagePlanKey",
+			"Properties": {
+				"KeyId": {
+					"Ref": "HealthCheckAPIKey"
+				},
+				"KeyType": "API_KEY",
+				"UsagePlanId": {
+					"Ref": "HealthCheckAPIUsagePlan"
+				}
+			}
+		},
+		"HealthCheckAPIKey": {
+			"Type": "AWS::ApiGateway::ApiKey",
+			"DependsOn": ["HealthCheckAPIDeployment"],
+			"Properties": {
+				"Name": {
+					"Fn::Join": [
+						"", [{
+								"Ref": "AWS::StackName"
+							},
+							"-HealthCheckAPIKey"
+						]
+					]
+				},
+				"Description": "HealthCheckAPIKey",
+				"Enabled": "true",
+				"StageKeys": [{
+					"RestApiId": {
+						"Ref": "HealthCheckAPI"
+					},
+					"StageName": "prod"
+				}]
+			}
+		},
+		"CloudWatchEventRule": {
+			"Type": "AWS::Events::Rule",
+			"Properties": {
+				"Description": "CloudWatchEventRule",
+				"ScheduleExpression": "rate(1 minute)",
+				"State": "ENABLED",
+				"Targets": [{
+					"Arn": {
+						"Fn::GetAtt": [
+							"HealthCheckLambda",
+							"Arn"
+						]
+					},
+					"Id": "TargetFunctionV1"
+				}]
+			}
+		},
+		"HealthCheckLambda": {
+			"Type": "AWS::Lambda::Function",
+			"DependsOn": [
+				"HealthCheckLambdaRole",
+				"HealthCheckLambdaPolicy"
+			],
+			"Properties": {
+				"Code": {
+					"S3Bucket": {
+						"Fn::FindInMap": ["RegionMap", {
+							"Ref": "AWS::Region"
+						}, "LambdaCode"]
+					},
+					"S3Key": "healthcheck.zip"
+				},
+				"Environment": {
+					"Variables": {
+						"InstanceIPs": {
+							"Ref": "InstanceIPs"
+						},
+						"InstanceENIs": {
+							"Ref": "InstanceENIs"
+						},
+						"az1RouteTables": {
+							"Ref": "az1RouteTables"
+						},
+						"az2RouteTables": {
+							"Ref": "az2RouteTables"
+						},
+						"HealthCheckPort": {
+							"Ref": "LambdaHealthCheckPort"
+						}
+					}
+				},
+				"Role": {
+					"Fn::GetAtt": [
+						"HealthCheckLambdaRole",
+						"Arn"
+					]
+				},
+				"VpcConfig": {
+					"SecurityGroupIds": [{
+						"Ref": "LambdaSecGrp"
+					}],
+					"SubnetIds": [{
+							"Ref": "PrivateSubnet1"
+						},
+						{
+							"Ref": "PrivateSubnet2"
+						}
+					]
+				},
+				"Timeout": 60,
+				"Handler": "healthcheck.lambda_handler",
+				"Runtime": "python2.7",
+				"MemorySize": 128
+			}
+		},
+		"LambdaSecGrp": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"Properties": {
+				"GroupDescription": "LambdaSecGrp",
+				"VpcId": {
+					"Ref": "VPCID"
+				},
+				"SecurityGroupIngress": [{
+					"IpProtocol": "-1",
+					"CidrIp": "0.0.0.0/0"
+				}],
+				"SecurityGroupEgress": [{
+					"IpProtocol": "-1",
+					"CidrIp": "0.0.0.0/0"
+				}]
+			}
+		},
+		"HealthCheckAPIRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [{
+						"Effect": "Allow",
+						"Principal": {
+							"Service": ["apigateway.amazonaws.com"]
+						},
+						"Action": ["sts:AssumeRole"]
+					}]
+				},
+				"Policies": [{
+					"PolicyName": "ApiGatewayLogsPolicy",
+					"PolicyDocument": {
+						"Version": "2012-10-17",
+						"Statement": [{
+							"Effect": "Allow",
+							"Action": [
+								"logs:CreateLogGroup",
+								"logs:CreateLogStream",
+								"logs:DescribeLogGroups",
+								"logs:DescribeLogStreams",
+								"logs:PutLogEvents",
+								"logs:GetLogEvents",
+								"logs:FilterLogEvents"
+							],
+							"Resource": "*"
+						}]
+					}
+				}]
+			}
+		},
+		"PermissionForAPIGatewayToEnvokeLambda": {
+			"Type": "AWS::Lambda::Permission",
+			"Properties": {
+				"Action": "lambda:invokeFunction",
+				"FunctionName": {
+					"Fn::GetAtt": ["HealthCheckLambda", "Arn"]
+				},
+				"Principal": "apigateway.amazonaws.com",
+				"SourceArn": {
+					"Fn::Join": ["", ["arn:aws:execute-api:", {
+						"Ref": "AWS::Region"
+					}, ":", {
+						"Ref": "AWS::AccountId"
+					}, ":", {
+						"Ref": "HealthCheckAPI"
+					}, "/*"]]
+				}
+			}
+		},
+		"PermissionForEventsToInvokeLambda": {
+			"Type": "AWS::Lambda::Permission",
+			"Properties": {
+				"FunctionName": {
+					"Ref": "HealthCheckLambda"
+				},
+				"Action": "lambda:InvokeFunction",
+				"Principal": "events.amazonaws.com",
+				"SourceArn": {
+					"Fn::GetAtt": [
+						"CloudWatchEventRule",
+						"Arn"
+					]
+				}
+			}
+		},
+		"HealthCheckLambdaRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [{
+						"Effect": "Allow",
+						"Principal": {
+							"Service": [
+								"lambda.amazonaws.com"
+							]
+						},
+						"Action": [
+							"sts:AssumeRole"
+						]
+					}]
+				},
+				"Path": "/"
+			}
+		},
+		"HealthCheckLambdaPolicy": {
+			"DependsOn": [
+				"HealthCheckLambdaRole"
+			],
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "HealthCheckLambdaPolicy",
+				"Roles": [{
+					"Ref": "HealthCheckLambdaRole"
+				}],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [{
+						"Effect": "Allow",
+						"Action": [
+							"logs:CreateLogGroup",
+							"logs:CreateLogStream",
+							"logs:PutLogEvents",
+							"ec2:CreateNetworkInterface",
+							"ec2:DescribeNetworkInterfaces",
+							"ec2:DeleteNetworkInterface",
+							"ec2:DescribeRouteTables",
+							"ec2:ReplaceRoute"
+						],
+						"Resource": [
+							"*"
+						]
+					}]
+				}
+			}
+		},
+		"BaseSecGrpHealthCheckrule": {
+			"Type": "AWS::EC2::SecurityGroupIngress",
+			"Properties": {
+				"GroupId": {
+					"Ref": "BaseSecurityGroup"
+				},
+				"IpProtocol": "tcp",
+				"FromPort": {
+					"Ref": "LambdaHealthCheckPort"
+				},
+				"ToPort": {
+					"Ref": "LambdaHealthCheckPort"
+				},
+				"SourceSecurityGroupId": {
+					"Ref": "LambdaSecGrp"
+				}
+			}
+		},
+		"VPCEndpointEC2": {
+			"Type": "AWS::EC2::VPCEndpoint",
+			"Properties": {
+				"VpcEndpointType": "Interface",
+				"PrivateDnsEnabled": true,
+				"VpcId": {
+					"Ref": "VPCID"
+				},
+				"SecurityGroupIds": [{
+					"Ref": "LambdaSecGrp"
+				}],
+				"SubnetIds": [{
+					"Ref": "PrivateSubnet1"
+				}, {
+					"Ref": "PrivateSubnet2"
+				}],
+				"ServiceName": {
+					"Fn::Join": ["", ["com.amazonaws.", {
+						"Ref": "AWS::Region"
+					}, ".ec2"]]
+				}
+			}
+		}
+	},
+	"Outputs": {
+		"HealthCheckAPIURL": {
+			"Description": "AWS API Gateway URL",
+			"Value": {
+				"Fn::Join": ["", ["https://", {
+					"Ref": "HealthCheckAPI"
+				}, ".execute-api.", {
+					"Ref": "AWS::Region"
+				}, ".amazonaws.com", "/prod/healthcheck"]]
+			}
+		},
+		"HealthCheckAPIKey": {
+			"Description": "AWS API Key ID (get actual key value from AWS console)",
+			"Value": {
+				"Ref": "HealthCheckAPIKey"
+			}
+		}
+	}
+}
