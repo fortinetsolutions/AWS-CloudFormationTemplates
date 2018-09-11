@@ -35,17 +35,17 @@
 			]
 		},
 		"SourceS3Bucket": {
-			"Description": " [Optional - BYOL or OnDemand] Enter the Source S3 Bucket name, where your license files and config files exists",
+			"Description": " [REQUIRED if BYOL licensing is used] Enter the Source S3 Bucket name, where your license files and config files exists",
 			"Type": "String",
 			"Default": ""
 		},
 		"SourceS3BucketRegion": {
-			"Description": "[Optional - BYOL or OnDemand] Enter the Source S3 Bucket Region",
+			"Description": "[REQUIRED if BYOL licensing is used] Enter the Source S3 Bucket Region",
 			"Type": "String",
 			"Default": ""
 		},
 		"Fgt1LicenseFile": {
-			"Description": "[Optional - BYOL only] Enter the name of the license file for FortiGate1",
+			"Description": "[REQUIRED if BYOL licensing is used] Enter the name of the license file for FortiGate1",
 			"Type": "String",
 			"Default": ""
 		},
@@ -55,7 +55,7 @@
 			"Default": ""
 		},
 		"Fgt2LicenseFile": {
-			"Description": "[Optional - BYOL only] Enter the name of the license file for FortiGate2",
+			"Description": "[REQUIRED if BYOL licensing is used] Enter the name of the license file for FortiGate2",
 			"Type": "String",
 			"Default": ""
 		},
@@ -352,7 +352,7 @@
 				},
 				"AvailabilityZone": {
 					"Fn::Select": [
-						"1",
+						"0",
 						{
 							"Fn::GetAZs": ""
 						}
@@ -402,7 +402,7 @@
 				},
 				"AvailabilityZone": {
 					"Fn::Select": [
-						"0",
+						"1",
 						{
 							"Fn::GetAZs": ""
 						}
@@ -1031,7 +1031,7 @@
 							"LambdaCode"
 						]
 					},
-					"S3Key": "main_functionv2.zip"
+					"S3Key": "main_functionv3.zip"
 				},
 				"Environment": {
 					"Variables": {
@@ -1199,7 +1199,7 @@
 							"LambdaCode"
 						]
 					},
-					"S3Key": "56_worker_functionv2.zip"
+					"S3Key": "56_worker_functionv3.zip"
 				},
 				"Environment": {
 					"Variables": {
