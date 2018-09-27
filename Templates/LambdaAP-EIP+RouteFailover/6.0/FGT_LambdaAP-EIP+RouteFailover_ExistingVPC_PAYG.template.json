@@ -1,0 +1,1581 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "(v1.0) AWS CloudFormation Template to deploy a Lambda based Active-Passive EIP & Route Failover solution with two FortiGates",
+	"Metadata": {
+		"AWS::CloudFormation::Interface": {
+			"ParameterGroups": [{
+					"Label": {
+						"default": "VPC Configuration"
+					},
+					"Parameters": [
+						"VPCID",
+						"VPCCIDR",
+						"PublicSubnet1",
+						"PrivateSubnet1",
+						"PublicSubnet2",
+						"PrivateSubnet2"
+					]
+				},
+				{
+					"Label": {
+						"default": "FortiGate Instance Configuration"
+					},
+					"Parameters": [
+						"AZForFGT1",
+						"AZForFGT2",
+						"InstanceType",
+						"CIDRForInstanceAccess",
+						"KeyPair",
+						"PublicSubnet1RouterIP",
+						"PublicSubnet1DnsIP",
+						"PublicSubnet2RouterIP",
+						"PublicSubnet2DnsIP"
+					]
+				},
+				{
+					"Label": {
+						"default": "Interface IP Configuration for FortiGate1"
+					},
+					"Parameters": [
+						"FortiGate1PublicIP",
+						"FortiGate1SecondPublicIP",
+						"FortiGate1PrivateIP"
+
+					]
+				},
+				{
+					"Label": {
+						"default": "Interface IP Configuration for FortiGate2"
+					},
+					"Parameters": [
+						"FortiGate2PublicIP",
+						"FortiGate2SecondPublicIP",
+						"FortiGate2PrivateIP"
+
+					]
+				},
+				{
+					"Label": {
+						"default": "Lambda Configuration"
+					},
+					"Parameters": [
+						"HAPairTagValue",
+						"LambdaHealthCheckPort",
+						"EmailNotification"
+					]
+				}
+			]
+		}
+	},
+	"Parameters": {
+		"VPCID": {
+			"Type": "AWS::EC2::VPC::Id",
+			"Description": "Select the VPC to use"
+		},
+		"VPCCIDR": {
+			"Type": "String",
+			"Default": "10.0.0.0/16",
+			"Description": "Provide the network CIDR for the VPC"
+		},
+		"PublicSubnet1": {
+			"Type": "AWS::EC2::Subnet::Id",
+			"Description": "Select the subnet to use for PublicSubnet1"
+		},
+		"PrivateSubnet1": {
+			"Type": "AWS::EC2::Subnet::Id",
+			"Description": "Select the subnet to use for  PrivateSubnet1"
+		},
+		"PublicSubnet2": {
+			"Type": "AWS::EC2::Subnet::Id",
+			"Description": "Select the subnet to use for PublicSubnet2"
+		},
+		"PrivateSubnet2": {
+			"Type": "AWS::EC2::Subnet::Id",
+			"Description": "Select the subnet to use for PrivateSubnet2"
+		},
+		"AZForFGT1": {
+			"Type": "AWS::EC2::AvailabilityZone::Name",
+			"Description": "Select an Availability Zone for FortiGate1"
+		},
+		"AZForFGT2": {
+			"Type": "AWS::EC2::AvailabilityZone::Name",
+			"Description": "Select an Availability Zone for FortiGate2"
+		},
+		"InstanceType": {
+			"Type": "String",
+			"Default": "c5.large",
+			"Description": "Select the instance type for the FortiGates",
+			"AllowedValues": [
+				"t2.small",
+				"c4.large",
+				"c4.xlarge",
+				"c4.2xlarge",
+				"c4.4xlarge",
+				"c4.8xlarge",
+				"c5.large",
+				"c5.xlarge",
+				"c5.2xlarge",
+				"c5.4xlarge",
+				"c5.9xlarge"
+			]
+		},
+		"CIDRForInstanceAccess": {
+			"Type": "String",
+			"Default": "0.0.0.0/0",
+			"Description": "Provide a network CIDR from which the FortiGate instances will be accessed"
+		},
+		"KeyPair": {
+			"Type": "AWS::EC2::KeyPair::KeyName",
+			"Description": "Select a keypair to associate with the FortiGates"
+		},
+		"PublicSubnet1RouterIP": {
+			"Type": "String",
+			"Default": "10.0.0.1",
+			"Description": "Provide the IP address of the AWS intrinsic router (First IP from PublicSubnet1)"
+		},
+		"PublicSubnet2RouterIP": {
+			"Type": "String",
+			"Default": "10.0.2.1",
+			"Description": "Provide the IP address of the AWS intrinsic router (First IP from PublicSubnet2)"
+		},
+		"PublicSubnet1DnsIP": {
+			"Type": "String",
+			"Default": "10.0.0.2",
+			"Description": "Provide the IP address of the AWS intrinsic dns server (Second IP from PublicSubnet1)"
+		},
+		"PublicSubnet2DnsIP": {
+			"Type": "String",
+			"Default": "10.0.2.2",
+			"Description": "Provide the IP address of the AWS intrinsic dns server (Second IP from PublicSubnet2)"
+		},
+		"FortiGate1PublicIP": {
+			"Type": "String",
+			"Default": "10.0.0.10/24",
+			"Description": "Provide the primary IP address in CIDR form for the public interface of FortiGate1 (IP from PublicSubnet1)"
+		},
+		"FortiGate2PublicIP": {
+			"Type": "String",
+			"Default": "10.0.2.10/24",
+			"Description": "Provide the primary IP address in CIDR form for the public interface of FortiGate2 (IP from PublicSubnet2)"
+		},
+		"FortiGate1PrivateIP": {
+			"Type": "String",
+			"Default": "10.0.1.10/24",
+			"Description": "Provide the IP address in CIDR form for the private interface of FortiGate1 (IP from PrivateSubnet1)"
+		},
+		"FortiGate2PrivateIP": {
+			"Type": "String",
+			"Default": "10.0.3.10/24",
+			"Description": "Provide the IP address in CIDR form for the public interface of FortiGate2 (IP from PrivateSubnet2)"
+		},
+		"FortiGate1SecondPublicIP": {
+			"Type": "String",
+			"Default": "10.0.0.11/24",
+			"Description": "Provide the second IP address in CIDR form for the public interface of FortiGate1 (IP from PublicSubnet1)"
+		},
+		"FortiGate2SecondPublicIP": {
+			"Type": "String",
+			"Default": "10.0.2.11/24",
+			"Description": "Provide the second IP address in CIDR form for the public interface of FortiGate2 (IP from PublicSubnet2)"
+		},
+		"HAPairTagValue": {
+			"Type": "String",
+			"Default": "pair1",
+			"Description": "Provide a string value for the ha:pair tag to uniquely identify the two HA instances within your VPC"
+		},
+		"LambdaHealthCheckPort": {
+			"Type": "String",
+			"Default": "541",
+			"Description": "Provide the health check port that will be monitored by Lambda"
+		},
+		"EmailNotification": {
+			"Type": "String",
+			"Default": "admin@example.com",
+			"Description": "Provide an email address to receive notifications when the CloudWatch Failover Alarm is triggered"
+		}
+	},
+	"Mappings": {
+		"RegionMap": {
+			"ap-northeast-1": {
+				"LambdaCode": "fortibucket-ap-northeast-1",
+				"Fgt1mi": "ami-ff4b2012"
+			},
+			"ap-northeast-2": {
+				"LambdaCode": "fortibucket-ap-northeast-2",
+				"Fgt1mi": "ami-b89720d6"
+			},
+			"ap-south-1": {
+				"LambdaCode": "fortibucket-ap-south-1",
+				"Fgt1mi": "ami-ce0033a1"
+			},
+			"ap-southeast-1": {
+				"LambdaCode": "fortibucket-ap-southeast-1",
+				"Fgt1mi": "ami-b546025f"
+			},
+			"ap-southeast-2": {
+				"LambdaCode": "fortibucket-ap-southeast-2",
+				"Fgt1mi": "ami-35be1957"
+			},
+			"ca-central-1": {
+				"LambdaCode": "fortibucket-ca-central-1",
+				"Fgt1mi": "ami-05911c61"
+			},
+			"eu-central-1": {
+				"LambdaCode": "fortibucket-eu-central-1",
+				"Fgt1mi": "ami-89161662"
+			},
+			"eu-west-1": {
+				"LambdaCode": "fortibucket-eu-west-1",
+				"Fgt1mi": "ami-17e0f9fd"
+			},
+			"eu-west-2": {
+				"LambdaCode": "fortibucket-eu-west-2",
+				"Fgt1mi": "ami-5ca64c3b"
+			},
+			"eu-west-3": {
+				"LambdaCode": "fortibucket-eu-west-3",
+				"Fgt1mi": "ami-2d883850"
+			},
+			"sa-east-1": {
+				"LambdaCode": "fortibucket-sa-east-1",
+				"Fgt1mi": "ami-438fa92f"
+			},
+			"us-east-1": {
+				"LambdaCode": "fortibucket-us-east-1",
+				"Fgt1mi": "ami-0426217b"
+			},
+			"us-east-2": {
+				"LambdaCode": "fortibucket-us-east-2",
+				"Fgt1mi": "ami-a94c76cc"
+			},
+			"us-west-1": {
+				"LambdaCode": "fortibucket-us-west-1",
+				"Fgt1mi": "ami-408e6323"
+			},
+			"us-west-2": {
+				"LambdaCode": "fortibucket-us-west-2",
+				"Fgt1mi": "ami-42dc833a"
+			}
+		}
+	},
+	"Conditions": {},
+	"Resources": {
+		"FGTSecGrpBase": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPCID"
+				},
+				"GroupDescription": "FGTSecGrp",
+				"SecurityGroupIngress": [{
+						"Description": "Allow remote access to FGT",
+						"IpProtocol": "-1",
+						"FromPort": "0",
+						"ToPort": "65535",
+						"CidrIp": {
+							"Ref": "CIDRForInstanceAccess"
+						}
+					},
+					{
+						"Description": "Allow local VPC access to FGT",
+						"IpProtocol": "-1",
+						"FromPort": "0",
+						"ToPort": "65535",
+						"CidrIp": {
+							"Ref": "VPCCIDR"
+						}
+					}
+				]
+			}
+		},
+		"FGTSecGrpFGTRule": {
+			"DependsOn": "FGTSecGrpBase",
+			"Type": "AWS::EC2::SecurityGroupIngress",
+			"Properties": {
+				"GroupId": {
+					"Ref": "FGTSecGrpBase"
+				},
+				"Description": "Allow FGTs to access each other",
+				"IpProtocol": "-1",
+				"FromPort": "0",
+				"ToPort": "65535",
+				"SourceSecurityGroupId": {
+					"Ref": "FGTSecGrpBase"
+				}
+			}
+		},
+		"FGTSecGrpHealthCheckrule": {
+			"DependsOn": "FGTSecGrpBase",
+			"Type": "AWS::EC2::SecurityGroupIngress",
+			"Properties": {
+				"GroupId": {
+					"Ref": "FGTSecGrpBase"
+				},
+				"Description": "Allow Lambda ENIs to access FGTs on HealthCheckPort",
+				"IpProtocol": "tcp",
+				"FromPort": {
+					"Ref": "LambdaHealthCheckPort"
+				},
+				"ToPort": {
+					"Ref": "LambdaHealthCheckPort"
+				},
+				"SourceSecurityGroupId": {
+					"Ref": "LambdaSecGrp"
+				}
+			}
+		},
+		"Fgt1": {
+			"Type": "AWS::EC2::Instance",
+			"Properties": {
+				"ImageId": {
+					"Fn::FindInMap": ["RegionMap", {
+						"Ref": "AWS::Region"
+					}, "Fgt1mi"]
+				},
+				"InstanceType": {
+					"Ref": "InstanceType"
+				},
+				"KeyName": {
+					"Ref": "KeyPair"
+				},
+				"NetworkInterfaces": [{
+						"NetworkInterfaceId": {
+							"Ref": "Fgt1ENI0"
+						},
+						"DeviceIndex": "0"
+					},
+					{
+						"NetworkInterfaceId": {
+							"Ref": "Fgt1ENI1"
+						},
+						"DeviceIndex": "1"
+					}
+				],
+				"Tags": [{
+						"Key": "Name",
+						"Value": {
+							"Fn::Join": [
+								"", [{
+										"Ref": "AWS::StackName"
+									},
+									"-Fgt1"
+								]
+							]
+						}
+					},
+					{
+						"Key": "ha:pair",
+						"Value": {
+							"Ref": "HAPairTagValue"
+						}
+					},
+					{
+						"Key": "ha:status",
+						"Value": "active"
+					},
+					{
+						"Key": "ha:time",
+						"Value": ""
+					}
+				],
+				"UserData": {
+					"Fn::Base64": {
+						"Fn::Join": ["\n", [
+							"config system global",
+							"set hostname Fgt1",
+							"set admintimeout 60",
+							"end",
+							"config system interface",
+							"edit port1",
+							"set alias public",
+							"set mode static",
+							{
+								"Fn::Sub": "set ip ${FortiGate1PublicIP}"
+							},
+							"set allowaccess ping https ssh fgfm",
+							"set secondary-IP enable",
+							"config secondaryip",
+							"edit 1",
+							{
+								"Fn::Sub": "set ip ${FortiGate1SecondPublicIP}"
+							},
+							"set allowaccess ping https ssh",
+							"next",
+							"end",
+							"next",
+							"edit port2",
+							"set alias private",
+							"set mode dhcp",
+							"set defaultgw disable",
+							"set dns-server-override disable",
+							"set allowaccess ping fgfm",
+							"set mtu-override enable",
+							"set mtu 9001",
+							"next",
+							"end",
+							"config router static",
+							"edit 1",
+							"set device port1",
+							{
+								"Fn::Sub": "set gateway ${PublicSubnet1RouterIP}"
+							},
+							"next",
+							"edit 2",
+							{
+								"Fn::Sub": "set dst ${VPCCIDR}"
+							},
+							"set device port2",
+							"set dynamic-gateway enable",
+							"next",
+							"end",
+							"config system dns",
+							{
+								"Fn::Sub": "set primary ${PublicSubnet1DnsIP}"
+							},
+							"end",
+							"config firewall ippool",
+							"edit cluster-ippool",
+							{
+								"Fn::Sub": ["set startip ${Fgt1IPPool}", {
+									"Fgt1IPPool": {
+										"Fn::Select": ["0", {
+											"Fn::Split": ["/", {
+												"Ref": "FortiGate1SecondPublicIP"
+											}]
+										}]
+									}
+								}]
+							},
+							{
+								"Fn::Sub": ["set endip ${Fgt1IPPool}", {
+									"Fgt1IPPool": {
+										"Fn::Select": ["0", {
+											"Fn::Split": ["/", {
+												"Ref": "FortiGate1SecondPublicIP"
+											}]
+										}]
+									}
+								}]
+							},
+							"next",
+							"end",
+							"config firewall policy",
+							"edit 1",
+							"set name outbound-all",
+							"set srcintf port2",
+							"set dstintf port1",
+							"set srcaddr all",
+							"set dstaddr all",
+							"set action accept",
+							"set schedule always",
+							"set service ALL",
+							"set logtraffic all",
+							"set ippool enable",
+							"set poolname cluster-ippool",
+							"set nat enable",
+							"next",
+							"end",
+							"config system automation-trigger",
+							"edit healthcheck-trigger",
+							"set event-type event-log",
+							"set logid 22922",
+							"next",
+							"end",
+							"config system automation-action",
+							"edit healthcheck-action",
+							"set action-type aws-lambda",
+							"set aws-api-path healthcheck",
+							"set aws-api-stage prod",
+							{
+								"Fn::Sub": "set aws-region ${AWS::Region}"
+							},
+							{
+								"Fn::Sub": "set aws-api-id ${HealthCheckAPI}"
+							},
+							{
+								"Fn::Sub": "set aws-api-key ${HealthCheckAPIKey}"
+							},
+							"next",
+							"end",
+							"config system automation-stitch",
+							"edit healthcheck-stitch",
+							"set trigger healthcheck-trigger",
+							"set action healthcheck-action",
+							"next",
+							"end",
+							"config system link-monitor",
+							"edit fgt-peer",
+							"set srcintf port2",
+							{
+								"Fn::Sub": ["set server ${peerip}", {
+									"peerip": {
+										"Fn::GetAtt": ["Fgt2ENI1", "PrimaryPrivateIpAddress"]
+									}
+								}]
+							},
+							"set update-cascade-interface disable",
+							"set update-static-route disable",
+							"next",
+							"end"
+						]]
+					}
+				}
+			}
+		},
+		"Fgt2": {
+			"Type": "AWS::EC2::Instance",
+			"Properties": {
+				"ImageId": {
+					"Fn::FindInMap": ["RegionMap", {
+						"Ref": "AWS::Region"
+					}, "Fgt1mi"]
+				},
+				"InstanceType": {
+					"Ref": "InstanceType"
+				},
+				"KeyName": {
+					"Ref": "KeyPair"
+				},
+				"NetworkInterfaces": [{
+						"NetworkInterfaceId": {
+							"Ref": "Fgt2ENI0"
+						},
+						"DeviceIndex": "0"
+					},
+					{
+						"NetworkInterfaceId": {
+							"Ref": "Fgt2ENI1"
+						},
+						"DeviceIndex": "1"
+					}
+				],
+				"Tags": [{
+						"Key": "Name",
+						"Value": {
+							"Fn::Join": [
+								"", [{
+										"Ref": "AWS::StackName"
+									},
+									"-Fgt2"
+								]
+							]
+						}
+					},
+					{
+						"Key": "ha:pair",
+						"Value": {
+							"Ref": "HAPairTagValue"
+						}
+					},
+					{
+						"Key": "ha:status",
+						"Value": "passive"
+					},
+					{
+						"Key": "ha:time",
+						"Value": ""
+					}
+				],
+				"UserData": {
+					"Fn::Base64": {
+						"Fn::Join": ["\n", [
+							"config system global",
+							"set hostname Fgt2",
+							"set admintimeout 60",
+							"end",
+							"config system interface",
+							"edit port1",
+							"set alias public",
+							"set mode static",
+							{
+								"Fn::Sub": "set ip ${FortiGate2PublicIP}"
+							},
+							"set allowaccess ping https ssh fgfm",
+							"set secondary-IP enable",
+							"config secondaryip",
+							"edit 1",
+							{
+								"Fn::Sub": "set ip ${FortiGate2SecondPublicIP}"
+							},
+							"set allowaccess ping https ssh",
+							"next",
+							"end",
+							"next",
+							"edit port2",
+							"set alias private",
+							"set mode dhcp",
+							"set defaultgw disable",
+							"set dns-server-override disable",
+							"set allowaccess ping fgfm",
+							"set mtu-override enable",
+							"set mtu 9001",
+							"next",
+							"end",
+							"config router static",
+							"edit 1",
+							"set device port1",
+							{
+								"Fn::Sub": "set gateway ${PublicSubnet2RouterIP}"
+							},
+							"next",
+							"edit 2",
+							{
+								"Fn::Sub": "set dst ${VPCCIDR}"
+							},
+							"set device port2",
+							"set dynamic-gateway enable",
+							"next",
+							"end",
+							"config system dns",
+							{
+								"Fn::Sub": "set primary ${PublicSubnet2DnsIP}"
+							},
+							"end",
+							"config firewall ippool",
+							"edit cluster-ippool",
+							{
+								"Fn::Sub": ["set startip ${Fgt1IPPool}", {
+									"Fgt1IPPool": {
+										"Fn::Select": ["0", {
+											"Fn::Split": ["/", {
+												"Ref": "FortiGate2SecondPublicIP"
+											}]
+										}]
+									}
+								}]
+							},
+							{
+								"Fn::Sub": ["set endip ${Fgt1IPPool}", {
+									"Fgt1IPPool": {
+										"Fn::Select": ["0", {
+											"Fn::Split": ["/", {
+												"Ref": "FortiGate2SecondPublicIP"
+											}]
+										}]
+									}
+								}]
+							},
+							"next",
+							"end",
+							"config firewall policy",
+							"edit 1",
+							"set name outbound-all",
+							"set srcintf port2",
+							"set dstintf port1",
+							"set srcaddr all",
+							"set dstaddr all",
+							"set action accept",
+							"set schedule always",
+							"set service ALL",
+							"set logtraffic all",
+							"set ippool enable",
+							"set poolname cluster-ippool",
+							"set nat enable",
+							"next",
+							"end",
+							"config system automation-trigger",
+							"edit healthcheck-trigger",
+							"set event-type event-log",
+							"set logid 22922",
+							"next",
+							"end",
+							"config system automation-action",
+							"edit healthcheck-action",
+							"set action-type aws-lambda",
+							"set aws-api-path healthcheck",
+							"set aws-api-stage prod",
+							{
+								"Fn::Sub": "set aws-region ${AWS::Region}"
+							},
+							{
+								"Fn::Sub": "set aws-api-id ${HealthCheckAPI}"
+							},
+							{
+								"Fn::Sub": "set aws-api-key ${HealthCheckAPIKey}"
+							},
+							"next",
+							"end",
+							"config system automation-stitch",
+							"edit healthcheck-stitch",
+							"set trigger healthcheck-trigger",
+							"set action healthcheck-action",
+							"next",
+							"end",
+							"config system link-monitor",
+							"edit fgt-peer",
+							"set srcintf port2",
+							{
+								"Fn::Sub": ["set server ${peerip}", {
+									"peerip": {
+										"Fn::GetAtt": ["Fgt1ENI1", "PrimaryPrivateIpAddress"]
+									}
+								}]
+							},
+							"set update-cascade-interface disable",
+							"set update-static-route disable",
+							"next",
+							"end"
+						]]
+					}
+				}
+			}
+		},
+		"Fgt1ENI0": {
+			"Type": "AWS::EC2::NetworkInterface",
+			"Properties": {
+				"Description": "port1",
+				"GroupSet": [{
+					"Ref": "FGTSecGrpBase"
+				}],
+				"SourceDestCheck": "false",
+				"SubnetId": {
+					"Ref": "PublicSubnet1"
+				},
+				"PrivateIpAddresses": [{
+						"PrivateIpAddress": {
+							"Fn::Select": ["0", {
+								"Fn::Split": ["/", {
+									"Ref": "FortiGate1PublicIP"
+								}]
+							}]
+						},
+						"Primary": "true"
+					},
+					{
+						"PrivateIpAddress": {
+							"Fn::Select": ["0", {
+								"Fn::Split": ["/", {
+									"Ref": "FortiGate1SecondPublicIP"
+								}]
+							}]
+						},
+						"Primary": "false"
+					}
+				],
+				"Tags": [{
+					"Key": "Name",
+					"Value": {
+						"Fn::Join": [
+							"", [{
+									"Ref": "AWS::StackName"
+								},
+								"Fgt1ENI0"
+							]
+						]
+					}
+				}, {
+					"Key": "Interface",
+					"Value": "eth0"
+				}]
+			}
+		},
+		"Fgt2ENI0": {
+			"Type": "AWS::EC2::NetworkInterface",
+			"Properties": {
+				"Description": "port1",
+				"GroupSet": [{
+					"Ref": "FGTSecGrpBase"
+				}],
+				"SourceDestCheck": "false",
+				"SubnetId": {
+					"Ref": "PublicSubnet2"
+				},
+				"PrivateIpAddresses": [{
+						"PrivateIpAddress": {
+							"Fn::Select": ["0", {
+								"Fn::Split": ["/", {
+									"Ref": "FortiGate2PublicIP"
+								}]
+							}]
+						},
+						"Primary": "true"
+					},
+					{
+						"PrivateIpAddress": {
+							"Fn::Select": ["0", {
+								"Fn::Split": ["/", {
+									"Ref": "FortiGate2SecondPublicIP"
+								}]
+							}]
+						},
+						"Primary": "false"
+					}
+				],
+				"Tags": [{
+					"Key": "Name",
+					"Value": {
+						"Fn::Join": [
+							"", [{
+									"Ref": "AWS::StackName"
+								},
+								"Fgt2ENI0"
+							]
+						]
+					}
+				}, {
+					"Key": "Interface",
+					"Value": "eth0"
+				}]
+			}
+		},
+		"Fgt1ENI1": {
+			"Type": "AWS::EC2::NetworkInterface",
+			"Properties": {
+				"Description": "port2",
+				"GroupSet": [{
+					"Ref": "FGTSecGrpBase"
+				}],
+				"SourceDestCheck": "false",
+				"SubnetId": {
+					"Ref": "PrivateSubnet1"
+				},
+				"PrivateIpAddresses": [{
+					"PrivateIpAddress": {
+						"Fn::Select": ["0", {
+							"Fn::Split": ["/", {
+								"Ref": "FortiGate1PrivateIP"
+							}]
+						}]
+					},
+					"Primary": "true"
+				}],
+				"Tags": [{
+					"Key": "Name",
+					"Value": {
+						"Fn::Join": [
+							"", [{
+									"Ref": "AWS::StackName"
+								},
+								"Fgt1ENI1"
+							]
+						]
+					}
+				}]
+			}
+		},
+		"Fgt2ENI1": {
+			"Type": "AWS::EC2::NetworkInterface",
+			"Properties": {
+				"Description": "port2",
+				"GroupSet": [{
+					"Ref": "FGTSecGrpBase"
+				}],
+				"SourceDestCheck": "false",
+				"SubnetId": {
+					"Ref": "PrivateSubnet2"
+				},
+				"PrivateIpAddresses": [{
+					"PrivateIpAddress": {
+						"Fn::Select": ["0", {
+							"Fn::Split": ["/", {
+								"Ref": "FortiGate2PrivateIP"
+							}]
+						}]
+					},
+					"Primary": "true"
+				}],
+				"Tags": [{
+					"Key": "Name",
+					"Value": {
+						"Fn::Join": [
+							"", [{
+									"Ref": "AWS::StackName"
+								},
+								"Fgt2ENI1"
+							]
+						]
+					}
+				}]
+			}
+		},
+		"Fgt1EIP": {
+			"Type": "AWS::EC2::EIP",
+			"Properties": {
+				"Domain": "vpc"
+			},
+			"DependsOn": "Fgt1"
+		},
+		"Fgt2EIP": {
+			"Type": "AWS::EC2::EIP",
+			"Properties": {
+				"Domain": "vpc"
+			},
+			"DependsOn": "Fgt2"
+		},
+		"ClusterEIP": {
+			"Type": "AWS::EC2::EIP",
+			"Properties": {
+				"Domain": "vpc"
+			},
+			"DependsOn": "Fgt1"
+		},
+		"Fgt1EIPASSOCIATION": {
+			"Type": "AWS::EC2::EIPAssociation",
+			"Properties": {
+				"AllocationId": {
+					"Fn::GetAtt": ["Fgt1EIP", "AllocationId"]
+				},
+				"NetworkInterfaceId": {
+					"Ref": "Fgt1ENI0"
+				}
+			},
+			"DependsOn": "Fgt1EIP"
+		},
+		"Fgt2EIPASSOCIATION": {
+			"Type": "AWS::EC2::EIPAssociation",
+			"Properties": {
+				"AllocationId": {
+					"Fn::GetAtt": ["Fgt2EIP", "AllocationId"]
+				},
+				"NetworkInterfaceId": {
+					"Ref": "Fgt2ENI0"
+				}
+			},
+			"DependsOn": "Fgt2EIP"
+		},
+		"ClusterEIPASSOCIATION": {
+			"Type": "AWS::EC2::EIPAssociation",
+			"Properties": {
+				"AllocationId": {
+					"Fn::GetAtt": ["ClusterEIP", "AllocationId"]
+				},
+				"NetworkInterfaceId": {
+					"Ref": "Fgt1ENI0"
+				},
+				"PrivateIpAddress": {
+					"Fn::Select": ["0", {
+						"Fn::GetAtt": ["Fgt1ENI0", "SecondaryPrivateIpAddresses"]
+					}]
+				}
+			},
+			"DependsOn": "ClusterEIP"
+		},
+		"PrivateRouteTable": {
+			"Type": "AWS::EC2::RouteTable",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPCID"
+				},
+				"Tags": [{
+					"Key": "Name",
+					"Value": {
+						"Fn::Join": [
+							"", [{
+									"Ref": "AWS::StackName"
+								},
+								"-PrivateRouteTable"
+							]
+						]
+					}
+				}]
+			}
+		},
+		"DefaultRoute": {
+			"Type": "AWS::EC2::Route",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "PrivateRouteTable"
+				},
+				"DestinationCidrBlock": "0.0.0.0/0",
+				"NetworkInterfaceId": {
+					"Ref": "Fgt1ENI1"
+				}
+			}
+		},
+		"AZ1SubnetRouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties": {
+				"SubnetId": {
+					"Ref": "PrivateSubnet1"
+				},
+				"RouteTableId": {
+					"Ref": "PrivateRouteTable"
+				}
+			}
+		},
+		"AZ2SubnetRouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties": {
+				"SubnetId": {
+					"Ref": "PrivateSubnet2"
+				},
+				"RouteTableId": {
+					"Ref": "PrivateRouteTable"
+				}
+			}
+		},
+		"Fgt1EC2AutoRecovery": {
+			"Type": "AWS::CloudWatch::Alarm",
+			"Properties": {
+				"AlarmDescription": "EC2 AutoRecovery for Fgt1",
+				"Namespace": "AWS/EC2",
+				"MetricName": "StatusCheckFailed_System",
+				"Statistic": "Minimum",
+				"Period": "60",
+				"EvaluationPeriods": "15",
+				"ComparisonOperator": "GreaterThanThreshold",
+				"Threshold": "0",
+				"AlarmActions": [{
+					"Fn::Join": ["", ["arn:aws:automate:", {
+						"Ref": "AWS::Region"
+					}, ":ec2:recover"]]
+				}],
+				"Dimensions": [{
+					"Name": "InstanceId",
+					"Value": {
+						"Ref": "Fgt1"
+					}
+				}]
+			}
+		},
+		"Fgt2EC2AutoRecovery": {
+			"Type": "AWS::CloudWatch::Alarm",
+			"Properties": {
+				"AlarmDescription": "EC2 AutoRecovery for Fgt2",
+				"Namespace": "AWS/EC2",
+				"MetricName": "StatusCheckFailed_System",
+				"Statistic": "Minimum",
+				"Period": "60",
+				"EvaluationPeriods": "15",
+				"ComparisonOperator": "GreaterThanThreshold",
+				"Threshold": "0",
+				"AlarmActions": [{
+					"Fn::Join": ["", ["arn:aws:automate:", {
+						"Ref": "AWS::Region"
+					}, ":ec2:recover"]]
+				}],
+				"Dimensions": [{
+					"Name": "InstanceId",
+					"Value": {
+						"Ref": "Fgt2"
+					}
+				}]
+			}
+		},
+		"HealthCheckLogGroup": {
+			"Type": "AWS::Logs::LogGroup",
+			"Properties": {
+				"LogGroupName": {
+					"Fn::Join": [
+						"", [
+							"/aws/lambda/",
+							{
+								"Ref": "HealthCheckLambda"
+							}
+						]
+					]
+				}
+			}
+		},
+		"FailoverTopic": {
+			"Type": "AWS::SNS::Topic",
+			"Properties": {
+				"Subscription": [{
+					"Endpoint": {
+						"Ref": "EmailNotification"
+					},
+					"Protocol": "email"
+				}],
+				"TopicName": {
+					"Fn::Join": [
+						"", [{
+								"Ref": "AWS::StackName"
+							},
+							"-FailoverTopic"
+						]
+					]
+				}
+			}
+		},
+		"FailoverMetricFilter": {
+			"Type": "AWS::Logs::MetricFilter",
+			"Properties": {
+				"LogGroupName": {
+					"Ref": "HealthCheckLogGroup"
+				},
+				"FilterPattern": "Triggering_CloudWatch_Failover_Alarm",
+				"MetricTransformations": [{
+					"MetricValue": "1",
+					"MetricNamespace": "LogMetrics",
+					"MetricName": {
+						"Fn::Join": [
+							"", [{
+									"Ref": "AWS::StackName"
+								},
+								"-Failover-Alarm"
+							]
+						]
+					}
+				}]
+			}
+		},
+		"FailoverAlarm": {
+			"Type": "AWS::CloudWatch::Alarm",
+			"Properties": {
+				"AlarmDescription": "Failover alarm if active or both units are down.",
+				"Namespace": "LogMetrics",
+				"MetricName": {
+					"Fn::Join": [
+						"", [{
+								"Ref": "AWS::StackName"
+							},
+							"-Failover-Alarm"
+						]
+					]
+				},
+				"Statistic": "Sum",
+				"Period": "300",
+				"EvaluationPeriods": "1",
+				"ComparisonOperator": "GreaterThanThreshold",
+				"Threshold": "0",
+				"TreatMissingData": "notBreaching",
+				"AlarmActions": [{
+					"Ref": "FailoverTopic"
+				}]
+			}
+		},
+		"VPCEndpointEC2": {
+			"Type": "AWS::EC2::VPCEndpoint",
+			"Properties": {
+				"VpcEndpointType": "Interface",
+				"PrivateDnsEnabled": true,
+				"VpcId": {
+					"Ref": "VPCID"
+				},
+				"SecurityGroupIds": [{
+					"Ref": "LambdaSecGrp"
+				}],
+				"SubnetIds": [{
+					"Ref": "PrivateSubnet1"
+				}, {
+					"Ref": "PrivateSubnet2"
+				}],
+				"ServiceName": {
+					"Fn::Join": ["", ["com.amazonaws.", {
+						"Ref": "AWS::Region"
+					}, ".ec2"]]
+				}
+			}
+		},
+		"HealthCheckAPI": {
+			"Type": "AWS::ApiGateway::RestApi",
+			"Properties": {
+				"Name": {
+					"Fn::Join": [
+						"", [{
+								"Ref": "AWS::StackName"
+							},
+							"-HealthCheckAPI"
+						]
+					]
+				},
+				"Description": "API used for health check requests",
+				"ApiKeySourceType": "HEADER",
+				"FailOnWarnings": true
+			}
+		},
+		"HealthCheckAPIAccount": {
+			"Type": "AWS::ApiGateway::Account",
+			"Properties": {
+				"CloudWatchRoleArn": {
+					"Fn::GetAtt": ["HealthCheckAPIRole", "Arn"]
+				}
+			}
+		},
+		"HealthCheckAPIDeployment": {
+			"Type": "AWS::ApiGateway::Deployment",
+			"DependsOn": ["HealthCheckAPIMethodPOST"],
+			"Properties": {
+				"RestApiId": {
+					"Ref": "HealthCheckAPI"
+				},
+				"StageName": "prod"
+			}
+		},
+		"HealthCheckAPIResource": {
+			"Type": "AWS::ApiGateway::Resource",
+			"Properties": {
+				"RestApiId": {
+					"Ref": "HealthCheckAPI"
+				},
+				"ParentId": {
+					"Fn::GetAtt": ["HealthCheckAPI", "RootResourceId"]
+				},
+				"PathPart": "healthcheck"
+			}
+		},
+		"HealthCheckAPIMethodPOST": {
+			"DependsOn": "PermissionForAPIGatewayToEnvokeLambda",
+			"Type": "AWS::ApiGateway::Method",
+			"Properties": {
+				"AuthorizationType": "NONE",
+				"ApiKeyRequired": true,
+				"HttpMethod": "POST",
+				"Integration": {
+					"Type": "AWS",
+					"IntegrationHttpMethod": "POST",
+					"Uri": {
+						"Fn::Join": ["", ["arn:aws:apigateway:", {
+							"Ref": "AWS::Region"
+						}, ":lambda:path/2015-03-31/functions/", {
+							"Fn::GetAtt": ["HealthCheckLambda", "Arn"]
+						}, "/invocations"]]
+					},
+					"IntegrationResponses": [{
+						"StatusCode": 200
+					}]
+				},
+				"ResourceId": {
+					"Ref": "HealthCheckAPIResource"
+				},
+				"RestApiId": {
+					"Ref": "HealthCheckAPI"
+				},
+				"MethodResponses": [{
+					"StatusCode": 200
+				}]
+			}
+		},
+		"HealthCheckAPIUsagePlan": {
+			"DependsOn": ["HealthCheckAPIDeployment"],
+			"Type": "AWS::ApiGateway::UsagePlan",
+			"Properties": {
+				"ApiStages": [{
+					"ApiId": {
+						"Ref": "HealthCheckAPI"
+					},
+					"Stage": "prod"
+				}],
+				"Description": "HealthCheckAPIUsagePlan",
+				"UsagePlanName": {
+					"Fn::Join": [
+						"", [{
+								"Ref": "AWS::StackName"
+							},
+							"-HealthCheckAPIUsagePlan"
+						]
+					]
+				}
+			}
+		},
+		"HealthCheckAPIUsagePlanKey": {
+			"Type": "AWS::ApiGateway::UsagePlanKey",
+			"Properties": {
+				"KeyId": {
+					"Ref": "HealthCheckAPIKey"
+				},
+				"KeyType": "API_KEY",
+				"UsagePlanId": {
+					"Ref": "HealthCheckAPIUsagePlan"
+				}
+			}
+		},
+		"HealthCheckAPIKey": {
+			"Type": "AWS::ApiGateway::ApiKey",
+			"DependsOn": ["HealthCheckAPIDeployment"],
+			"Properties": {
+				"Name": {
+					"Fn::Join": [
+						"", [{
+								"Ref": "AWS::StackName"
+							},
+							"-HealthCheckAPIKey"
+						]
+					]
+				},
+				"Description": "HealthCheckAPIKey",
+				"Enabled": "true",
+				"StageKeys": [{
+					"RestApiId": {
+						"Ref": "HealthCheckAPI"
+					},
+					"StageName": "prod"
+				}]
+			}
+		},
+		"CloudWatchEventRule": {
+			"Type": "AWS::Events::Rule",
+			"Properties": {
+				"Description": "CloudWatchEventRule",
+				"ScheduleExpression": "rate(1 minute)",
+				"State": "ENABLED",
+				"Targets": [{
+					"Arn": {
+						"Fn::GetAtt": [
+							"HealthCheckLambda",
+							"Arn"
+						]
+					},
+					"Id": "TargetFunctionV1"
+				}]
+			}
+		},
+		"HealthCheckLambda": {
+			"Type": "AWS::Lambda::Function",
+			"DependsOn": [
+				"HealthCheckLambdaRole",
+				"HealthCheckLambdaPolicy"
+			],
+			"Properties": {
+				"Code": {
+					"S3Bucket": {
+						"Fn::FindInMap": ["RegionMap", {
+							"Ref": "AWS::Region"
+						}, "LambdaCode"]
+					},
+					"S3Key": "ap-healthcheck-v1.zip"
+				},
+				"Environment": {
+					"Variables": {
+						"HAPairValue": {
+							"Ref": "HAPairTagValue"
+						},
+						"VPCID": {
+							"Ref": "VPCID"
+						},
+						"HealthCheckPort": {
+							"Ref": "LambdaHealthCheckPort"
+						}
+					}
+				},
+				"Role": {
+					"Fn::GetAtt": [
+						"HealthCheckLambdaRole",
+						"Arn"
+					]
+				},
+				"VpcConfig": {
+					"SecurityGroupIds": [{
+						"Ref": "LambdaSecGrp"
+					}],
+					"SubnetIds": [{
+							"Ref": "PrivateSubnet1"
+						},
+						{
+							"Ref": "PrivateSubnet2"
+						}
+					]
+				},
+				"Timeout": 60,
+				"Handler": "healthcheck.lambda_handler",
+				"Runtime": "python2.7",
+				"MemorySize": 128
+			}
+		},
+		"LambdaSecGrp": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"Properties": {
+				"GroupDescription": "LambdaSecGrp",
+				"VpcId": {
+					"Ref": "VPCID"
+				},
+				"SecurityGroupIngress": [{
+					"IpProtocol": "-1",
+					"FromPort": "0",
+					"ToPort": "65535",
+					"CidrIp": {
+						"Ref": "VPCCIDR"
+					}
+				}],
+				"SecurityGroupEgress": [{
+					"IpProtocol": "-1",
+					"CidrIp": "0.0.0.0/0"
+				}]
+			}
+		},
+		"HealthCheckAPIRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [{
+						"Effect": "Allow",
+						"Principal": {
+							"Service": ["apigateway.amazonaws.com"]
+						},
+						"Action": ["sts:AssumeRole"]
+					}]
+				},
+				"Policies": [{
+					"PolicyName": "ApiGatewayLogsPolicy",
+					"PolicyDocument": {
+						"Version": "2012-10-17",
+						"Statement": [{
+							"Effect": "Allow",
+							"Action": [
+								"logs:CreateLogGroup",
+								"logs:CreateLogStream",
+								"logs:DescribeLogGroups",
+								"logs:DescribeLogStreams",
+								"logs:PutLogEvents",
+								"logs:GetLogEvents",
+								"logs:FilterLogEvents"
+							],
+							"Resource": "*"
+						}]
+					}
+				}]
+			}
+		},
+		"PermissionForAPIGatewayToEnvokeLambda": {
+			"Type": "AWS::Lambda::Permission",
+			"Properties": {
+				"Action": "lambda:invokeFunction",
+				"FunctionName": {
+					"Fn::GetAtt": ["HealthCheckLambda", "Arn"]
+				},
+				"Principal": "apigateway.amazonaws.com",
+				"SourceArn": {
+					"Fn::Join": ["", ["arn:aws:execute-api:", {
+						"Ref": "AWS::Region"
+					}, ":", {
+						"Ref": "AWS::AccountId"
+					}, ":", {
+						"Ref": "HealthCheckAPI"
+					}, "/*"]]
+				}
+			}
+		},
+		"PermissionForEventsToInvokeLambda": {
+			"Type": "AWS::Lambda::Permission",
+			"Properties": {
+				"FunctionName": {
+					"Ref": "HealthCheckLambda"
+				},
+				"Action": "lambda:InvokeFunction",
+				"Principal": "events.amazonaws.com",
+				"SourceArn": {
+					"Fn::GetAtt": [
+						"CloudWatchEventRule",
+						"Arn"
+					]
+				}
+			}
+		},
+		"HealthCheckLambdaRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [{
+						"Effect": "Allow",
+						"Principal": {
+							"Service": [
+								"lambda.amazonaws.com"
+							]
+						},
+						"Action": [
+							"sts:AssumeRole"
+						]
+					}]
+				},
+				"Path": "/"
+			}
+		},
+		"HealthCheckLambdaPolicy": {
+			"DependsOn": [
+				"HealthCheckLambdaRole"
+			],
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "HealthCheckLambdaPolicy",
+				"Roles": [{
+					"Ref": "HealthCheckLambdaRole"
+				}],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [{
+						"Effect": "Allow",
+						"Action": [
+							"logs:CreateLogGroup",
+							"logs:CreateLogStream",
+							"logs:PutLogEvents",
+							"ec2:CreateNetworkInterface",
+							"ec2:DescribeNetworkInterfaces",
+							"ec2:DeleteNetworkInterface",
+							"ec2:DescribeInstances",
+							"ec2:DescribeAddresses",
+							"ec2:AssociateAddress",
+							"ec2:DescribeRouteTables",
+							"ec2:ReplaceRoute",
+							"ec2:CreateTags"
+						],
+						"Resource": [
+							"*"
+						]
+					}]
+				}
+			}
+		}
+	},
+	"Outputs": {
+		"Username": {
+			"Value": "admin",
+			"Description": "Username for the Fortigates"
+		},
+		"Fgt1Password": {
+			"Value": {
+				"Ref": "Fgt1"
+			},
+			"Description": "Password for FortiGate1"
+		},
+		"Fgt2Password": {
+			"Value": {
+				"Ref": "Fgt2"
+			},
+			"Description": "Password for FortiGate2"
+		},
+		"FloatingEIPLoginURL": {
+			"Value": {
+				"Fn::Join": [
+					"", [
+						"https://", {
+							"Ref": "ClusterEIP"
+						}
+					]
+				]
+			},
+			"Description": "Login URL for the public interface of the active FortiGate"
+		},
+		"Fgt1LoginURL": {
+			"Value": {
+				"Fn::Join": [
+					"", [
+						"https://", {
+							"Ref": "Fgt1EIP"
+						}
+					]
+				]
+			},
+			"Description": "Login URL for the public interface of FortiGate1"
+		},
+		"Fgt2LoginURL": {
+			"Value": {
+				"Fn::Join": [
+					"", [
+						"https://", {
+							"Ref": "Fgt2EIP"
+						}
+					]
+				]
+			},
+			"Description": "Login URL for the public interface of FortiGate2"
+		},
+		"HealthCheckAPIURL": {
+			"Description": "AWS API Gateway URL",
+			"Value": {
+				"Fn::Join": ["", ["https://", {
+					"Ref": "HealthCheckAPI"
+				}, ".execute-api.", {
+					"Ref": "AWS::Region"
+				}, ".amazonaws.com", "/prod/healthcheck"]]
+			}
+		},
+		"HealthCheckAPIKeyID": {
+			"Description": "AWS API KeyID (get secret key value from AWS console)",
+			"Value": {
+				"Ref": "HealthCheckAPIKey"
+			}
+		}
+	}
+}
