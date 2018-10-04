@@ -1,19 +1,19 @@
 {
 	"AWSTemplateFormatVersion": "2010-09-09",
-	"Description": "(rc2) AWS CloudFormation Template to deploy a FGCP based Active-Passive HA solution with two FortiGates",
+	"Description": "(rc3) AWS CloudFormation Template to deploy a FGCP based Active-Passive HA solution with two FortiGates",
 	"Metadata": {
 		"AWS::CloudFormation::Interface": {
 			"ParameterGroups": [{
 					"Label": {
 						"default": "VPC Configuration"
 					},
-					"Parameters": ["VPCCIDR", "PublicSubnet", "PrivateSubnet", "HAsyncSubnet", "HAmgmtSubnet"]
+					"Parameters": ["VPCID", "VPCCIDR", "PublicSubnet", "PrivateSubnet", "HAsyncSubnet", "HAmgmtSubnet"]
 				},
 				{
 					"Label": {
 						"default": "FortiGate Instance Configuration"
 					},
-					"Parameters": ["InstanceType", "CIDRForInstanceAccess", "AZForInstances", "KeyPair", "FortiGate1LicenseFile", "FortiGate2LicenseFile", "PublicSubnetRouterIP", "PublicSubnetDnsIP", "PrivateSubnetRouterIP", "HAmgmtSubnetRouterIP"]
+					"Parameters": ["InstanceType", "CIDRForInstanceAccess", "AZForInstances", "KeyPair", "PublicSubnetRouterIP", "PrivateSubnetRouterIP", "HAmgmtSubnetRouterIP"]
 				},
 				{
 					"Label": {
@@ -33,45 +33,39 @@
 					},
 					"Parameters": ["ClusterPublicIP", "ClusterPrivateIP"]
 				}
-
 			]
 		}
 	},
 	"Parameters": {
+		"VPCID": {
+			"Type": "AWS::EC2::VPC::Id",
+			"Description": "Select the VPC to use"
+		},
 		"VPCCIDR": {
 			"Type": "String",
 			"Default": "192.168.0.0/16",
 			"Description": "Provide a network CIDR for the VPC"
 		},
 		"PublicSubnet": {
-			"Type": "String",
-			"Default": "192.168.1.0/24",
-			"Description": "Provide a network CIDR for the PublicSubnet"
+			"Type": "AWS::EC2::Subnet::Id",
+			"Description": "Select the subnet for the PublicSubnet"
 		},
 		"PrivateSubnet": {
-			"Type": "String",
-			"Default": "192.168.2.0/24",
-			"Description": "Provide a network CIDR for the PrivateSubnet"
+			"Type": "AWS::EC2::Subnet::Id",
+			"Description": "Select the subnet for the  PrivateSubnet"
 		},
 		"HAsyncSubnet": {
-			"Type": "String",
-			"Default": "192.168.3.0/24",
-			"Description": "Provide a network CIDR for the HAsyncSubnet"
+			"Type": "AWS::EC2::Subnet::Id",
+			"Description": "Select the subnet for the  HAsyncSubnet"
 		},
 		"HAmgmtSubnet": {
-			"Type": "String",
-			"Default": "192.168.4.0/24",
-			"Description": "Provide a network CIDR for the HAmgmtSubnet"
+			"Type": "AWS::EC2::Subnet::Id",
+			"Description": "Select the subnet for the  HAmgmtSubnet"
 		},
 		"PublicSubnetRouterIP": {
 			"Type": "String",
 			"Default": "192.168.1.1",
 			"Description": "Provide the IP address of the AWS intrinsic router (First IP from PublicSubnet)"
-		},
-		"PublicSubnetDnsIP": {
-			"Type": "String",
-			"Default": "192.168.1.2",
-			"Description": "Provide the IP address of the AWS intrinsic dns server (Second IP from PublicSubnet)"
 		},
 		"PrivateSubnetRouterIP": {
 			"Type": "String",
@@ -160,62 +154,54 @@
 		"AZForInstances": {
 			"Type": "AWS::EC2::AvailabilityZone::Name",
 			"Description": "Select an Availability Zone for the FortiGates"
-		},
-		"FortiGate1LicenseFile": {
-			"Description": "Provide the content of the license file for FortiGate 1 (ie -----BEGIN FGT VM LICENSE----- ... -----END FGT VM LICENSE-----)",
-			"Type": "String"
-		},
-		"FortiGate2LicenseFile": {
-			"Description": "Provide the content of the license file for FortiGate 2(ie -----BEGIN FGT VM LICENSE----- ... -----END FGT VM LICENSE-----)",
-			"Type": "String"
 		}
 	},
 	"Mappings": {
 		"RegionMap": {
 			"ap-northeast-1": {
-				"fgtami": "ami-2865a957"
+				"fgtami": "ami-ff4b2012"
 			},
 			"ap-northeast-2": {
-				"fgtami": "ami-dc9b31b2"
+				"fgtami": "ami-b89720d6"
 			},
 			"ap-south-1": {
-				"fgtami": "ami-bb88a0d4"
+				"fgtami": "ami-ce0033a1"
 			},
 			"ap-southeast-1": {
-				"fgtami": "ami-5f6a6d23"
+				"fgtami": "ami-b546025f"
 			},
 			"ap-southeast-2": {
-				"fgtami": "ami-6eaa750c"
+				"fgtami": "ami-35be1957"
 			},
 			"ca-central-1": {
-				"fgtami": "ami-25028141"
+				"fgtami": "ami-05911c61"
 			},
 			"eu-central-1": {
-				"fgtami": "ami-6a85b581"
+				"fgtami": "ami-89161662"
 			},
 			"eu-west-1": {
-				"fgtami": "ami-3da3ae44"
+				"fgtami": "ami-17e0f9fd"
 			},
 			"eu-west-2": {
-				"fgtami": "ami-878d63e0"
+				"fgtami": "ami-5ca64c3b"
 			},
 			"eu-west-3": {
-				"fgtami": "ami-ae2e9fd3"
+				"fgtami": "ami-2d883850"
 			},
 			"sa-east-1": {
-				"fgtami": "ami-03461d6f"
+				"fgtami": "ami-438fa92f"
 			},
 			"us-east-1": {
-				"fgtami": "ami-48400137"
+				"fgtami": "ami-0426217b"
 			},
 			"us-east-2": {
-				"fgtami": "ami-340a3451"
+				"fgtami": "ami-a94c76cc"
 			},
 			"us-west-1": {
-				"fgtami": "ami-05de3a66"
+				"fgtami": "ami-408e6323"
 			},
 			"us-west-2": {
-				"fgtami": "ami-b6befdce"
+				"fgtami": "ami-42dc833a"
 			}
 		}
 	},
@@ -245,8 +231,7 @@
 								"ec2:AssociateAddress",
 								"ec2:AssignPrivateIpAddresses",
 								"ec2:UnassignPrivateIpAddresses",
-								"ec2:ReplaceRoute",
-								"s3:GetObject"
+								"ec2:ReplaceRoute"
 							],
 							"Resource": "*"
 						}]
@@ -263,267 +248,15 @@
 				}]
 			}
 		},
-		"VPC": {
-			"Type": "AWS::EC2::VPC",
-			"Properties": {
-				"EnableDnsSupport": "true",
-				"EnableDnsHostnames": "true",
-				"CidrBlock": {
-					"Ref": "VPCCIDR"
-				},
-				"Tags": [{
-					"Key": "Name",
-					"Value": {
-						"Fn::Join": [
-							"", [{
-									"Ref": "AWS::StackName"
-								},
-								"-VPC"
-							]
-						]
-					}
-				}]
-			}
-		},
-		"Subnet1": {
-			"Type": "AWS::EC2::Subnet",
-			"Properties": {
-				"VpcId": {
-					"Ref": "VPC"
-				},
-				"CidrBlock": {
-					"Ref": "PublicSubnet"
-				},
-				"AvailabilityZone": {
-					"Ref": "AZForInstances"
-				},
-				"Tags": [{
-					"Key": "Name",
-					"Value": {
-						"Fn::Join": [
-							"", [{
-									"Ref": "AWS::StackName"
-								},
-								"-PublicSubnet"
-							]
-						]
-					}
-				}]
-			}
-		},
-		"Subnet2": {
-			"Type": "AWS::EC2::Subnet",
-			"Properties": {
-				"VpcId": {
-					"Ref": "VPC"
-				},
-				"CidrBlock": {
-					"Ref": "PrivateSubnet"
-				},
-				"AvailabilityZone": {
-					"Ref": "AZForInstances"
-				},
-				"Tags": [{
-					"Key": "Name",
-					"Value": {
-						"Fn::Join": [
-							"", [{
-									"Ref": "AWS::StackName"
-								},
-								"-PrivateSubnet"
-							]
-						]
-					}
-				}]
-			}
-		},
-		"Subnet3": {
-			"Type": "AWS::EC2::Subnet",
-			"Properties": {
-				"VpcId": {
-					"Ref": "VPC"
-				},
-				"CidrBlock": {
-					"Ref": "HAsyncSubnet"
-				},
-				"AvailabilityZone": {
-					"Ref": "AZForInstances"
-				},
-				"Tags": [{
-					"Key": "Name",
-					"Value": {
-						"Fn::Join": [
-							"", [{
-									"Ref": "AWS::StackName"
-								},
-								"-HAsyncSubnet"
-							]
-						]
-					}
-				}]
-			}
-		},
-		"Subnet4": {
-			"Type": "AWS::EC2::Subnet",
-			"Properties": {
-				"VpcId": {
-					"Ref": "VPC"
-				},
-				"CidrBlock": {
-					"Ref": "HAmgmtSubnet"
-				},
-				"AvailabilityZone": {
-					"Ref": "AZForInstances"
-				},
-				"Tags": [{
-					"Key": "Name",
-					"Value": {
-						"Fn::Join": [
-							"", [{
-									"Ref": "AWS::StackName"
-								},
-								"-HAmgmtSubnet"
-							]
-						]
-					}
-				}]
-			}
-		},
-		"InternetGateway": {
-			"Type": "AWS::EC2::InternetGateway",
-			"Properties": {
-				"Tags": [{
-					"Key": "Name",
-					"Value": {
-						"Fn::Join": [
-							"", [{
-									"Ref": "AWS::StackName"
-								},
-								"-IGW"
-							]
-						]
-					}
-				}]
-			}
-		},
-		"AttachGateway": {
-			"Type": "AWS::EC2::VPCGatewayAttachment",
-			"Properties": {
-				"VpcId": {
-					"Ref": "VPC"
-				},
-				"InternetGatewayId": {
-					"Ref": "InternetGateway"
-				}
-			}
-		},
-		"RouteTable": {
-			"Type": "AWS::EC2::RouteTable",
-			"Properties": {
-				"VpcId": {
-					"Ref": "VPC"
-				},
-				"Tags": [{
-					"Key": "Name",
-					"Value": {
-						"Fn::Join": [
-							"", [{
-									"Ref": "AWS::StackName"
-								},
-								"-PublicRouteTable"
-							]
-						]
-					}
-				}]
-			}
-		},
-		"RouteTable1": {
-			"Type": "AWS::EC2::RouteTable",
-			"Properties": {
-				"VpcId": {
-					"Ref": "VPC"
-				},
-				"Tags": [{
-					"Key": "Name",
-					"Value": {
-						"Fn::Join": [
-							"", [{
-									"Ref": "AWS::StackName"
-								},
-								"-PrivateRouteTable"
-							]
-						]
-					}
-				}]
-			}
-		},
-		"Route1": {
-			"Type": "AWS::EC2::Route",
-			"DependsOn": "AttachGateway",
-			"Properties": {
-				"RouteTableId": {
-					"Ref": "RouteTable"
-				},
-				"DestinationCidrBlock": "0.0.0.0/0",
-				"GatewayId": {
-					"Ref": "InternetGateway"
-				}
-			}
-		},
-		"Route2": {
-			"Type": "AWS::EC2::Route",
-			"DependsOn": "AttachGateway",
-			"Properties": {
-				"RouteTableId": {
-					"Ref": "RouteTable1"
-				},
-				"DestinationCidrBlock": "0.0.0.0/0",
-				"NetworkInterfaceId": {
-					"Ref": "fgt1eni1"
-				}
-			}
-		},
-		"SubnetRouteTableAssociation1": {
-			"Type": "AWS::EC2::SubnetRouteTableAssociation",
-			"Properties": {
-				"SubnetId": {
-					"Ref": "Subnet1"
-				},
-				"RouteTableId": {
-					"Ref": "RouteTable"
-				}
-			}
-		},
-		"SubnetRouteTableAssociation2": {
-			"Type": "AWS::EC2::SubnetRouteTableAssociation",
-			"Properties": {
-				"SubnetId": {
-					"Ref": "Subnet4"
-				},
-				"RouteTableId": {
-					"Ref": "RouteTable"
-				}
-			}
-		},
-		"SubnetRouteTableAssociation3": {
-			"Type": "AWS::EC2::SubnetRouteTableAssociation",
-			"Properties": {
-				"SubnetId": {
-					"Ref": "Subnet2"
-				},
-				"RouteTableId": {
-					"Ref": "RouteTable1"
-				}
-			}
-		},
 		"FortiGateSecGrp": {
 			"Type": "AWS::EC2::SecurityGroup",
 			"Properties": {
 				"VpcId": {
-					"Ref": "VPC"
+					"Ref": "VPCID"
 				},
-				"GroupDescription": "Allow All Traffic",
+				"GroupDescription": "FortigateSecGrp",
 				"SecurityGroupIngress": [{
+						"Description": "Allow remote access to FGT",
 						"IpProtocol": "-1",
 						"FromPort": "0",
 						"ToPort": "65535",
@@ -532,6 +265,7 @@
 						}
 					},
 					{
+						"Description": "Allow local VPC access to FGT",
 						"IpProtocol": "-1",
 						"FromPort": "0",
 						"ToPort": "65535",
@@ -599,15 +333,6 @@
 				"UserData": {
 					"Fn::Base64": {
 						"Fn::Join": ["\n", [
-							"Content-Type: multipart/mixed; boundary=\"===============3585321300151562773==\"",
-							"MIME-Version: 1.0",
-							"",
-							"--===============3585321300151562773==",
-							"Content-Type: text/plain; charset=\"us-ascii\"",
-							"MIME-Version: 1.0",
-							"Content-Transfer-Encoding: 7bit",
-							"Content-Disposition: attachment; filename=\"config\"",
-							"",
 							"config system global",
 							"set hostname Fgt1",
 							"set admintimeout 60",
@@ -669,11 +394,6 @@
 							},
 							"next",
 							"end",
-							"config system dns",
-							{
-								"Fn::Sub": "set primary ${PublicSubnetDnsIP}"
-							},
-							"end",
 							"config firewall policy",
 							"edit 1",
 							"set name outbound-all",
@@ -716,19 +436,7 @@
 									}
 								}]
 							},
-							"end",
-							"",
-							"--===============3585321300151562773==",
-							"Content-Type: text/plain; charset=\"us-ascii\"",
-							"MIME-Version: 1.0",
-							"Content-Transfer-Encoding: 7bit",
-							"Content-Disposition: attachment; filename=\"license\"",
-							"",
-							{
-								"Fn::Sub": "${FortiGate1LicenseFile}"
-							},
-							"",
-							"--===============3585321300151562773==--"
+							"end"
 						]]
 					}
 				}
@@ -791,15 +499,6 @@
 				"UserData": {
 					"Fn::Base64": {
 						"Fn::Join": ["\n", [
-							"Content-Type: multipart/mixed; boundary=\"===============3585321300151562773==\"",
-							"MIME-Version: 1.0",
-							"",
-							"--===============3585321300151562773==",
-							"Content-Type: text/plain; charset=\"us-ascii\"",
-							"MIME-Version: 1.0",
-							"Content-Transfer-Encoding: 7bit",
-							"Content-Disposition: attachment; filename=\"config\"",
-							"",
 							"config system global",
 							"set hostname Fgt2",
 							"set admintimeout 60",
@@ -861,11 +560,6 @@
 							},
 							"next",
 							"end",
-							"config system dns",
-							{
-								"Fn::Sub": "set primary ${PublicSubnetDnsIP}"
-							},
-							"end",
 							"config firewall policy",
 							"edit 1",
 							"set name outbound-all",
@@ -908,19 +602,7 @@
 									}
 								}]
 							},
-							"end",
-							"",
-							"--===============3585321300151562773==",
-							"Content-Type: text/plain; charset=\"us-ascii\"",
-							"MIME-Version: 1.0",
-							"Content-Transfer-Encoding: 7bit",
-							"Content-Disposition: attachment; filename=\"license\"",
-							"",
-							{
-								"Fn::Sub": "${FortiGate2LicenseFile}"
-							},
-							"",
-							"--===============3585321300151562773==--"
+							"end"
 						]]
 					}
 				}
@@ -935,7 +617,7 @@
 				}],
 				"SourceDestCheck": "false",
 				"SubnetId": {
-					"Ref": "Subnet1"
+					"Ref": "PublicSubnet"
 				},
 				"Tags": [{
 					"Key": "Name",
@@ -984,7 +666,7 @@
 				}],
 				"SourceDestCheck": "false",
 				"SubnetId": {
-					"Ref": "Subnet1"
+					"Ref": "PublicSubnet"
 				},
 				"Tags": [{
 					"Key": "Name",
@@ -1024,21 +706,7 @@
 			},
 			"DependsOn": "Fgt1"
 		},
-		"Fgt1EIPBegin": {
-			"Type": "AWS::EC2::EIP",
-			"Properties": {
-				"Domain": "vpc"
-			},
-			"DependsOn": "Fgt1"
-		},
 		"Fgt2EIP": {
-			"Type": "AWS::EC2::EIP",
-			"Properties": {
-				"Domain": "vpc"
-			},
-			"DependsOn": "Fgt2"
-		},
-		"Fgt2EIPBegin": {
 			"Type": "AWS::EC2::EIP",
 			"Properties": {
 				"Domain": "vpc"
@@ -1073,7 +741,7 @@
 				}],
 				"SourceDestCheck": "false",
 				"SubnetId": {
-					"Ref": "Subnet2"
+					"Ref": "PrivateSubnet"
 				},
 				"Tags": [{
 					"Key": "Name",
@@ -1119,7 +787,7 @@
 				}],
 				"SourceDestCheck": "false",
 				"SubnetId": {
-					"Ref": "Subnet2"
+					"Ref": "PrivateSubnet"
 				},
 				"Tags": [{
 					"Key": "Name",
@@ -1151,7 +819,7 @@
 				}],
 				"SourceDestCheck": "false",
 				"SubnetId": {
-					"Ref": "Subnet3"
+					"Ref": "HAsyncSubnet"
 				},
 				"Tags": [{
 					"Key": "Name",
@@ -1183,7 +851,7 @@
 				}],
 				"SourceDestCheck": "false",
 				"SubnetId": {
-					"Ref": "Subnet4"
+					"Ref": "HAmgmtSubnet"
 				},
 				"Tags": [{
 					"Key": "Name",
@@ -1215,7 +883,7 @@
 				}],
 				"SourceDestCheck": "false",
 				"SubnetId": {
-					"Ref": "Subnet3"
+					"Ref": "HAsyncSubnet"
 				},
 				"Tags": [{
 					"Key": "Name",
@@ -1247,7 +915,7 @@
 				}],
 				"SourceDestCheck": "false",
 				"SubnetId": {
-					"Ref": "Subnet4"
+					"Ref": "HAmgmtSubnet"
 				},
 				"Tags": [{
 					"Key": "Name",
@@ -1289,25 +957,6 @@
 			},
 			"DependsOn": "Fgt1EIP"
 		},
-		"Fgt1EIPBeginASSOCIATION": {
-			"Type": "AWS::EC2::EIPAssociation",
-			"Properties": {
-				"AllocationId": {
-					"Fn::GetAtt": ["Fgt1EIPBegin", "AllocationId"]
-				},
-				"NetworkInterfaceId": {
-					"Ref": "fgt1eni0"
-				},
-				"PrivateIpAddress": {
-					"Fn::Select": ["0", {
-						"Fn::Split": ["/", {
-							"Ref": "FortiGate1PublicIP"
-						}]
-					}]
-				}
-			},
-			"DependsOn": "Fgt1EIPBegin"
-		},
 		"Fgt2EIPASSOCIATION": {
 			"Type": "AWS::EC2::EIPAssociation",
 			"Properties": {
@@ -1326,25 +975,6 @@
 				}
 			},
 			"DependsOn": "Fgt2EIP"
-		},
-		"Fgt2EIPBeginASSOCIATION": {
-			"Type": "AWS::EC2::EIPAssociation",
-			"Properties": {
-				"AllocationId": {
-					"Fn::GetAtt": ["Fgt2EIPBegin", "AllocationId"]
-				},
-				"NetworkInterfaceId": {
-					"Ref": "fgt2eni0"
-				},
-				"PrivateIpAddress": {
-					"Fn::Select": ["0", {
-						"Fn::Split": ["/", {
-							"Ref": "FortiGate2PublicIP"
-						}]
-					}]
-				}
-			},
-			"DependsOn": "Fgt2EIPBegin"
 		}
 	},
 	"Outputs": {
