@@ -1,6 +1,6 @@
 {
 	"AWSTemplateFormatVersion": "2010-09-09",
-	"Description": "Launch two FortiGates with a Lambda Function and API Gateway based Health Check solution",
+	"Description": "(v1.0) AWS CloudFormation Template to deploy a Lambda based Active-Active Route Failover solution with two FortiGates",
 	"Metadata": {
 		"AWS::CloudFormation::Interface": {
 			"ParameterGroups": [{
@@ -21,10 +21,10 @@
 						"default": "FortiGate Instance Configuration"
 					},
 					"Parameters": [
-						"AZForFGTA",
-						"AZForFGTB",
-						"FGTInstanceType",
-						"CIDRForFGTAccess",
+						"AZForFGT1",
+						"AZForFGT2",
+						"InstanceType",
+						"CIDRForInstanceAccess",
 						"KeyPair"
 
 					]
@@ -52,40 +52,40 @@
 	"Parameters": {
 		"VPCID": {
 			"Type": "AWS::EC2::VPC::Id",
-			"Description": "Select the VPC to deploy the Lambda function and FortiGates within"
+			"Description": "Select the VPC to use"
 		},
 		"VPCCIDR": {
 			"Type": "String",
-			"Default": "192.168.0.0/16",
-			"Description": "Enter the VPC CIDR that you are using"
+			"Default": "10.0.0.0/16",
+			"Description": "Provide the network CIDR for the VPC"
 		},
 		"PublicSubnet1": {
 			"Type": "AWS::EC2::Subnet::Id",
-			"Description": "Select the Public1 subnet"
+			"Description": "Select the subnet to use for PublicSubnet1"
 		},
 		"PrivateSubnet1": {
 			"Type": "AWS::EC2::Subnet::Id",
-			"Description": "Select the Private1 subnet"
+			"Description": "Select the subnet to use for PrivateSubnet1"
 		},
 		"PublicSubnet2": {
 			"Type": "AWS::EC2::Subnet::Id",
-			"Description": "Select the Public2 subnet"
+			"Description": "Select the subnet to use for PublicSubnet2"
 		},
 		"PrivateSubnet2": {
 			"Type": "AWS::EC2::Subnet::Id",
-			"Description": "Select the Private2 subnet"
+			"Description": "Select the subnet to use for PrivateSubnet2"
 		},
-		"AZForFGTA": {
+		"AZForFGT1": {
 			"Type": "AWS::EC2::AvailabilityZone::Name",
-			"Description": "Select the first AZ for FortiGateA"
+			"Description": "Select an Availability Zone for FortiGate1"
 		},
-		"AZForFGTB": {
+		"AZForFGT2": {
 			"Type": "AWS::EC2::AvailabilityZone::Name",
-			"Description": "Select the second AZ for FortiGateB"
+			"Description": "Select an Availability Zone for FortiGate2"
 		},
-		"FGTInstanceType": {
+		"InstanceType": {
 			"Type": "String",
-			"Default": "c4.large",
+			"Default": "c5.large",
 			"Description": "Select the instance type for the FortiGates",
 			"AllowedValues": [
 				"t2.small",
@@ -101,18 +101,18 @@
 				"c5.9xlarge"
 			]
 		},
-		"CIDRForFGTAccess": {
+		"CIDRForInstanceAccess": {
 			"Type": "String",
 			"Default": "0.0.0.0/0",
-			"Description": "Enter the CIDR from which FortiGate instances need to be accessed from"
+			"Description": "Provide a network CIDR from which the FortiGate instances will be accessed"
 		},
 		"KeyPair": {
 			"Type": "AWS::EC2::KeyPair::KeyName",
-			"Description": "Select the keypair for the FortiGates"
+			"Description": "Select a keypair to associate with the FortiGates"
 		},
 		"LambdaHealthCheckPort": {
 			"Type": "String",
-			"Description": "Enter the health check port that will be monitored by Lambda",
+			"Description": "Provide the health check port that will be monitored by Lambda",
 			"Default": "541"
 		},
 		"LoadbalancerType": {
@@ -128,18 +128,38 @@
 		"ListenerPort": {
 			"Type": "Number",
 			"Default": "80",
-			"Description": "Enter the listener port for the external ELB"
+			"Description": "Provide the listener port for the external ELB"
 		}
 	},
 	"Mappings": {
 		"RegionMap": {
-			"us-east-1": {
-				"LambdaCode": "fortibucket-us-east-1",
-				"fgtami": "ami-0426217b"
+			"ap-northeast-1": {
+				"LambdaCode": "fortibucket-ap-northeast-1",
+				"fgtami": "ami-ff4b2012"
 			},
-			"us-east-2": {
-				"LambdaCode": "fortibucket-us-east-2",
-				"fgtami": "ami-a94c76cc"
+			"ap-northeast-2": {
+				"LambdaCode": "fortibucket-ap-northeast-2",
+				"fgtami": "ami-b89720d6"
+			},
+			"ap-south-1": {
+				"LambdaCode": "fortibucket-ap-south-1",
+				"fgtami": "ami-ce0033a1"
+			},
+			"ap-southeast-1": {
+				"LambdaCode": "fortibucket-ap-southeast-1",
+				"fgtami": "ami-b546025f"
+			},
+			"ap-southeast-2": {
+				"LambdaCode": "fortibucket-ap-southeast-2",
+				"fgtami": "ami-35be1957"
+			},
+			"ca-central-1": {
+				"LambdaCode": "fortibucket-ca-central-1",
+				"fgtami": "ami-05911c61"
+			},
+			"eu-central-1": {
+				"LambdaCode": "fortibucket-eu-central-1",
+				"fgtami": "ami-89161662"
 			},
 			"eu-west-1": {
 				"LambdaCode": "fortibucket-eu-west-1",
@@ -153,33 +173,17 @@
 				"LambdaCode": "fortibucket-eu-west-3",
 				"fgtami": "ami-2d883850"
 			},
-			"eu-central-1": {
-				"LambdaCode": "fortibucket-eu-central-1",
-				"fgtami": "ami-89161662"
-			},
-			"ap-northeast-1": {
-				"LambdaCode": "fortibucket-ap-northeast-1",
-				"fgtami": "ami-ff4b2012"
-			},
-			"ap-northeast-2": {
-				"LambdaCode": "fortibucket-ap-northeast-2",
-				"fgtami": "ami-b89720d6"
-			},
-			"ap-southeast-1": {
-				"LambdaCode": "fortibucket-ap-southeast-1",
-				"fgtami": "ami-b546025f"
-			},
-			"ap-southeast-2": {
-				"LambdaCode": "fortibucket-ap-southeast-2",
-				"fgtami": "ami-35be1957"
-			},
-			"ap-south-1": {
-				"LambdaCode": "fortibucket-ap-south-1",
-				"fgtami": "ami-ce0033a1"
-			},
 			"sa-east-1": {
 				"LambdaCode": "fortibucket-sa-east-1",
 				"fgtami": "ami-438fa92f"
+			},
+			"us-east-1": {
+				"LambdaCode": "fortibucket-us-east-1",
+				"fgtami": "ami-0426217b"
+			},
+			"us-east-2": {
+				"LambdaCode": "fortibucket-us-east-2",
+				"fgtami": "ami-a94c76cc"
 			},
 			"us-west-1": {
 				"LambdaCode": "fortibucket-us-west-1",
@@ -188,10 +192,6 @@
 			"us-west-2": {
 				"LambdaCode": "fortibucket-us-west-2",
 				"fgtami": "ami-42dc833a"
-			},
-			"ca-central-1": {
-				"LambdaCode": "fortibucket-ca-central-1",
-				"fgtami": "ami-05911c61"
 			}
 		}
 	},
@@ -220,14 +220,16 @@
 				},
 				"GroupDescription": "FGTSecGrp",
 				"SecurityGroupIngress": [{
+						"Description": "Allow remote access to FGT",
 						"IpProtocol": "-1",
 						"FromPort": "0",
 						"ToPort": "65535",
 						"CidrIp": {
-							"Ref": "CIDRForFGTAccess"
+							"Ref": "CIDRForInstanceAccess"
 						}
 					},
 					{
+						"Description": "Allow local VPC access to FGT",
 						"IpProtocol": "-1",
 						"FromPort": "0",
 						"ToPort": "65535",
@@ -245,6 +247,7 @@
 				"GroupId": {
 					"Ref": "FGTSecGrpBase"
 				},
+				"Description": "Allow FGTs to access each other",
 				"IpProtocol": "-1",
 				"FromPort": "0",
 				"ToPort": "65535",
@@ -260,6 +263,7 @@
 				"GroupId": {
 					"Ref": "FGTSecGrpBase"
 				},
+				"Description": "Allow Lambda ENIs to access FGTs on HealthCheckPort",
 				"IpProtocol": "tcp",
 				"FromPort": {
 					"Ref": "LambdaHealthCheckPort"
@@ -280,6 +284,7 @@
 				"GroupId": {
 					"Ref": "FGTSecGrpBase"
 				},
+				"Description": "Allow ALBs to send traffic to FGTs",
 				"IpProtocol": "-1",
 				"FromPort": "0",
 				"ToPort": "65535",
@@ -296,6 +301,7 @@
 				"GroupId": {
 					"Ref": "FGTSecGrpBase"
 				},
+				"Description": "Allow NLBs to send traffic to FGTs on ListenerPort",
 				"IpProtocol": "tcp",
 				"FromPort": {
 					"Ref": "ListenerPort"
@@ -306,7 +312,7 @@
 				"CidrIp": "0.0.0.0/0"
 			}
 		},
-		"FgtA": {
+		"Fgt1": {
 			"Type": "AWS::EC2::Instance",
 			"Properties": {
 				"ImageId": {
@@ -315,20 +321,20 @@
 					}, "fgtami"]
 				},
 				"InstanceType": {
-					"Ref": "FGTInstanceType"
+					"Ref": "InstanceType"
 				},
 				"KeyName": {
 					"Ref": "KeyPair"
 				},
 				"NetworkInterfaces": [{
 						"NetworkInterfaceId": {
-							"Ref": "FGTAENI0"
+							"Ref": "FGT1ENI0"
 						},
 						"DeviceIndex": "0"
 					},
 					{
 						"NetworkInterfaceId": {
-							"Ref": "FGTAENI1"
+							"Ref": "FGT1ENI1"
 						},
 						"DeviceIndex": "1"
 					}
@@ -340,7 +346,7 @@
 							"", [{
 									"Ref": "AWS::StackName"
 								},
-								"-FgtA"
+								"-Fgt1"
 							]
 						]
 					}
@@ -349,7 +355,7 @@
 					"Fn::Base64": {
 						"Fn::Join": ["\n", [
 							"config system global",
-							"set hostname FgtA",
+							"set hostname Fgt1",
 							"set admintimeout 60",
 							"end",
 							"config system interface",
@@ -408,7 +414,7 @@
 							{
 								"Fn::Sub": ["set server ${peerip}", {
 									"peerip": {
-										"Fn::GetAtt": ["FGTBENI1", "PrimaryPrivateIpAddress"]
+										"Fn::GetAtt": ["FGT2ENI1", "PrimaryPrivateIpAddress"]
 									}
 								}]
 							},
@@ -421,7 +427,7 @@
 				}
 			}
 		},
-		"FgtB": {
+		"Fgt2": {
 			"Type": "AWS::EC2::Instance",
 			"Properties": {
 				"ImageId": {
@@ -430,20 +436,20 @@
 					}, "fgtami"]
 				},
 				"InstanceType": {
-					"Ref": "FGTInstanceType"
+					"Ref": "InstanceType"
 				},
 				"KeyName": {
 					"Ref": "KeyPair"
 				},
 				"NetworkInterfaces": [{
 						"NetworkInterfaceId": {
-							"Ref": "FGTBENI0"
+							"Ref": "FGT2ENI0"
 						},
 						"DeviceIndex": "0"
 					},
 					{
 						"NetworkInterfaceId": {
-							"Ref": "FGTBENI1"
+							"Ref": "FGT2ENI1"
 						},
 						"DeviceIndex": "1"
 					}
@@ -455,7 +461,7 @@
 							"", [{
 									"Ref": "AWS::StackName"
 								},
-								"-FgtB"
+								"-Fgt2"
 							]
 						]
 					}
@@ -464,7 +470,7 @@
 					"Fn::Base64": {
 						"Fn::Join": ["\n", [
 							"config system global",
-							"set hostname FgtB",
+							"set hostname Fgt2",
 							"set admintimeout 60",
 							"end",
 							"config system interface",
@@ -523,7 +529,7 @@
 							{
 								"Fn::Sub": ["set server ${peerip}", {
 									"peerip": {
-										"Fn::GetAtt": ["FGTAENI1", "PrimaryPrivateIpAddress"]
+										"Fn::GetAtt": ["FGT1ENI1", "PrimaryPrivateIpAddress"]
 									}
 								}]
 							},
@@ -536,7 +542,7 @@
 				}
 			}
 		},
-		"FGTAENI0": {
+		"FGT1ENI0": {
 			"Type": "AWS::EC2::NetworkInterface",
 			"Properties": {
 				"Description": "port1",
@@ -554,7 +560,7 @@
 							"", [{
 									"Ref": "AWS::StackName"
 								},
-								"FgtAENI0"
+								"-Fgt1ENI0"
 							]
 						]
 					}
@@ -564,7 +570,7 @@
 				}]
 			}
 		},
-		"FGTBENI0": {
+		"FGT2ENI0": {
 			"Type": "AWS::EC2::NetworkInterface",
 			"Properties": {
 				"Description": "port1",
@@ -582,7 +588,7 @@
 							"", [{
 									"Ref": "AWS::StackName"
 								},
-								"FgtBENI0"
+								"-Fgt2ENI0"
 							]
 						]
 					}
@@ -592,7 +598,7 @@
 				}]
 			}
 		},
-		"FGTAENI1": {
+		"FGT1ENI1": {
 			"Type": "AWS::EC2::NetworkInterface",
 			"Properties": {
 				"Description": "port2",
@@ -610,14 +616,14 @@
 							"", [{
 									"Ref": "AWS::StackName"
 								},
-								"FgtAENI1"
+								"-Fgt1ENI1"
 							]
 						]
 					}
 				}]
 			}
 		},
-		"FGTBENI1": {
+		"FGT2ENI1": {
 			"Type": "AWS::EC2::NetworkInterface",
 			"Properties": {
 				"Description": "port2",
@@ -635,50 +641,50 @@
 							"", [{
 									"Ref": "AWS::StackName"
 								},
-								"FgtBENI1"
+								"-Fgt2ENI1"
 							]
 						]
 					}
 				}]
 			}
 		},
-		"FgtAEIP": {
+		"Fgt1EIP": {
 			"Type": "AWS::EC2::EIP",
 			"Properties": {
 				"Domain": "vpc"
 			},
-			"DependsOn": "FgtA"
+			"DependsOn": "Fgt1"
 		},
-		"FgtBEIP": {
+		"Fgt2EIP": {
 			"Type": "AWS::EC2::EIP",
 			"Properties": {
 				"Domain": "vpc"
 			},
-			"DependsOn": "FgtB"
+			"DependsOn": "Fgt2"
 		},
-		"FgtAEIPASSOCIATION": {
+		"Fgt1EIPASSOCIATION": {
 			"Type": "AWS::EC2::EIPAssociation",
 			"Properties": {
 				"AllocationId": {
-					"Fn::GetAtt": ["FgtAEIP", "AllocationId"]
+					"Fn::GetAtt": ["Fgt1EIP", "AllocationId"]
 				},
 				"NetworkInterfaceId": {
-					"Ref": "FGTAENI0"
+					"Ref": "FGT1ENI0"
 				}
 			},
-			"DependsOn": "FgtAEIP"
+			"DependsOn": "Fgt1EIP"
 		},
-		"FgtBEIPASSOCIATION": {
+		"Fgt2EIPASSOCIATION": {
 			"Type": "AWS::EC2::EIPAssociation",
 			"Properties": {
 				"AllocationId": {
-					"Fn::GetAtt": ["FgtBEIP", "AllocationId"]
+					"Fn::GetAtt": ["Fgt2EIP", "AllocationId"]
 				},
 				"NetworkInterfaceId": {
-					"Ref": "FGTBENI0"
+					"Ref": "FGT2ENI0"
 				}
 			},
-			"DependsOn": "FgtBEIP"
+			"DependsOn": "Fgt2EIP"
 		},
 		"AZ1PrivateRouteTable": {
 			"Type": "AWS::EC2::RouteTable",
@@ -708,7 +714,7 @@
 				},
 				"DestinationCidrBlock": "0.0.0.0/0",
 				"NetworkInterfaceId": {
-					"Ref": "FGTAENI1"
+					"Ref": "FGT1ENI1"
 				}
 			}
 		},
@@ -751,7 +757,7 @@
 				},
 				"DestinationCidrBlock": "0.0.0.0/0",
 				"NetworkInterfaceId": {
-					"Ref": "FGTBENI1"
+					"Ref": "FGT2ENI1"
 				}
 			}
 		},
@@ -847,7 +853,7 @@
 				"TargetType": "instance",
 				"Targets": [{
 						"Id": {
-							"Ref": "FgtA"
+							"Ref": "Fgt1"
 						},
 						"Port": {
 							"Ref": "ListenerPort"
@@ -855,7 +861,7 @@
 					},
 					{
 						"Id": {
-							"Ref": "FgtB"
+							"Ref": "Fgt2"
 						},
 						"Port": {
 							"Ref": "ListenerPort"
@@ -978,7 +984,7 @@
 				"TargetType": "instance",
 				"Targets": [{
 						"Id": {
-							"Ref": "FgtA"
+							"Ref": "Fgt1"
 						},
 						"Port": {
 							"Ref": "ListenerPort"
@@ -986,7 +992,7 @@
 					},
 					{
 						"Id": {
-							"Ref": "FgtB"
+							"Ref": "Fgt2"
 						},
 						"Port": {
 							"Ref": "ListenerPort"
@@ -1201,16 +1207,16 @@
 					"Variables": {
 						"InstanceIPs": {
 							"Fn::Join": [",", [{
-								"Fn::GetAtt": ["FGTAENI1", "PrimaryPrivateIpAddress"]
+								"Fn::GetAtt": ["FGT1ENI1", "PrimaryPrivateIpAddress"]
 							}, {
-								"Fn::GetAtt": ["FGTBENI1", "PrimaryPrivateIpAddress"]
+								"Fn::GetAtt": ["FGT2ENI1", "PrimaryPrivateIpAddress"]
 							}]]
 						},
 						"InstanceENIs": {
 							"Fn::Join": [",", [{
-								"Ref": "FGTAENI1"
+								"Ref": "FGT1ENI1"
 							}, {
-								"Ref": "FGTBENI1"
+								"Ref": "FGT2ENI1"
 							}]]
 						},
 						"az1RouteTables": {
@@ -1257,7 +1263,9 @@
 				},
 				"SecurityGroupIngress": [{
 					"IpProtocol": "-1",
-					"CidrIp": "0.0.0.0/0"
+					"CidrIp": {
+						"Ref": "VPCCIDR"
+					}
 				}],
 				"SecurityGroupEgress": [{
 					"IpProtocol": "-1",
@@ -1387,45 +1395,45 @@
 		}
 	},
 	"Outputs": {
-		"FGTAURL": {
-			"Value": {
-				"Fn::Join": [
-					"", [
-						"https://", {
-							"Ref": "FgtAEIP"
-						}
-					]
-				]
-			},
-			"Description": "URL to access FortigateA"
-		},
-		"FGTUsername": {
+		"Username": {
 			"Value": "admin",
-			"Description": "Username to access Fortigates"
+			"Description": "Username for the Fortigates"
 		},
-		"FGTAPassword": {
+		"Fgt1Password": {
 			"Value": {
-				"Ref": "FgtA"
+				"Ref": "Fgt1"
 			},
-			"Description": "Password to access FortigateA"
+			"Description": "Password for FortiGate1"
 		},
-		"FGTBURL": {
+		"Fgt2Password": {
+			"Value": {
+				"Ref": "Fgt2"
+			},
+			"Description": "Password for FortiGate2"
+		},
+		"Fgt1LoginURL": {
 			"Value": {
 				"Fn::Join": [
 					"", [
 						"https://", {
-							"Ref": "FgtBEIP"
+							"Ref": "Fgt1EIP"
 						}
 					]
 				]
 			},
-			"Description": "URL to access FortigateB"
+			"Description": "Login URL for the public interface of FortiGate1"
 		},
-		"FGTBPassword": {
+		"Fgt2LoginURL": {
 			"Value": {
-				"Ref": "FgtB"
+				"Fn::Join": [
+					"", [
+						"https://", {
+							"Ref": "Fgt2EIP"
+						}
+					]
+				]
 			},
-			"Description": "Password to access FortigateB"
+			"Description": "Login URL for the public interface of FortiGate2"
 		},
 		"HealthCheckAPIURL": {
 			"Description": "AWS API Gateway URL",
