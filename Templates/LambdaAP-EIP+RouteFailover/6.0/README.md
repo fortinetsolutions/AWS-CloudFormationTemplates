@@ -163,64 +163,86 @@ Once the prerequisites have been satisfied, download a local copy of the relevan
 
 ----
 1.  In the AWS services page under All Services > Management Tools, select CloudFormation.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy1.png)
 
 2.  Select Create New Stack.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy2.png)
  
 3.  On the Select Template page, under the Choose a Template section select Upload a template to Amazon S3 and browse to your local copy of the chosen deployment template.  In this example, we are using the ‘FGT_LambdaAP-EIP+RouteFailover_ExistingVPC_BYOL.template.json’ template.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy3.png)
 
 4.  On the Specify Details page, you will be prompted for a stack name and parameters for the deployment.  We are using a AWS resource IDs for a VPC created with the default values of the 'NewVPC_BaseSetup.template' template.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy4.png)
 
 5.  In the FortiGate Instance Configuration parameters section, we have selected an Availability Zone and Key Pair to use for the FortiGates as well as BYOL licensing.  Notice, since we are using a BYOL template we are prompted for the FortiGate1LicenseFile and FortiGate2LicenseFile parameters.  For the values we are literally copying & pasting the actual BYOL license file content into these fields.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy5.png)
 
 6.  In the Interface IP Configuration for the FortiGates parameters section, we are going with the defaults in this example as the subnet addressing matches.  These IPs will be the primary and secondary IPs assigned to the FortiGate ENIs.  These values will also be used as the static IPs in the FortiOS configuration for both FortiGates.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy6.png)
 
 7.  In the Lambda Configuration parameters section, we have specified a valid email address to use and are going with the defaults values for the rest.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy7.png)
 
 8.  On the Options page, you can scroll to the bottom and select Next.
 9.  On the Review page, confirm that the stack name and parameters are correct.  This is what the parameters look like in this example.  Notice the parameter values for the FortiGate License Files.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy8.png)
 
 10.  On the Review page, scroll down to the capabilities section.  As the template will create IAM resources, you need to acknowledge this by checking the box next to ‘I acknowledge that AWS CloudFormation might create IAM resources’ and then click Create.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy9.png)
 
 11.  On the main AWS CloudFormation console, you will now see your stack being created.  You can monitor the progress by selecting your stack and then select the Events tab.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy10.png)
 
 12.  Once the stack creation has completed successfully, select the Resources tab and search for 'HealthCheckAPIKey’, then click on the resource ID which will take you to the AWS API Gateway console.  Click on the 'show' button next to API Key so you can copy the secret API Key value to complete the FortiOS stich configuration.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy11.png)
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy12.png)
 
 13.  Navigate back to the AWS CloudFormation console and select the Outputs tab to get the login information for the FortiGate instances.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy13.png)
 
 14.  Log into both FortiGates and navigate to (Security Fabric > Automation > healthcheck-stitch), then update the API Key value with the secret key data and save your changes.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy14.png)
 
 15.  Navigate to the AWS EC2 console and reference the instance Description tab for FortiGate1.  Notice the primary and secondary IPs assigned to the instance ENIs as well as the 2 EIPs associated to the instance, the floating EIP and the dedicated EIP.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy15.png)
 
 16.  Now reference the instance Description tab for FortiGate2.  Notice the primary and secondary IPs assigned to the instance ENIs as well as the dedicated EIP associated to the instance.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy16.png)
 
 17.  Navigate to the AWS VPC console and look at the routes for the PrivateRouteTable which is associated to the private subnets.  The default route target is pointing to ENI1\port2 of FortiGate1.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy17.png)
 
-18.  Navigate back to the AWS EC2 console and reference the instance Description tab for FortiGate1.  Now shutdown FortiGate1 via the EC2 console and refresh the page after a few seconds.  Notice that the floating EIP is no longer assigned to FortiGate1.
+18.  Navigate back to the AWS EC2 console and reference the instance Description tab for FortiGate1.  Now shutdown FortiGate1 via the EC2 console and refresh the page after a few seconds.  Notice that the floating EIP is no longer assigned to FortiGate1 and the tags have been updated.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy18.png)
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy19.png)
 
-19.  Now reference the instance Description tab for FortiGate2.  Notice that the floating EIP is now associated to FortiGate2.
+19.  Now reference the instance Description tab for FortiGate2.  Notice that the floating EIP is now associated to FortiGate2 and the tags have been updated.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy20.png)
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy21.png)
 
 20.  Navigate back to the AWS VPC console and look at the routes for the PrivateRouteTable which is associated to the the private subnets.  The default route target is now pointing to ENI1\port2 of FortiGate2.
+
 ![Example Diagram](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/Templates/LambdaAP-EIP%2BRouteFailover/6.0/content/deploy22.png)
 
 21.  Now log back into the FloatingEIPLoginURL and you will be logged into the current active FortiGate, which should now be FortiGate2.
