@@ -83,7 +83,7 @@
 		},
 		"PrivateSubnet1": {
 			"Type": "AWS::EC2::Subnet::Id",
-			"Description": "Select the subnet to use for  PrivateSubnet1"
+			"Description": "Select the subnet to use for PrivateSubnet1"
 		},
 		"PublicSubnet2": {
 			"Type": "AWS::EC2::Subnet::Id",
@@ -198,63 +198,63 @@
 		"RegionMap": {
 			"ap-northeast-1": {
 				"LambdaCode": "fortibucket-ap-northeast-1",
-				"Fgt1mi": "ami-ff4b2012"
+				"fgtami": "ami-ff4b2012"
 			},
 			"ap-northeast-2": {
 				"LambdaCode": "fortibucket-ap-northeast-2",
-				"Fgt1mi": "ami-b89720d6"
+				"fgtami": "ami-b89720d6"
 			},
 			"ap-south-1": {
 				"LambdaCode": "fortibucket-ap-south-1",
-				"Fgt1mi": "ami-ce0033a1"
+				"fgtami": "ami-ce0033a1"
 			},
 			"ap-southeast-1": {
 				"LambdaCode": "fortibucket-ap-southeast-1",
-				"Fgt1mi": "ami-b546025f"
+				"fgtami": "ami-b546025f"
 			},
 			"ap-southeast-2": {
 				"LambdaCode": "fortibucket-ap-southeast-2",
-				"Fgt1mi": "ami-35be1957"
+				"fgtami": "ami-35be1957"
 			},
 			"ca-central-1": {
 				"LambdaCode": "fortibucket-ca-central-1",
-				"Fgt1mi": "ami-05911c61"
+				"fgtami": "ami-05911c61"
 			},
 			"eu-central-1": {
 				"LambdaCode": "fortibucket-eu-central-1",
-				"Fgt1mi": "ami-89161662"
+				"fgtami": "ami-89161662"
 			},
 			"eu-west-1": {
 				"LambdaCode": "fortibucket-eu-west-1",
-				"Fgt1mi": "ami-17e0f9fd"
+				"fgtami": "ami-17e0f9fd"
 			},
 			"eu-west-2": {
 				"LambdaCode": "fortibucket-eu-west-2",
-				"Fgt1mi": "ami-5ca64c3b"
+				"fgtami": "ami-5ca64c3b"
 			},
 			"eu-west-3": {
 				"LambdaCode": "fortibucket-eu-west-3",
-				"Fgt1mi": "ami-2d883850"
+				"fgtami": "ami-2d883850"
 			},
 			"sa-east-1": {
 				"LambdaCode": "fortibucket-sa-east-1",
-				"Fgt1mi": "ami-438fa92f"
+				"fgtami": "ami-438fa92f"
 			},
 			"us-east-1": {
 				"LambdaCode": "fortibucket-us-east-1",
-				"Fgt1mi": "ami-0426217b"
+				"fgtami": "ami-0426217b"
 			},
 			"us-east-2": {
 				"LambdaCode": "fortibucket-us-east-2",
-				"Fgt1mi": "ami-a94c76cc"
+				"fgtami": "ami-a94c76cc"
 			},
 			"us-west-1": {
 				"LambdaCode": "fortibucket-us-west-1",
-				"Fgt1mi": "ami-408e6323"
+				"fgtami": "ami-408e6323"
 			},
 			"us-west-2": {
 				"LambdaCode": "fortibucket-us-west-2",
-				"Fgt1mi": "ami-42dc833a"
+				"fgtami": "ami-42dc833a"
 			}
 		}
 	},
@@ -330,7 +330,7 @@
 				"ImageId": {
 					"Fn::FindInMap": ["RegionMap", {
 						"Ref": "AWS::Region"
-					}, "Fgt1mi"]
+					}, "fgtami"]
 				},
 				"InstanceType": {
 					"Ref": "InstanceType"
@@ -528,7 +528,7 @@
 				"ImageId": {
 					"Fn::FindInMap": ["RegionMap", {
 						"Ref": "AWS::Region"
-					}, "Fgt1mi"]
+					}, "fgtami"]
 				},
 				"InstanceType": {
 					"Ref": "InstanceType"
@@ -759,7 +759,7 @@
 							"", [{
 									"Ref": "AWS::StackName"
 								},
-								"Fgt1ENI0"
+								"-Fgt1ENI0"
 							]
 						]
 					}
@@ -808,7 +808,7 @@
 							"", [{
 									"Ref": "AWS::StackName"
 								},
-								"Fgt2ENI0"
+								"-Fgt2ENI0"
 							]
 						]
 					}
@@ -846,7 +846,7 @@
 							"", [{
 									"Ref": "AWS::StackName"
 								},
-								"Fgt1ENI1"
+								"-Fgt1ENI1"
 							]
 						]
 					}
@@ -881,7 +881,7 @@
 							"", [{
 									"Ref": "AWS::StackName"
 								},
-								"Fgt2ENI1"
+								"-Fgt2ENI1"
 							]
 						]
 					}
