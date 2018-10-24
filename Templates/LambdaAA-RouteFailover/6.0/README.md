@@ -1,4 +1,4 @@
-# Lambda A-P failover for AWS EIP & Routes 
+# Lambda A-A failover for AWS Routes 
 
 ## Table of Contents
   - [Overview](https://github.com/fortinetsolutions/AWS-CloudFormationTemplates/blob/master/Templates/LambdaAA-RouteFailover/6.0/README.md#overview)
