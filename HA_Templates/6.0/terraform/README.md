@@ -242,7 +242,7 @@ drwxrwxr-x 2 ubuntu ubuntu 4096 Oct 26 10:29 FGT_AP_NativeHA_NewVPC_BYOL
 drwxrwxr-x 2 ubuntu ubuntu 4096 Oct 26 10:29 FGT_AP_NativeHA_NewVPC_PAYG
 ```
 
-3.  In this example we will use the Terraform template in '~/examples/FGT_AP_NativeHA_NewVPC_BYOL/'.  Copy all the files from that folder to the root Terraform folder '~/teraform/'.
+3.  In this example we will use the Terraform template in 'FGT_AP_NativeHA_NewVPC_BYOL'.  Copy all the files from that folder to the root Terraform folder '~/teraform/'.
 ```
 ubuntu@ip-10-7-7-25:~/Desktop/AWS-CloudFormationTemplates/HA_Templates/6.0/terraform$ pwd
 /home/ubuntu/Desktop/AWS-CloudFormationTemplates/HA_Templates/6.0/terraform
