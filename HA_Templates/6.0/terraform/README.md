@@ -214,7 +214,7 @@ Once the prerequisites have been satisfied, login to your account in the AWS con
 
 ```
 ubuntu@ip-10-7-7-25:~/Desktop$ pwd
-/home/ubuntu/Desktop/AWS-CloudFormationTemplates/HA_Templates/6.0/terraform
+/home/ubuntu/Desktop
 
 ubuntu@ip-10-7-7-25:~/Desktop$ git clone https://github.com/fortinetsolutions/AWS-CloudFormationTemplates
 Cloning into 'AWS-CloudFormationTemplates'...
@@ -231,18 +231,18 @@ Resolving deltas: 100% (648/648), done.
 ubuntu@ip-10-7-7-25:~/Desktop$ cd AWS-CloudFormationTemplates/HA_Templates/6.0/terraform/
 ubuntu@ip-10-7-7-25:~/Desktop/AWS-CloudFormationTemplates/HA_Templates/6.0/terraform$ ls -l
 total 8
-drwxrwxr-x 6 ubuntu ubuntu 4096 Oct 6 10:29 examples
-drwxrwxr-x 3 ubuntu ubuntu 4096 Oct 6 10:29 modules
+drwxrwxr-x 6 ubuntu ubuntu 4096 Oct 26 10:29 examples
+drwxrwxr-x 3 ubuntu ubuntu 4096 Oct 26 10:29 modules
 
 ubuntu@ip-10-7-7-25:~/Desktop/AWS-CloudFormationTemplates/HA_Templates/6.0/terraform$ ls -l examples/
 total 16
-drwxrwxr-x 2 ubuntu ubuntu 4096 Oct 6 10:29 FGT_AP_NativeHA_ExistingVPC_BYOL
-drwxrwxr-x 2 ubuntu ubuntu 4096 Oct 6 10:29 FGT_AP_NativeHA_ExistingVPC_PAYG
-drwxrwxr-x 2 ubuntu ubuntu 4096 Oct 6 10:29 FGT_AP_NativeHA_NewVPC_BYOL
-drwxrwxr-x 2 ubuntu ubuntu 4096 Oct 6 10:29 FGT_AP_NativeHA_NewVPC_PAYG
+drwxrwxr-x 2 ubuntu ubuntu 4096 Oct 26 10:29 FGT_AP_NativeHA_ExistingVPC_BYOL
+drwxrwxr-x 2 ubuntu ubuntu 4096 Oct 26 10:29 FGT_AP_NativeHA_ExistingVPC_PAYG
+drwxrwxr-x 2 ubuntu ubuntu 4096 Oct 26 10:29 FGT_AP_NativeHA_NewVPC_BYOL
+drwxrwxr-x 2 ubuntu ubuntu 4096 Oct 26 10:29 FGT_AP_NativeHA_NewVPC_PAYG
 ```
 
-3.  In this example we will use the Terraform template in '~/examples/FGT_AP_NativeHA_NewVPC_BYOL'.  Copy all the files from that folder to the root Terraform folder '~/teraform/'
+3.  In this example we will use the Terraform template in '~/examples/FGT_AP_NativeHA_NewVPC_BYOL/'.  Copy all the files from that folder to the root Terraform folder '~/teraform/'.
 ```
 ubuntu@ip-10-7-7-25:~/Desktop/AWS-CloudFormationTemplates/HA_Templates/6.0/terraform$ pwd
 /home/ubuntu/Desktop/AWS-CloudFormationTemplates/HA_Templates/6.0/terraform
@@ -250,15 +250,15 @@ ubuntu@ip-10-7-7-25:~/Desktop/AWS-CloudFormationTemplates/HA_Templates/6.0/terra
 ubuntu@ip-10-7-7-25:~/Desktop/AWS-CloudFormationTemplates/HA_Templates/6.0/terraform$ cp examples/FGT_AP_NativeHA_NewVPC_BYOL/* ./
 ubuntu@ip-10-7-7-25:~/Desktop/AWS-CloudFormationTemplates/HA_Templates/6.0/terraform$ ls -l
 total 40
--rw-rw-r-- 1 ubuntu ubuntu 1395 Oct 6 10:38 amis.tf
-drwxrwxr-x 6 ubuntu ubuntu 4096 Oct 6 10:29 examples
--rw-rw-r-- 1 ubuntu ubuntu   91 Oct 6 10:38 fgt1-license.lic
--rw-rw-r-- 1 ubuntu ubuntu   91 Oct 6 10:38 fgt2-license.lic
--rw-rw-r-- 1 ubuntu ubuntu 2268 Oct 6 10:38 main.tf
-drwxrwxr-x 3 ubuntu ubuntu 4096 Oct 6 10:29 modules
--rw-rw-r-- 1 ubuntu ubuntu  378 Oct 6 10:38 outputs.tf
--rw-rw-r-- 1 ubuntu ubuntu  300 Oct 6 10:38 terraform.tfvars
--rw-rw-r-- 1 ubuntu ubuntu 4229 Oct 6 10:38 variables.tf
+-rw-rw-r-- 1 ubuntu ubuntu 1395 Oct 26 10:38 amis.tf
+drwxrwxr-x 6 ubuntu ubuntu 4096 Oct 26 10:29 examples
+-rw-rw-r-- 1 ubuntu ubuntu   91 Oct 26 10:38 fgt1-license.lic
+-rw-rw-r-- 1 ubuntu ubuntu   91 Oct 26 10:38 fgt2-license.lic
+-rw-rw-r-- 1 ubuntu ubuntu 2268 Oct 26 10:38 main.tf
+drwxrwxr-x 3 ubuntu ubuntu 4096 Oct 26 10:29 modules
+-rw-rw-r-- 1 ubuntu ubuntu  378 Oct 26 10:38 outputs.tf
+-rw-rw-r-- 1 ubuntu ubuntu  300 Oct 26 10:38 terraform.tfvars
+-rw-rw-r-- 1 ubuntu ubuntu 4229 Oct 26 10:38 variables.tf
 ```
 
 4.  We are using all the default variables and values defined in 'variables.tf' and overriding a few relevant variables and values for this example by modifying 'terraform.tfvars'. 
@@ -279,7 +279,7 @@ fgt2_byol_license = "fgt2-license.lic"
 tag_name_prefix = "tfstack-1x"
 ```
 
-5.  For this deployment, we updated the 'terraform.tfvars' file to provide AWS API credentials, the region, availability zone, keypair, and tagprefix to use.  Here is how the 'terraform.tfvars' file looks like after modification (sensitive information hidden).
+5.  For this deployment, we updated the 'terraform.tfvars' file to provide AWS access key credentials, the region, availability zone, keypair, and tag prefix to use.  Here is how the 'terraform.tfvars' file looks like after modification (sensitive information hidden).
 ```
 ubuntu@ip-10-7-7-25:~/Desktop/AWS-CloudFormationTemplates/HA_Templates/6.0/terraform$ cat terraform.tfvars
 access_key = "A---contentremovedcontentremoved---A"
