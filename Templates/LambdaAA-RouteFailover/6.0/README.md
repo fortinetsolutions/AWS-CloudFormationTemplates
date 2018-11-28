@@ -260,6 +260,7 @@ For further information on FortiManager, such as the Administration Guide or For
 Alternatively, the FortiGates can be fully configured via the GUI, CLI, or API by applying changes to each FGT manually.
 
   - **Are multiple routes table IDs supported per AZ?**
+
 Yes.  Additional route table IDs for each AZ can be added to the Lambda function environment variables (az1RouteTables, az2RouteTables).  The string value needs to be entered in as a comma delimited list of route table IDs (ie rtb-aaaaaa,rtb-bbbbb).
 
   - **What are the expected CloudWatch logs when both instances are passing health checks?**
