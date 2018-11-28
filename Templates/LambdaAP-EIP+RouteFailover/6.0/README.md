@@ -253,15 +253,28 @@ Once the prerequisites have been satisfied, download a local copy of the relevan
 ----
 
 ## FAQ \ Tshoot	
+ - **How do I share firewall policy and objects between the FortiGates?**
+
+The FortiGate instances are deployed as standalone instances, however centralized configuration management can be fully provided with the use of a FortiManager and policy packages.  This would allow a single firewall policy package and objects to be deployed to both of the FortiGate instances.
+
+The FortiManager can be an existing physical\virtual appliance or you can deploy a new FortiManager instance.
+
+For further information on FortiManager, such as the Administration Guide or FortiManager to FortiGate compatibility matrix, please visit (docs.fortinet.com)[https://docs.fortinet.com/fortimanager/admin-guides] for further information. 
+
+Alternatively, the FortiGates can be fully configured via the GUI, CLI, or API by applying changes to each FGT manually.
+
   - **Are multiple Failover EIPs supported?**
+
 Yes.  The Lambda function will move over any EIPs associated to the secondary IPs of the active instance's public interface.  In order to configure additional secondary IPs on the public ENI and in FortiOS for port1, reference this [use-case guide](https://www.fortinet.com/content/dam/fortinet/assets/solutions/aws/Fortinet_Multiple_Public_IPs_for_an_AWS_interface.pdf) on the Fortinet AWS micro site.
 
 **Note:** The number of secondary IPs configured on both FortiGate instances public interface should match for EIP failover to work as expected.
 
   - **Are multiple routes for ENI0 or ENI1 supported?**
+
 Yes.  The Lambda function will move any routes (regardless of the network CIDR) found in any AWS route table(s) for the current VPC that are referencing any of the active instance ENIs.
 
   - **When I deployed the template, FortiGate2 is the active instance instead of FortiGate1.**
+
 Depending on the when both FortiGate instances fully boot up, FortiGate1 can fail a TCP health check while FortiGate2 passes.  So the Lambda function works as expected and fails over the AWS SDN to reference FortiGate2 in this scenario.
 
   - **What are the expected CloudWatch logs when both instances are passing health checks?**
