@@ -249,6 +249,16 @@ Once the prerequisites have been satisfied, download a local copy of the relevan
 ----
 
 ## FAQ \ Tshoot	
+ - **How do I share firewall policy and objects between the FortiGates?**
+
+The FortiGate instances are deployed as standalone instances, however centralized configuration management can be fully provided with the use of a FortiManager and policy packages.  This would allow a single firewall policy package and objects to be deployed to both of the FortiGate instances.
+
+The FortiManager can be an existing physical\virtual appliance or you can deploy a new FortiManager instance.
+
+For further information on FortiManager, such as the Administration Guide or FortiManager to FortiGate compatibility matrix, please visit (docs.fortinet.com)[https://docs.fortinet.com/fortimanager/admin-guides] for further information. 
+
+Alternatively, the FortiGates can be fully configured via the GUI, CLI, or API by applying changes to each FGT manually.
+
   - **Are multiple routes table IDs supported per AZ?**
 Yes.  Additional route table IDs for each AZ can be added to the Lambda function environment variables (az1RouteTables, az2RouteTables).  The string value needs to be entered in as a comma delimited list of route table IDs (ie rtb-aaaaaa,rtb-bbbbb).
 
