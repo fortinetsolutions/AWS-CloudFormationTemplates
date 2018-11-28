@@ -259,7 +259,7 @@ The FortiGate instances are deployed as standalone instances, however centralize
 
 The FortiManager can be an existing physical\virtual appliance or you can deploy a new FortiManager instance.
 
-For further information on FortiManager, such as the Administration Guide or FortiManager to FortiGate compatibility matrix, please visit (docs.fortinet.com)[https://docs.fortinet.com/fortimanager/admin-guides] for further information. 
+For further information on FortiManager, such as the Administration Guide or FortiManager to FortiGate compatibility matrix, please visit [docs.fortinet.com](https://docs.fortinet.com/fortimanager/admin-guides) for further information. 
 
 Alternatively, the FortiGates can be fully configured via the GUI, CLI, or API by applying changes to each FGT manually.
 
