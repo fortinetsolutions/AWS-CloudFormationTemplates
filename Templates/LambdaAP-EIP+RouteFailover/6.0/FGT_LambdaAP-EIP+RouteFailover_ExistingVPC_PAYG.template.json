@@ -107,16 +107,18 @@
 			"Description": "Select the instance type for the FortiGates",
 			"AllowedValues": [
 				"t2.small",
-				"c4.large",
-				"c4.xlarge",
-				"c4.2xlarge",
-				"c4.4xlarge",
-				"c4.8xlarge",
 				"c5.large",
 				"c5.xlarge",
 				"c5.2xlarge",
 				"c5.4xlarge",
-				"c5.9xlarge"
+				"c5.9xlarge",
+				"c5.18xlarge",
+				"c5n.large",
+				"c5n.xlarge",
+				"c5n.2xlarge",
+				"c5n.4xlarge",
+				"c5n.9xlarge",
+				"c5n.18xlarge"
 			]
 		},
 		"CIDRForInstanceAccess": {
@@ -198,63 +200,63 @@
 		"RegionMap": {
 			"ap-northeast-1": {
 				"LambdaCode": "fortibucket-ap-northeast-1",
-				"fgtami": "ami-ff4b2012"
+				"fgtami": "ami-0da422b51d0b3b5ed"
 			},
 			"ap-northeast-2": {
 				"LambdaCode": "fortibucket-ap-northeast-2",
-				"fgtami": "ami-b89720d6"
+				"fgtami": "ami-0342f195d9115b385"
 			},
 			"ap-south-1": {
 				"LambdaCode": "fortibucket-ap-south-1",
-				"fgtami": "ami-ce0033a1"
+				"fgtami": "ami-088a63af370cacb04"
 			},
 			"ap-southeast-1": {
 				"LambdaCode": "fortibucket-ap-southeast-1",
-				"fgtami": "ami-b546025f"
+				"fgtami": "ami-06354eb92f740685d"
 			},
 			"ap-southeast-2": {
 				"LambdaCode": "fortibucket-ap-southeast-2",
-				"fgtami": "ami-35be1957"
+				"fgtami": "ami-03d5bc1d7c6f33715"
 			},
 			"ca-central-1": {
 				"LambdaCode": "fortibucket-ca-central-1",
-				"fgtami": "ami-05911c61"
+				"fgtami": "ami-0c6d315214a290934"
 			},
 			"eu-central-1": {
 				"LambdaCode": "fortibucket-eu-central-1",
-				"fgtami": "ami-89161662"
+				"fgtami": "ami-0c416689e186f8109"
 			},
 			"eu-west-1": {
 				"LambdaCode": "fortibucket-eu-west-1",
-				"fgtami": "ami-17e0f9fd"
+				"fgtami": "ami-0367b2f3b85bc3cb4"
 			},
 			"eu-west-2": {
 				"LambdaCode": "fortibucket-eu-west-2",
-				"fgtami": "ami-5ca64c3b"
+				"fgtami": "ami-0c2cfafaf7aa1ba1d"
 			},
 			"eu-west-3": {
 				"LambdaCode": "fortibucket-eu-west-3",
-				"fgtami": "ami-2d883850"
+				"fgtami": "ami-0c0bbb1ddcf5773d6"
 			},
 			"sa-east-1": {
 				"LambdaCode": "fortibucket-sa-east-1",
-				"fgtami": "ami-438fa92f"
+				"fgtami": "ami-0b565b83b59e5d728"
 			},
 			"us-east-1": {
 				"LambdaCode": "fortibucket-us-east-1",
-				"fgtami": "ami-0426217b"
+				"fgtami": "ami-073b7839422f625e5"
 			},
 			"us-east-2": {
 				"LambdaCode": "fortibucket-us-east-2",
-				"fgtami": "ami-a94c76cc"
+				"fgtami": "ami-0b36959fe838b0a76"
 			},
 			"us-west-1": {
 				"LambdaCode": "fortibucket-us-west-1",
-				"fgtami": "ami-408e6323"
+				"fgtami": "ami-05c19b93fd2c85c4a"
 			},
 			"us-west-2": {
 				"LambdaCode": "fortibucket-us-west-2",
-				"fgtami": "ami-42dc833a"
+				"fgtami": "ami-03fa388aaa3f38041"
 			}
 		}
 	},
@@ -1517,13 +1519,13 @@
 			"Value": {
 				"Ref": "Fgt1"
 			},
-			"Description": "Password for FortiGate1"
+			"Description": "Initial password for FortiGate1"
 		},
 		"Fgt2Password": {
 			"Value": {
 				"Ref": "Fgt2"
 			},
-			"Description": "Password for FortiGate2"
+			"Description": "Initial password for FortiGate2"
 		},
 		"FloatingEIPLoginURL": {
 			"Value": {

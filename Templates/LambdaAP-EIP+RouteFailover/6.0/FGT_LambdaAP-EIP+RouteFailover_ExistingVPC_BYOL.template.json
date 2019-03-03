@@ -109,16 +109,18 @@
 			"Description": "Select the instance type for the FortiGates",
 			"AllowedValues": [
 				"t2.small",
-				"c4.large",
-				"c4.xlarge",
-				"c4.2xlarge",
-				"c4.4xlarge",
-				"c4.8xlarge",
 				"c5.large",
 				"c5.xlarge",
 				"c5.2xlarge",
 				"c5.4xlarge",
-				"c5.9xlarge"
+				"c5.9xlarge",
+				"c5.18xlarge",
+				"c5n.large",
+				"c5n.xlarge",
+				"c5n.2xlarge",
+				"c5n.4xlarge",
+				"c5n.9xlarge",
+				"c5n.18xlarge"
 			]
 		},
 		"CIDRForInstanceAccess": {
@@ -181,11 +183,11 @@
 			"Description": "Provide the second IP address in CIDR form for the public interface of FortiGate2 (IP from PublicSubnet2)"
 		},
 		"FortiGate1LicenseFile": {
-			"Description": "Provide the content of the license file for FortiGate 1 (ie -----BEGIN FGT VM LICENSE----- ... -----END FGT VM LICENSE-----)",
+			"Description": "Provide the content of the license file for FortiGate1 (ie -----BEGIN FGT VM LICENSE----- ... -----END FGT VM LICENSE-----)",
 			"Type": "String"
 		},
 		"FortiGate2LicenseFile": {
-			"Description": "Provide the content of the license file for FortiGate 2(ie -----BEGIN FGT VM LICENSE----- ... -----END FGT VM LICENSE-----)",
+			"Description": "Provide the content of the license file for FortiGate2 (ie -----BEGIN FGT VM LICENSE----- ... -----END FGT VM LICENSE-----)",
 			"Type": "String"
 		},
 		"HAPairTagValue": {
@@ -208,63 +210,63 @@
 		"RegionMap": {
 			"ap-northeast-1": {
 				"LambdaCode": "fortibucket-ap-northeast-1",
-				"fgtami": "ami-2865a957"
+				"fgtami": "ami-01717134c621e9735"
 			},
 			"ap-northeast-2": {
 				"LambdaCode": "fortibucket-ap-northeast-2",
-				"fgtami": "ami-dc9b31b2"
+				"fgtami": "ami-09e9633d56e9dd64a"
 			},
 			"ap-south-1": {
 				"LambdaCode": "fortibucket-ap-south-1",
-				"fgtami": "ami-bb88a0d4"
+				"fgtami": "ami-0e218bda8681b18e1"
 			},
 			"ap-southeast-1": {
 				"LambdaCode": "fortibucket-ap-southeast-1",
-				"fgtami": "ami-5f6a6d23"
+				"fgtami": "ami-0f41a6c5e50d38dc2"
 			},
 			"ap-southeast-2": {
 				"LambdaCode": "fortibucket-ap-southeast-2",
-				"fgtami": "ami-6eaa750c"
+				"fgtami": "ami-0f670cae9c606b94a"
 			},
 			"ca-central-1": {
 				"LambdaCode": "fortibucket-ca-central-1",
-				"fgtami": "ami-25028141"
+				"fgtami": "ami-06855da319cfcde7c"
 			},
 			"eu-central-1": {
 				"LambdaCode": "fortibucket-eu-central-1",
-				"fgtami": "ami-6a85b581"
+				"fgtami": "ami-0f1a383a05eb44602"
 			},
 			"eu-west-1": {
 				"LambdaCode": "fortibucket-eu-west-1",
-				"fgtami": "ami-3da3ae44"
+				"fgtami": "ami-09756fbedaac05076"
 			},
 			"eu-west-2": {
 				"LambdaCode": "fortibucket-eu-west-2",
-				"fgtami": "ami-878d63e0"
+				"fgtami": "ami-00d7818f03addbb4b"
 			},
 			"eu-west-3": {
 				"LambdaCode": "fortibucket-eu-west-3",
-				"fgtami": "ami-ae2e9fd3"
+				"fgtami": "ami-0698b8b6c81f9fdde"
 			},
 			"sa-east-1": {
 				"LambdaCode": "fortibucket-sa-east-1",
-				"fgtami": "ami-03461d6f"
+				"fgtami": "ami-0c3a6acc24a8f6f24"
 			},
 			"us-east-1": {
 				"LambdaCode": "fortibucket-us-east-1",
-				"fgtami": "ami-48400137"
+				"fgtami": "ami-081a50d612399ef3a"
 			},
 			"us-east-2": {
 				"LambdaCode": "fortibucket-us-east-2",
-				"fgtami": "ami-340a3451"
+				"fgtami": "ami-033a6d6ec5389bf58"
 			},
 			"us-west-1": {
 				"LambdaCode": "fortibucket-us-west-1",
-				"fgtami": "ami-05de3a66"
+				"fgtami": "ami-0a18a6cb761d70cfe"
 			},
 			"us-west-2": {
 				"LambdaCode": "fortibucket-us-west-2",
-				"fgtami": "ami-b6befdce"
+				"fgtami": "ami-0cac552cdf25122d0"
 			}
 		}
 	},
@@ -1569,13 +1571,13 @@
 			"Value": {
 				"Ref": "Fgt1"
 			},
-			"Description": "Password for FortiGate1"
+			"Description": "Initial password for FortiGate1"
 		},
 		"Fgt2Password": {
 			"Value": {
 				"Ref": "Fgt2"
 			},
-			"Description": "Password for FortiGate2"
+			"Description": "Initial password for FortiGate2"
 		},
 		"FloatingEIPLoginURL": {
 			"Value": {

@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "AWS CloudFormation Template to launch a VPC with 2 public subnets and 2 private subnets.",
+  "Description": "(1.0) AWS CloudFormation Template to launch a VPC with 2 public subnets and 2 private subnets.",
   "Metadata": {
     "AWS::CloudFormation::Interface": {
       "ParameterGroups": [
@@ -72,12 +72,12 @@
             "Key": "Name",
             "Value": {
               "Fn::Join": [
-                "",
+                "-",
                 [
                   {
                     "Ref": "AWS::StackName"
                   },
-                  "VPCID"
+                  "Vpc"
                 ]
               ]
             }
@@ -102,7 +102,7 @@
             "Key": "Name",
             "Value": {
               "Fn::Join": [
-                "",
+                "-",
                 [
                   {
                     "Ref": "AWS::StackName"
@@ -132,7 +132,7 @@
             "Key": "Name",
             "Value": {
               "Fn::Join": [
-                "",
+                "-",
                 [
                   {
                     "Ref": "AWS::StackName"
@@ -162,7 +162,7 @@
             "Key": "Name",
             "Value": {
               "Fn::Join": [
-                "",
+                "-",
                 [
                   {
                     "Ref": "AWS::StackName"
@@ -192,7 +192,7 @@
             "Key": "Name",
             "Value": {
               "Fn::Join": [
-                "",
+                "-",
                 [
                   {
                     "Ref": "AWS::StackName"
@@ -216,7 +216,7 @@
             "Key": "Name",
             "Value": {
               "Fn::Join": [
-                "",
+                "-",
                 [
                   {
                     "Ref": "AWS::StackName"
@@ -240,7 +240,7 @@
             "Key": "Name",
             "Value": {
               "Fn::Join": [
-                "",
+                "-",
                 [
                   {
                     "Ref": "AWS::StackName"
@@ -264,7 +264,7 @@
             "Key": "Name",
             "Value": {
               "Fn::Join": [
-                "",
+                "-",
                 [
                   {
                     "Ref": "AWS::StackName"
@@ -285,12 +285,12 @@
             "Key": "Name",
             "Value": {
               "Fn::Join": [
-                "",
+                "-",
                 [
                   {
                     "Ref": "AWS::StackName"
                   },
-                  "IGW"
+                  "Igw"
                 ]
               ]
             }
