@@ -1,6 +1,6 @@
 {
 	"AWSTemplateFormatVersion": "2010-09-09",
-	"Description": "(v3.0) AWS CloudFormation Template to deploy a FGCP based Active-Passive HA solution with two FortiGates",
+	"Description": "(v4.0) AWS CloudFormation Template to deploy a FGCP based Active-Passive HA solution with two FortiGates",
 	"Metadata": {
 		"AWS::CloudFormation::Interface": {
 			"ParameterGroups": [{
@@ -80,42 +80,42 @@
 		"FortiGate1PublicIP": {
 			"Type": "String",
 			"Default": "192.168.1.11/24",
-			"Description": "Provide the IP address in CIDR form for the public interface of FortiGate 1 (IP from PublicSubnet)"
+			"Description": "Provide the IP address in CIDR form for the public interface of FortiGate1 (IP from PublicSubnet)"
 		},
 		"FortiGate2PublicIP": {
 			"Type": "String",
 			"Default": "192.168.1.12/24",
-			"Description": "Provide the IP address in CIDR form for the public interface of FortiGate 2 (IP from PublicSubnet)"
+			"Description": "Provide the IP address in CIDR form for the public interface of FortiGate2 (IP from PublicSubnet)"
 		},
 		"FortiGate1PrivateIP": {
 			"Type": "String",
 			"Default": "192.168.2.11/24",
-			"Description": "Provide the IP address in CIDR form for the private interface of FortiGate 1 (IP from PrivateSubnet)"
+			"Description": "Provide the IP address in CIDR form for the private interface of FortiGate1 (IP from PrivateSubnet)"
 		},
 		"FortiGate2PrivateIP": {
 			"Type": "String",
 			"Default": "192.168.2.12/24",
-			"Description": "Provide the IP address in CIDR form for the private interface of FortiGate 2 (IP from PrivateSubnet)"
+			"Description": "Provide the IP address in CIDR form for the private interface of FortiGate2 (IP from PrivateSubnet)"
 		},
 		"FortiGate1HAsyncIP": {
 			"Type": "String",
 			"Default": "192.168.3.11/24",
-			"Description": "Provide the IP address in CIDR form for the ha sync interface of FortiGate 1 (IP from HAsyncSubnet)"
+			"Description": "Provide the IP address in CIDR form for the ha sync interface of FortiGate1 (IP from HAsyncSubnet)"
 		},
 		"FortiGate2HAsyncIP": {
 			"Type": "String",
 			"Default": "192.168.3.12/24",
-			"Description": "Provide the IP address in CIDR form for the ha sync interface of FortiGate 2 (IP from HAsyncSubnet)"
+			"Description": "Provide the IP address in CIDR form for the ha sync interface of FortiGate2 (IP from HAsyncSubnet)"
 		},
 		"FortiGate1HAmgmtIP": {
 			"Type": "String",
 			"Default": "192.168.4.11/24",
-			"Description": "Provide the IP address in CIDR form for the ha management interface of FortiGate 1 (IP from HAmgmtSubnet)"
+			"Description": "Provide the IP address in CIDR form for the ha management interface of FortiGate1 (IP from HAmgmtSubnet)"
 		},
 		"FortiGate2HAmgmtIP": {
 			"Type": "String",
 			"Default": "192.168.4.12/24",
-			"Description": "Provide the IP address in CIDR form for the ha management interface of FortiGate 2 (IP from HAmgmtSubnet)"
+			"Description": "Provide the IP address in CIDR form for the ha management interface of FortiGate2 (IP from HAmgmtSubnet)"
 		},
 		"ClusterPublicIP": {
 			"Type": "String",
@@ -132,14 +132,14 @@
 			"Default": "c5.xlarge",
 			"Description": "Select the instance type for the FortiGates",
 			"AllowedValues": [
-				"c4.xlarge",
-				"c4.2xlarge",
-				"c4.4xlarge",
-				"c4.8xlarge",
 				"c5.xlarge",
 				"c5.2xlarge",
 				"c5.4xlarge",
-				"c5.9xlarge"
+				"c5.9xlarge",
+				"c5n.xlarge",
+				"c5n.2xlarge",
+				"c5n.4xlarge",
+				"c5n.9xlarge"
 			]
 		},
 		"CIDRForInstanceAccess": {
@@ -159,49 +159,49 @@
 	"Mappings": {
 		"RegionMap": {
 			"ap-northeast-1": {
-				"fgtami": "ami-ff4b2012"
+				"fgtami": "ami-0da422b51d0b3b5ed"
 			},
 			"ap-northeast-2": {
-				"fgtami": "ami-b89720d6"
+				"fgtami": "ami-0342f195d9115b385"
 			},
 			"ap-south-1": {
-				"fgtami": "ami-ce0033a1"
+				"fgtami": "ami-088a63af370cacb04"
 			},
 			"ap-southeast-1": {
-				"fgtami": "ami-b546025f"
+				"fgtami": "ami-06354eb92f740685d"
 			},
 			"ap-southeast-2": {
-				"fgtami": "ami-35be1957"
+				"fgtami": "ami-03d5bc1d7c6f33715"
 			},
 			"ca-central-1": {
-				"fgtami": "ami-05911c61"
+				"fgtami": "ami-0c6d315214a290934"
 			},
 			"eu-central-1": {
-				"fgtami": "ami-89161662"
+				"fgtami": "ami-0c416689e186f8109"
 			},
 			"eu-west-1": {
-				"fgtami": "ami-17e0f9fd"
+				"fgtami": "ami-0367b2f3b85bc3cb4"
 			},
 			"eu-west-2": {
-				"fgtami": "ami-5ca64c3b"
+				"fgtami": "ami-0c2cfafaf7aa1ba1d"
 			},
 			"eu-west-3": {
-				"fgtami": "ami-2d883850"
+				"fgtami": "ami-0c0bbb1ddcf5773d6"
 			},
 			"sa-east-1": {
-				"fgtami": "ami-438fa92f"
+				"fgtami": "ami-0b565b83b59e5d728"
 			},
 			"us-east-1": {
-				"fgtami": "ami-0426217b"
+				"fgtami": "ami-073b7839422f625e5"
 			},
 			"us-east-2": {
-				"fgtami": "ami-a94c76cc"
+				"fgtami": "ami-0b36959fe838b0a76"
 			},
 			"us-west-1": {
-				"fgtami": "ami-408e6323"
+				"fgtami": "ami-05c19b93fd2c85c4a"
 			},
 			"us-west-2": {
-				"fgtami": "ami-42dc833a"
+				"fgtami": "ami-03fa388aaa3f38041"
 			}
 		}
 	},
@@ -1002,7 +1002,7 @@
 			"Value": {
 				"Ref": "Fgt1"
 			},
-			"Description": "Password for the FortiGates"
+			"Description": "Initial password for the FortiGates"
 		},
 		"ClusterLoginURL": {
 			"Value": {

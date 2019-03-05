@@ -1,6 +1,6 @@
 {
 	"AWSTemplateFormatVersion": "2010-09-09",
-	"Description": "(v3.0) AWS CloudFormation Template to deploy a FGCP based Active-Passive HA solution with two FortiGates",
+	"Description": "(v4.0) AWS CloudFormation Template to deploy a FGCP based Active-Passive HA solution with two FortiGates",
 	"Metadata": {
 		"AWS::CloudFormation::Interface": {
 			"ParameterGroups": [{
@@ -13,7 +13,7 @@
 					"Label": {
 						"default": "FortiGate Instance Configuration"
 					},
-					"Parameters": ["InstanceType", "CIDRForInstanceAccess", "AZForInstances", "KeyPair", "FortiGate1LicenseFile", "FortiGate2LicenseFile", "PublicSubnetRouterIP",  "PrivateSubnetRouterIP", "HAmgmtSubnetRouterIP"]
+					"Parameters": ["InstanceType", "CIDRForInstanceAccess", "AZForInstances", "KeyPair", "InitS3Bucket", "InitS3BucketRegion", "FortiGate1LicenseFile", "FortiGate2LicenseFile", "PublicSubnetRouterIP", "PrivateSubnetRouterIP", "HAmgmtSubnetRouterIP"]
 				},
 				{
 					"Label": {
@@ -80,42 +80,42 @@
 		"FortiGate1PublicIP": {
 			"Type": "String",
 			"Default": "192.168.1.11/24",
-			"Description": "Provide the IP address in CIDR form for the public interface of FortiGate 1 (IP from PublicSubnet)"
+			"Description": "Provide the IP address in CIDR form for the public interface of FortiGate1 (IP from PublicSubnet)"
 		},
 		"FortiGate2PublicIP": {
 			"Type": "String",
 			"Default": "192.168.1.12/24",
-			"Description": "Provide the IP address in CIDR form for the public interface of FortiGate 2 (IP from PublicSubnet)"
+			"Description": "Provide the IP address in CIDR form for the public interface of FortiGate2 (IP from PublicSubnet)"
 		},
 		"FortiGate1PrivateIP": {
 			"Type": "String",
 			"Default": "192.168.2.11/24",
-			"Description": "Provide the IP address in CIDR form for the private interface of FortiGate 1 (IP from PrivateSubnet)"
+			"Description": "Provide the IP address in CIDR form for the private interface of FortiGate1 (IP from PrivateSubnet)"
 		},
 		"FortiGate2PrivateIP": {
 			"Type": "String",
 			"Default": "192.168.2.12/24",
-			"Description": "Provide the IP address in CIDR form for the private interface of FortiGate 2 (IP from PrivateSubnet)"
+			"Description": "Provide the IP address in CIDR form for the private interface of FortiGate2 (IP from PrivateSubnet)"
 		},
 		"FortiGate1HAsyncIP": {
 			"Type": "String",
 			"Default": "192.168.3.11/24",
-			"Description": "Provide the IP address in CIDR form for the ha sync interface of FortiGate 1 (IP from HAsyncSubnet)"
+			"Description": "Provide the IP address in CIDR form for the ha sync interface of FortiGate1 (IP from HAsyncSubnet)"
 		},
 		"FortiGate2HAsyncIP": {
 			"Type": "String",
 			"Default": "192.168.3.12/24",
-			"Description": "Provide the IP address in CIDR form for the ha sync interface of FortiGate 2 (IP from HAsyncSubnet)"
+			"Description": "Provide the IP address in CIDR form for the ha sync interface of FortiGate2 (IP from HAsyncSubnet)"
 		},
 		"FortiGate1HAmgmtIP": {
 			"Type": "String",
 			"Default": "192.168.4.11/24",
-			"Description": "Provide the IP address in CIDR form for the ha management interface of FortiGate 1 (IP from HAmgmtSubnet)"
+			"Description": "Provide the IP address in CIDR form for the ha management interface of FortiGate1 (IP from HAmgmtSubnet)"
 		},
 		"FortiGate2HAmgmtIP": {
 			"Type": "String",
 			"Default": "192.168.4.12/24",
-			"Description": "Provide the IP address in CIDR form for the ha management interface of FortiGate 2 (IP from HAmgmtSubnet)"
+			"Description": "Provide the IP address in CIDR form for the ha management interface of FortiGate2 (IP from HAmgmtSubnet)"
 		},
 		"ClusterPublicIP": {
 			"Type": "String",
@@ -132,14 +132,16 @@
 			"Default": "c5.xlarge",
 			"Description": "Select the instance type for the FortiGates",
 			"AllowedValues": [
-				"c4.xlarge",
-				"c4.2xlarge",
-				"c4.4xlarge",
-				"c4.8xlarge",
 				"c5.xlarge",
 				"c5.2xlarge",
 				"c5.4xlarge",
-				"c5.9xlarge"
+				"c5.9xlarge",
+				"c5.18xlarge",
+				"c5n.xlarge",
+				"c5n.2xlarge",
+				"c5n.4xlarge",
+				"c5n.9xlarge",
+				"c5n.18xlarge"
 			]
 		},
 		"CIDRForInstanceAccess": {
@@ -155,61 +157,89 @@
 			"Type": "AWS::EC2::AvailabilityZone::Name",
 			"Description": "Select an Availability Zone for the FortiGates"
 		},
+		"InitS3Bucket": {
+			"Type": "String",
+			"MinLength" : "1",
+			"Description": "Provide the Init S3 Bucket name, where your license files and config files exists"
+		},
+		"InitS3BucketRegion": {
+			"Type": "String",
+			"Description": "Select the Region where the Init S3 Bucket exists",
+			"AllowedValues": [
+				"ap-northeast-1",
+				"ap-northeast-2",
+				"ap-south-1",
+				"ap-southeast-1",
+				"ap-southeast-2",
+				"ca-central-1",
+				"eu-central-1",
+				"eu-west-1",
+				"eu-west-2",
+				"eu-west-3",
+				"sa-east-1",
+				"us-east-1",
+				"us-east-2",
+				"us-west-1",
+				"us-west-2"
+			]
+		},
 		"FortiGate1LicenseFile": {
-			"Description": "Provide the content of the license file for FortiGate 1 (ie -----BEGIN FGT VM LICENSE----- ... -----END FGT VM LICENSE-----)",
-			"Type": "String"
+			"Type": "String",
+			"MinLength" : "1",
+			"Description": "Provide the name of the license file in the Init S3 Bucket for FortiGate1 (ie fgt1.lic or prefix/fgt1.lic)"
 		},
 		"FortiGate2LicenseFile": {
-			"Description": "Provide the content of the license file for FortiGate 2(ie -----BEGIN FGT VM LICENSE----- ... -----END FGT VM LICENSE-----)",
-			"Type": "String"
+			"Type": "String",
+			"MinLength" : "1",
+			"Description": "Provide the name of the license file in the Init S3 Bucket for FortiGate2 (ie fgt2.lic or prefix/fgt2.lic)"
 		}
 	},
 	"Mappings": {
 		"RegionMap": {
 			"ap-northeast-1": {
-				"fgtami": "ami-2865a957"
+				"fgtami": "ami-01717134c621e9735"
 			},
 			"ap-northeast-2": {
-				"fgtami": "ami-dc9b31b2"
+				"fgtami": "ami-09e9633d56e9dd64a"
 			},
 			"ap-south-1": {
-				"fgtami": "ami-bb88a0d4"
+				"fgtami": "ami-0e218bda8681b18e1"
 			},
 			"ap-southeast-1": {
-				"fgtami": "ami-5f6a6d23"
+				"fgtami": "ami-0f41a6c5e50d38dc2"
 			},
 			"ap-southeast-2": {
-				"fgtami": "ami-6eaa750c"
+				"fgtami": "ami-0f670cae9c606b94a"
 			},
 			"ca-central-1": {
-				"fgtami": "ami-25028141"
+				"fgtami": "ami-06855da319cfcde7c"
 			},
 			"eu-central-1": {
-				"fgtami": "ami-6a85b581"
+				"fgtami": "ami-0f1a383a05eb44602"
 			},
 			"eu-west-1": {
-				"fgtami": "ami-3da3ae44"
+				"fgtami": "ami-09756fbedaac05076"
 			},
 			"eu-west-2": {
-				"fgtami": "ami-878d63e0"
+				"fgtami": "ami-00d7818f03addbb4b"
 			},
 			"eu-west-3": {
-				"fgtami": "ami-ae2e9fd3"
+				"fgtami": "ami-0698b8b6c81f9fdde"
 			},
 			"sa-east-1": {
-				"fgtami": "ami-03461d6f"
+				"fgtami": "ami-0c3a6acc24a8f6f24"
 			},
 			"us-east-1": {
-				"fgtami": "ami-48400137"
+				"fgtami": "ami-081a50d612399ef3a"
 			},
 			"us-east-2": {
-				"fgtami": "ami-340a3451"
+				"fgtami": "ami-033a6d6ec5389bf58"
 			},
 			"us-west-1": {
-				"fgtami": "ami-05de3a66"
+				"fgtami": "ami-0a18a6cb761d70cfe"
 			},
 			"us-west-2": {
-				"fgtami": "ami-b6befdce"
+				"fgtami": "ami-0cac552cdf25122d0"
 			}
 		}
 	},
@@ -239,7 +269,8 @@
 								"ec2:AssociateAddress",
 								"ec2:AssignPrivateIpAddresses",
 								"ec2:UnassignPrivateIpAddresses",
-								"ec2:ReplaceRoute"
+								"ec2:ReplaceRoute",
+								"s3:GetObject"
 							],
 							"Resource": "*"
 						}]
@@ -271,7 +302,7 @@
 							"", [{
 									"Ref": "AWS::StackName"
 								},
-								"-VPC"
+								"-Vpc"
 							]
 						]
 					}
@@ -392,7 +423,7 @@
 							"", [{
 									"Ref": "AWS::StackName"
 								},
-								"-IGW"
+								"-Igw"
 							]
 						]
 					}
@@ -609,132 +640,19 @@
 				}],
 				"UserData": {
 					"Fn::Base64": {
-						"Fn::Join": ["\n", [
-							"Content-Type: multipart/mixed; boundary=\"===============3585321300151562773==\"",
-							"MIME-Version: 1.0",
-							"",
-							"--===============3585321300151562773==",
-							"Content-Type: text/plain; charset=\"us-ascii\"",
-							"MIME-Version: 1.0",
-							"Content-Transfer-Encoding: 7bit",
-							"Content-Disposition: attachment; filename=\"config\"",
-							"",
-							"config system global",
-							"set hostname Fgt1",
-							"set admintimeout 60",
-							"end",
-							"config system interface",
-							"edit port1",
-							"set alias public",
-							"set mode static",
-							{
-								"Fn::Sub": "set ip ${ClusterPublicIP}"
-							},
-							"set allowaccess ping https ssh fgfm",
-							"next",
-							"edit port2",
-							"set alias private",
-							"set mode static",
-							{
-								"Fn::Sub": "set ip ${ClusterPrivateIP}"
-							},
-							"set allowaccess ping",
-							"set mtu-override enable",
-							"set mtu 9001",
-							"next",
-							"edit port3",
-							"set alias hasync",
-							"set mode static",
-							{
-								"Fn::Sub": "set ip ${FortiGate1HAsyncIP}"
-							},
-							"set allowaccess ping",
-							"set mtu-override enable",
-							"set mtu 9001",
-							"next",
-							"edit port4",
-							"set alias hamgmt",
-							"set mode static",
-							{
-								"Fn::Sub": "set ip ${FortiGate1HAmgmtIP}"
-							},
-							"set allowaccess ping https ssh",
-							"set mtu-override enable",
-							"set mtu 9001",
-							"next",
-							"end",
-							"config router static",
-							"edit 1",
-							"set device port1",
-							{
-								"Fn::Sub": "set gateway ${PublicSubnetRouterIP}"
-							},
-							"next",
-							"edit 2",
-							{
-								"Fn::Sub": "set dst ${VPCCIDR}"
-							},
-							"set device port2",
-							{
-								"Fn::Sub": "set gateway ${PrivateSubnetRouterIP}"
-							},
-							"next",
-							"end",
-							"config firewall policy",
-							"edit 1",
-							"set name outbound-all",
-							"set srcintf port2",
-							"set dstintf port1",
-							"set srcaddr all",
-							"set dstaddr all",
-							"set action accept",
-							"set schedule always",
-							"set service ALL",
-							"set logtraffic all",
-							"set nat enable",
-							"next",
-							"end",
-							"config system ha",
-							"set group-name group1",
-							"set mode a-p",
-							"set hbdev port3 50",
-							"set session-pickup enable",
-							"set ha-mgmt-status enable",
-							"config ha-mgmt-interface",
-							"edit 1",
-							"set interface port4",
-							{
-								"Fn::Sub": "set gateway ${HAmgmtSubnetRouterIP}"
-							},
-							"next",
-							"end",
-							"set override disable",
-							"set priority 255",
-							"set unicast-hb enable",
-							{
-								"Fn::Sub": ["set unicast-hb-peerip ${peerip}", {
-									"peerip": {
-										"Fn::Select": ["0", {
-											"Fn::Split": ["/", {
-												"Ref": "FortiGate2HAsyncIP"
-											}]
-										}]
-									}
-								}]
-							},
-							"end",
-							"",
-							"--===============3585321300151562773==",
-							"Content-Type: text/plain; charset=\"us-ascii\"",
-							"MIME-Version: 1.0",
-							"Content-Transfer-Encoding: 7bit",
-							"Content-Disposition: attachment; filename=\"license\"",
-							"",
-							{
-								"Fn::Sub": "${FortiGate1LicenseFile}"
-							},
-							"",
-							"--===============3585321300151562773==--"
+						"Fn::Join": ["", [
+							"{\n",
+							"\"bucket\"", " : \"", {
+								"Ref": "InitS3Bucket"
+							}, "\"", ",\n",
+							"\"region\"", " : ", "\"", {
+								"Ref": "InitS3BucketRegion"
+							}, "\"", ",\n",
+							"\"license\"", " : ", "\"", "/", {
+								"Ref": "FortiGate1LicenseFile"
+							}, "\"", ",\n",
+							"\"config\"", " : ", "\"", "/fgt1.txt\"", "\n",
+							"}"
 						]]
 					}
 				}
@@ -796,132 +714,19 @@
 				}],
 				"UserData": {
 					"Fn::Base64": {
-						"Fn::Join": ["\n", [
-							"Content-Type: multipart/mixed; boundary=\"===============3585321300151562773==\"",
-							"MIME-Version: 1.0",
-							"",
-							"--===============3585321300151562773==",
-							"Content-Type: text/plain; charset=\"us-ascii\"",
-							"MIME-Version: 1.0",
-							"Content-Transfer-Encoding: 7bit",
-							"Content-Disposition: attachment; filename=\"config\"",
-							"",
-							"config system global",
-							"set hostname Fgt2",
-							"set admintimeout 60",
-							"end",
-							"config system interface",
-							"edit port1",
-							"set alias public",
-							"set mode static",
-							{
-								"Fn::Sub": "set ip ${FortiGate2PublicIP}"
-							},
-							"set allowaccess ping https ssh fgfm",
-							"next",
-							"edit port2",
-							"set alias private",
-							"set mode static",
-							{
-								"Fn::Sub": "set ip ${FortiGate2PrivateIP}"
-							},
-							"set allowaccess ping",
-							"set mtu-override enable",
-							"set mtu 9001",
-							"next",
-							"edit port3",
-							"set alias hasync",
-							"set mode static",
-							{
-								"Fn::Sub": "set ip ${FortiGate2HAsyncIP}"
-							},
-							"set allowaccess ping",
-							"set mtu-override enable",
-							"set mtu 9001",
-							"next",
-							"edit port4",
-							"set alias hamgmt",
-							"set mode static",
-							{
-								"Fn::Sub": "set ip ${FortiGate2HAmgmtIP}"
-							},
-							"set allowaccess ping https ssh",
-							"set mtu-override enable",
-							"set mtu 9001",
-							"next",
-							"end",
-							"config router static",
-							"edit 1",
-							"set device port1",
-							{
-								"Fn::Sub": "set gateway ${PublicSubnetRouterIP}"
-							},
-							"next",
-							"edit 2",
-							{
-								"Fn::Sub": "set dst ${VPCCIDR}"
-							},
-							"set device port2",
-							{
-								"Fn::Sub": "set gateway ${PrivateSubnetRouterIP}"
-							},
-							"next",
-							"end",
-							"config firewall policy",
-							"edit 1",
-							"set name outbound-all",
-							"set srcintf port2",
-							"set dstintf port1",
-							"set srcaddr all",
-							"set dstaddr all",
-							"set action accept",
-							"set schedule always",
-							"set service ALL",
-							"set logtraffic all",
-							"set nat enable",
-							"next",
-							"end",
-							"config system ha",
-							"set group-name group1",
-							"set mode a-p",
-							"set hbdev port3 50",
-							"set session-pickup enable",
-							"set ha-mgmt-status enable",
-							"config ha-mgmt-interface",
-							"edit 1",
-							"set interface port4",
-							{
-								"Fn::Sub": "set gateway ${HAmgmtSubnetRouterIP}"
-							},
-							"next",
-							"end",
-							"set override disable",
-							"set priority 1",
-							"set unicast-hb enable",
-							{
-								"Fn::Sub": ["set unicast-hb-peerip ${peerip}", {
-									"peerip": {
-										"Fn::Select": ["0", {
-											"Fn::Split": ["/", {
-												"Ref": "FortiGate1HAsyncIP"
-											}]
-										}]
-									}
-								}]
-							},
-							"end",
-							"",
-							"--===============3585321300151562773==",
-							"Content-Type: text/plain; charset=\"us-ascii\"",
-							"MIME-Version: 1.0",
-							"Content-Transfer-Encoding: 7bit",
-							"Content-Disposition: attachment; filename=\"license\"",
-							"",
-							{
-								"Fn::Sub": "${FortiGate2LicenseFile}"
-							},
-							"",
-							"--===============3585321300151562773==--"
+						"Fn::Join": ["", [
+							"{\n",
+							"'bucket' : '", {
+								"Ref": "InitS3Bucket"
+							}, "',\n",
+							"'region' : '", {
+								"Ref": "InitS3BucketRegion"
+							}, "',\n",
+							"'license' : '/", {
+								"Ref": "FortiGate2LicenseFile"
+							}, "',\n",
+							"'config' : '/fgt2.txt'\n",
+							"}"
 						]]
 					}
 				}
@@ -1294,6 +1099,361 @@
 				}
 			},
 			"DependsOn": "Fgt2EIP"
+		},
+		"LambdaRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [{
+						"Effect": "Allow",
+						"Principal": {
+							"Service": [
+								"lambda.amazonaws.com"
+							]
+						},
+						"Action": [
+							"sts:AssumeRole"
+						]
+					}]
+				},
+				"Path": "/",
+				"Policies": [{
+					"PolicyName": "S3AccessRole",
+					"PolicyDocument": {
+						"Version": "2012-10-17",
+						"Statement": [{
+								"Effect": "Allow",
+								"Action": [
+									"s3:PutObject"
+								],
+								"Resource": "*"
+							},
+							{
+								"Effect": "Allow",
+								"Action": [
+									"logs:*"
+								],
+								"Resource": "*"
+							}
+						]
+					}
+				}]
+			}
+		},
+		"InitFunction": {
+			"Type": "AWS::Lambda::Function",
+			"DependsOn": "LambdaRole",
+			"Properties": {
+				"Code": {
+					"ZipFile": {
+						"Fn::Join": ["\n", [
+							"import ast",
+							"import boto3",
+							"import cfnresponse",
+							"import json",
+							"import logging",
+							"logger = logging.getLogger()",
+							"logger.setLevel(logging.INFO)",
+							"s3 = boto3.client('s3')",
+							"",
+							"template = '''\\",
+							"config system global",
+							"set hostname {Hostname}",
+							"set admintimeout 60",
+							"end",
+							"config system interface",
+							"edit port1",
+							"set alias public",
+							"set mode static",
+							"set ip {Port1IP}",
+							"set allowaccess ping https ssh fgfm",
+							"next",
+							"edit port2",
+							"set alias private",
+							"set mode static",
+							"set ip {Port2IP}",
+							"set allowaccess ping",
+							"set mtu-override enable",
+							"set mtu 9001",
+							"next",
+							"edit port3",
+							"set alias hasync",
+							"set mode static",
+							"set ip {Port3IP}",
+							"set allowaccess ping",
+							"set mtu-override enable",
+							"set mtu 9001",
+							"next",
+							"edit port4",
+							"set alias hamgmt",
+							"set mode static",
+							"set ip {Port4IP}",
+							"set allowaccess ping https ssh",
+							"set mtu-override enable",
+							"set mtu 9001",
+							"next",
+							"end",
+							"config router static",
+							"edit 1",
+							"set device port1",
+							"set gateway {PublicSubnetRouterIP}",
+							"next",
+							"edit 2",
+							"set dst {VPCCIDR}",
+							"set device port2",
+							"set gateway {PrivateSubnetRouterIP}",
+							"next",
+							"end",
+							"config firewall policy",
+							"edit 1",
+							"set name outbound-all",
+							"set srcintf port2",
+							"set dstintf port1",
+							"set srcaddr all",
+							"set dstaddr all",
+							"set action accept",
+							"set schedule always",
+							"set service ALL",
+							"set logtraffic all",
+							"set nat enable",
+							"next",
+							"end",
+							"config system ha",
+							"set group-name group1",
+							"set mode a-p",
+							"set hbdev port3 50",
+							"set session-pickup enable",
+							"set ha-mgmt-status enable",
+							"config ha-mgmt-interface",
+							"edit 1",
+							"set interface port4",
+							"set gateway {HAmgmtSubnetRouterIP}",
+							"next",
+							"end",
+							"set override disable",
+							"set priority {HApriority}",
+							"set unicast-hb enable",
+							"set unicast-hb-peerip {HApeer}",
+							"end\\",
+							"'''",
+							"",
+							"def handler(event, context):",
+							"    dict1 = ast.literal_eval(event['ResourceProperties']['FGT1Info'])",
+							"    dict2 = ast.literal_eval(event['ResourceProperties']['FGT2Info'])",
+							"    fgt1_conf = template.format(**dict1)",
+							"    fgt2_conf = template.format(**dict2)",
+							"    fgt1_result = False",
+							"    fgt2_result = False",
+							"    logger.info('<-- event received: {}'.format(json.dumps(event)))",
+							"",
+							"    try:",
+							"        resp = s3.put_object(Body=fgt1_conf, Bucket=event['ResourceProperties']['S3Bucket'], Key='fgt1.txt')",
+							"    except Exception as error:",
+							"        logger.error('<--!! Exception: {}'.format(error))",
+							"        responseData = {'msg':'error'}",
+							"        cfnresponse.send(event, context, cfnresponse.FAILED, responseData)",
+							"    if resp['ResponseMetadata']['HTTPStatusCode'] == 200:",
+							"        fgt1_result = True",
+							"        logger.info('<-- s3 put_object fgt1.txt successful')",
+							"",
+							"    try:",
+							"        resp = s3.put_object(Body=fgt2_conf, Bucket=event['ResourceProperties']['S3Bucket'], Key='fgt2.txt')",
+							"    except Exception as error:",
+							"        logger.error('<--!! Exception: {}'.format(error))",
+							"        responseData = {'msg':'error'}",
+							"        cfnresponse.send(event, context, cfnresponse.FAILED, responseData)",
+							"    if resp['ResponseMetadata']['HTTPStatusCode'] == 200:",
+							"        fgt2_result = True",
+							"        logger.info('<-- s3 put_object fgt2.txt successful')",
+							"",
+							"    if fgt1_result is True and fgt2_result is True:",
+							"        responseData = {'msg':'200'}",
+							"        cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)",
+							"    else:",
+							"        responseData = {'msg':'error'}",
+							"        cfnresponse.send(event, context, cfnresponse.FAILED, responseData)",
+							""
+						]]
+					}
+				},
+				"Role": {
+					"Fn::GetAtt": [
+						"LambdaRole",
+						"Arn"
+					]
+				},
+				"Timeout": 120,
+				"Handler": "index.handler",
+				"Runtime": "python2.7",
+				"MemorySize": 128
+			}
+		},
+		"RunInitFunction": {
+			"Type": "Custom::InitFunction",
+			"DependsOn": "InitFunction",
+			"Properties": {
+				"ServiceToken": {
+					"Fn::GetAtt": [
+						"InitFunction",
+						"Arn"
+					]
+				},
+				"S3Bucket": {
+					"Ref": "InitS3Bucket"
+				},
+				"FGT1Info": {
+					"Fn::Join": [
+						"", ["{",
+							"'VPCCIDR':'",
+							{
+								"Ref": "VPCCIDR"
+							},
+							"',",
+							"'HAmgmtSubnetRouterIP':'",
+							{
+								"Ref": "HAmgmtSubnetRouterIP"
+							},
+							"',",
+							"'PublicSubnetRouterIP':'",
+							{
+								"Ref": "PublicSubnetRouterIP"
+							},
+							"',",
+							"'PrivateSubnetRouterIP':'",
+							{
+								"Ref": "PrivateSubnetRouterIP"
+							},
+							"',",
+							"'Port1IP':'",
+							{
+								"Ref": "ClusterPublicIP"
+							},
+							"',",
+							"'Port2IP':'",
+							{
+								"Ref": "ClusterPrivateIP"
+							},
+							"',",
+							"'Port3IP':'",
+							{
+								"Ref": "FortiGate1HAsyncIP"
+							},
+							"',",
+							"'Port4IP':'",
+							{
+								"Ref": "FortiGate1HAmgmtIP"
+							},
+							"',",
+							"'HApeer':'",
+							{
+								"Fn::Select": ["0", {
+									"Fn::Split": ["/", {
+										"Ref": "FortiGate2HAsyncIP"
+									}]
+								}]
+							},
+							"',",
+							"'HApriority':'255',",
+							"'Hostname':'Fgt1'",
+							"}"
+						]
+					]
+				},
+				"FGT2Info": {
+					"Fn::Join": [
+						"", ["{",
+							"'VPCCIDR':'",
+							{
+								"Ref": "VPCCIDR"
+							},
+							"',",
+							"'HAmgmtSubnetRouterIP':'",
+							{
+								"Ref": "HAmgmtSubnetRouterIP"
+							},
+							"',",
+							"'PublicSubnetRouterIP':'",
+							{
+								"Ref": "PublicSubnetRouterIP"
+							},
+							"',",
+							"'PrivateSubnetRouterIP':'",
+							{
+								"Ref": "PrivateSubnetRouterIP"
+							},
+							"',",
+							"'Port1IP':'",
+							{
+								"Ref": "FortiGate2PublicIP"
+							},
+							"',",
+							"'Port2IP':'",
+							{
+								"Ref": "FortiGate2PrivateIP"
+							},
+							"',",
+							"'Port3IP':'",
+							{
+								"Ref": "FortiGate2HAsyncIP"
+							},
+							"',",
+							"'Port4IP':'",
+							{
+								"Ref": "FortiGate2HAmgmtIP"
+							},
+							"',",
+							"'HApeer':'",
+							{
+								"Fn::Select": ["0", {
+									"Fn::Split": ["/", {
+										"Ref": "FortiGate1HAsyncIP"
+									}]
+								}]
+							},
+							"',",
+							"'HApriority':'1',",
+							"'Hostname':'Fgt2'",
+							"}"
+						]
+					]
+				}
+			}
+		},
+		"S3Endpoint": {
+			"Type": "AWS::EC2::VPCEndpoint",
+			"Properties": {
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [{
+						"Effect": "Allow",
+						"Principal": "*",
+						"Action": [
+							"s3:*"
+						],
+						"Resource": [
+							"*"
+						]
+					}]
+				},
+				"RouteTableIds": [{
+					"Ref": "RouteTable"
+				}],
+				"ServiceName": {
+					"Fn::Join": [
+						"", [
+							"com.amazonaws.",
+							{
+								"Ref": "AWS::Region"
+							},
+							".s3"
+						]
+					]
+				},
+				"VpcId": {
+					"Ref": "VPC"
+				}
+			}
 		}
 	},
 	"Outputs": {
@@ -1305,7 +1465,7 @@
 			"Value": {
 				"Ref": "Fgt1"
 			},
-			"Description": "Password for the FortiGates"
+			"Description": "Initial password for the FortiGates"
 		},
 		"ClusterLoginURL": {
 			"Value": {
