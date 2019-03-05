@@ -1,6 +1,6 @@
 {
 	"AWSTemplateFormatVersion": "2010-09-09",
-	"Description": "(v1.0) AWS CloudFormation Template to deploy a Lambda based Active-Passive EIP & Route Failover solution with two FortiGates",
+	"Description": "(v2.0) AWS CloudFormation Template to deploy a Lambda based Active-Passive EIP & Route Failover solution with two FortiGates",
 	"Metadata": {
 		"AWS::CloudFormation::Interface": {
 			"ParameterGroups": [{
@@ -27,9 +27,7 @@
 						"CIDRForInstanceAccess",
 						"KeyPair",
 						"PublicSubnet1RouterIP",
-						"PublicSubnet1DnsIP",
-						"PublicSubnet2RouterIP",
-						"PublicSubnet2DnsIP"
+						"PublicSubnet2RouterIP"
 					]
 				},
 				{
@@ -137,16 +135,6 @@
 			"Type": "String",
 			"Default": "10.0.2.1",
 			"Description": "Provide the IP address of the AWS intrinsic router (First IP from PublicSubnet2)"
-		},
-		"PublicSubnet1DnsIP": {
-			"Type": "String",
-			"Default": "10.0.0.2",
-			"Description": "Provide the IP address of the AWS intrinsic dns server (Second IP from PublicSubnet1)"
-		},
-		"PublicSubnet2DnsIP": {
-			"Type": "String",
-			"Default": "10.0.2.2",
-			"Description": "Provide the IP address of the AWS intrinsic dns server (Second IP from PublicSubnet2)"
 		},
 		"FortiGate1PublicIP": {
 			"Type": "String",
@@ -428,11 +416,6 @@
 							"set dynamic-gateway enable",
 							"next",
 							"end",
-							"config system dns",
-							{
-								"Fn::Sub": "set primary ${PublicSubnet1DnsIP}"
-							},
-							"end",
 							"config firewall ippool",
 							"edit cluster-ippool",
 							{
@@ -625,11 +608,6 @@
 							"set device port2",
 							"set dynamic-gateway enable",
 							"next",
-							"end",
-							"config system dns",
-							{
-								"Fn::Sub": "set primary ${PublicSubnet2DnsIP}"
-							},
 							"end",
 							"config firewall ippool",
 							"edit cluster-ippool",
@@ -1323,7 +1301,7 @@
 							"Ref": "AWS::Region"
 						}, "LambdaCode"]
 					},
-					"S3Key": "ap-healthcheck-v1.zip"
+					"S3Key": "ap-healthcheck-v2.zip"
 				},
 				"Environment": {
 					"Variables": {
@@ -1335,6 +1313,19 @@
 						},
 						"HealthCheckPort": {
 							"Ref": "LambdaHealthCheckPort"
+						},
+						"VPCEndpointURL": {
+							"Fn::Join": [
+								"", ["https://", {
+									"Fn::Select": ["1", {
+										"Fn::Split": [":", {
+											"Fn::Select": ["0", {
+												"Fn::GetAtt": ["VPCEndpointEC2", "DnsEntries"]
+											}]
+										}]
+									}]
+								}]
+							]
 						}
 					}
 				},

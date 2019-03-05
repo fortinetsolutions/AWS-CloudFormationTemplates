@@ -1,6 +1,6 @@
 {
 	"AWSTemplateFormatVersion": "2010-09-09",
-	"Description": "(v1.0) AWS CloudFormation Template to deploy a Lambda based Active-Passive EIP & Route Failover solution with two FortiGates",
+	"Description": "(v2.0) AWS CloudFormation Template to deploy a Lambda based Active-Passive EIP & Route Failover solution with two FortiGates",
 	"Metadata": {
 		"AWS::CloudFormation::Interface": {
 			"ParameterGroups": [{
@@ -26,12 +26,12 @@
 						"InstanceType",
 						"CIDRForInstanceAccess",
 						"KeyPair",
+						"InitS3Bucket",
+						"InitS3BucketRegion",
 						"FortiGate1LicenseFile",
 						"FortiGate2LicenseFile",
 						"PublicSubnet1RouterIP",
-						"PublicSubnet1DnsIP",
-						"PublicSubnet2RouterIP",
-						"PublicSubnet2DnsIP"
+						"PublicSubnet2RouterIP"
 					]
 				},
 				{
@@ -132,6 +132,32 @@
 			"Type": "AWS::EC2::KeyPair::KeyName",
 			"Description": "Select a keypair to associate with the FortiGates"
 		},
+		"InitS3Bucket": {
+			"Type": "String",
+			"MinLength": "1",
+			"Description": "Provide the Init S3 Bucket name, where your license files and config files exists"
+		},
+		"InitS3BucketRegion": {
+			"Type": "String",
+			"Description": "Select the Region where the Init S3 Bucket exists",
+			"AllowedValues": [
+				"ap-northeast-1",
+				"ap-northeast-2",
+				"ap-south-1",
+				"ap-southeast-1",
+				"ap-southeast-2",
+				"ca-central-1",
+				"eu-central-1",
+				"eu-west-1",
+				"eu-west-2",
+				"eu-west-3",
+				"sa-east-1",
+				"us-east-1",
+				"us-east-2",
+				"us-west-1",
+				"us-west-2"
+			]
+		},
 		"PublicSubnet1RouterIP": {
 			"Type": "String",
 			"Default": "10.0.0.1",
@@ -141,16 +167,6 @@
 			"Type": "String",
 			"Default": "10.0.2.1",
 			"Description": "Provide the IP address of the AWS intrinsic router (First IP from PublicSubnet2)"
-		},
-		"PublicSubnet1DnsIP": {
-			"Type": "String",
-			"Default": "10.0.0.2",
-			"Description": "Provide the IP address of the AWS intrinsic dns server (Second IP from PublicSubnet1)"
-		},
-		"PublicSubnet2DnsIP": {
-			"Type": "String",
-			"Default": "10.0.2.2",
-			"Description": "Provide the IP address of the AWS intrinsic dns server (Second IP from PublicSubnet2)"
 		},
 		"FortiGate1PublicIP": {
 			"Type": "String",
@@ -183,12 +199,14 @@
 			"Description": "Provide the second IP address in CIDR form for the public interface of FortiGate2 (IP from PublicSubnet2)"
 		},
 		"FortiGate1LicenseFile": {
-			"Description": "Provide the content of the license file for FortiGate1 (ie -----BEGIN FGT VM LICENSE----- ... -----END FGT VM LICENSE-----)",
-			"Type": "String"
+			"Type": "String",
+			"MinLength": "1",
+			"Description": "Provide the name of the license file in the Init S3 Bucket for FortiGate1 (ie fgt1.lic or prefix/fgt1.lic)"
 		},
 		"FortiGate2LicenseFile": {
-			"Description": "Provide the content of the license file for FortiGate2 (ie -----BEGIN FGT VM LICENSE----- ... -----END FGT VM LICENSE-----)",
-			"Type": "String"
+			"Type": "String",
+			"MinLength": "1",
+			"Description": "Provide the name of the license file in the Init S3 Bucket for FortiGate2 (ie fgt2.lic or prefix/fgt2.lic)"
 		},
 		"HAPairTagValue": {
 			"Type": "String",
@@ -272,6 +290,44 @@
 	},
 	"Conditions": {},
 	"Resources": {
+		"InstanceRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [{
+						"Effect": "Allow",
+						"Principal": {
+							"Service": ["ec2.amazonaws.com"]
+						},
+						"Action": ["sts:AssumeRole"]
+					}]
+				},
+				"Path": "/",
+				"Policies": [{
+					"PolicyName": "ApplicationPolicy",
+					"PolicyDocument": {
+						"Version": "2012-10-17",
+						"Statement": [{
+							"Effect": "Allow",
+							"Action": [
+								"s3:GetObject"
+							],
+							"Resource": "*"
+						}]
+					}
+				}]
+			}
+		},
+		"InstanceProfile": {
+			"Type": "AWS::IAM::InstanceProfile",
+			"Properties": {
+				"Path": "/",
+				"Roles": [{
+					"Ref": "InstanceRole"
+				}]
+			}
+		},
 		"FGTSecGrpBase": {
 			"Type": "AWS::EC2::SecurityGroup",
 			"Properties": {
@@ -337,6 +393,7 @@
 			}
 		},
 		"Fgt1": {
+			"DependsOn": "RunInitFunction",
 			"Type": "AWS::EC2::Instance",
 			"Properties": {
 				"ImageId": {
@@ -346,6 +403,9 @@
 				},
 				"InstanceType": {
 					"Ref": "InstanceType"
+				},
+				"IamInstanceProfile": {
+					"Ref": "InstanceProfile"
 				},
 				"KeyName": {
 					"Ref": "KeyPair"
@@ -392,170 +452,26 @@
 				],
 				"UserData": {
 					"Fn::Base64": {
-						"Fn::Join": ["\n", [
-							"Content-Type: multipart/mixed; boundary=\"===============3585321300151562773==\"",
-							"MIME-Version: 1.0",
-							"",
-							"--===============3585321300151562773==",
-							"Content-Type: text/plain; charset=\"us-ascii\"",
-							"MIME-Version: 1.0",
-							"Content-Transfer-Encoding: 7bit",
-							"Content-Disposition: attachment; filename=\"config\"",
-							"",
-							"config system global",
-							"set hostname Fgt1",
-							"set admintimeout 60",
-							"end",
-							"config system interface",
-							"edit port1",
-							"set alias public",
-							"set mode static",
-							{
-								"Fn::Sub": "set ip ${FortiGate1PublicIP}"
-							},
-							"set allowaccess ping https ssh fgfm",
-							"set secondary-IP enable",
-							"config secondaryip",
-							"edit 1",
-							{
-								"Fn::Sub": "set ip ${FortiGate1SecondPublicIP}"
-							},
-							"set allowaccess ping https ssh",
-							"next",
-							"end",
-							"next",
-							"edit port2",
-							"set alias private",
-							"set mode dhcp",
-							"set defaultgw disable",
-							"set dns-server-override disable",
-							"set allowaccess ping fgfm",
-							"set mtu-override enable",
-							"set mtu 9001",
-							"next",
-							"end",
-							"config router static",
-							"edit 1",
-							"set device port1",
-							{
-								"Fn::Sub": "set gateway ${PublicSubnet1RouterIP}"
-							},
-							"next",
-							"edit 2",
-							{
-								"Fn::Sub": "set dst ${VPCCIDR}"
-							},
-							"set device port2",
-							"set dynamic-gateway enable",
-							"next",
-							"end",
-							"config system dns",
-							{
-								"Fn::Sub": "set primary ${PublicSubnet1DnsIP}"
-							},
-							"end",
-							"config firewall ippool",
-							"edit cluster-ippool",
-							{
-								"Fn::Sub": ["set startip ${Fgt1IPPool}", {
-									"Fgt1IPPool": {
-										"Fn::Select": ["0", {
-											"Fn::Split": ["/", {
-												"Ref": "FortiGate1SecondPublicIP"
-											}]
-										}]
-									}
-								}]
-							},
-							{
-								"Fn::Sub": ["set endip ${Fgt1IPPool}", {
-									"Fgt1IPPool": {
-										"Fn::Select": ["0", {
-											"Fn::Split": ["/", {
-												"Ref": "FortiGate1SecondPublicIP"
-											}]
-										}]
-									}
-								}]
-							},
-							"next",
-							"end",
-							"config firewall policy",
-							"edit 1",
-							"set name outbound-all",
-							"set srcintf port2",
-							"set dstintf port1",
-							"set srcaddr all",
-							"set dstaddr all",
-							"set action accept",
-							"set schedule always",
-							"set service ALL",
-							"set logtraffic all",
-							"set ippool enable",
-							"set poolname cluster-ippool",
-							"set nat enable",
-							"next",
-							"end",
-							"config system automation-trigger",
-							"edit healthcheck-trigger",
-							"set event-type event-log",
-							"set logid 22922",
-							"next",
-							"end",
-							"config system automation-action",
-							"edit healthcheck-action",
-							"set action-type aws-lambda",
-							"set aws-api-path healthcheck",
-							"set aws-api-stage prod",
-							{
-								"Fn::Sub": "set aws-region ${AWS::Region}"
-							},
-							{
-								"Fn::Sub": "set aws-api-id ${HealthCheckAPI}"
-							},
-							{
-								"Fn::Sub": "set aws-api-key ${HealthCheckAPIKey}"
-							},
-							"next",
-							"end",
-							"config system automation-stitch",
-							"edit healthcheck-stitch",
-							"set trigger healthcheck-trigger",
-							"set action healthcheck-action",
-							"next",
-							"end",
-							"config system link-monitor",
-							"edit fgt-peer",
-							"set srcintf port2",
-							{
-								"Fn::Sub": ["set server ${peerip}", {
-									"peerip": {
-										"Fn::GetAtt": ["Fgt2ENI1", "PrimaryPrivateIpAddress"]
-									}
-								}]
-							},
-							"set update-cascade-interface disable",
-							"set update-static-route disable",
-							"next",
-							"end",
-							"",
-							"--===============3585321300151562773==",
-							"Content-Type: text/plain; charset=\"us-ascii\"",
-							"MIME-Version: 1.0",
-							"Content-Transfer-Encoding: 7bit",
-							"Content-Disposition: attachment; filename=\"license\"",
-							"",
-							{
-								"Fn::Sub": "${FortiGate1LicenseFile}"
-							},
-							"",
-							"--===============3585321300151562773==--"
+						"Fn::Join": ["", [
+							"{\n",
+							"\"bucket\"", " : \"", {
+								"Ref": "InitS3Bucket"
+							}, "\"", ",\n",
+							"\"region\"", " : ", "\"", {
+								"Ref": "InitS3BucketRegion"
+							}, "\"", ",\n",
+							"\"license\"", " : ", "\"", "/", {
+								"Ref": "FortiGate1LicenseFile"
+							}, "\"", ",\n",
+							"\"config\"", " : ", "\"", "/fgt1.txt\"", "\n",
+							"}"
 						]]
 					}
 				}
 			}
 		},
 		"Fgt2": {
+			"DependsOn": "RunInitFunction",
 			"Type": "AWS::EC2::Instance",
 			"Properties": {
 				"ImageId": {
@@ -565,6 +481,9 @@
 				},
 				"InstanceType": {
 					"Ref": "InstanceType"
+				},
+				"IamInstanceProfile": {
+					"Ref": "InstanceProfile"
 				},
 				"KeyName": {
 					"Ref": "KeyPair"
@@ -611,164 +530,19 @@
 				],
 				"UserData": {
 					"Fn::Base64": {
-						"Fn::Join": ["\n", [
-							"Content-Type: multipart/mixed; boundary=\"===============3585321300151562773==\"",
-							"MIME-Version: 1.0",
-							"",
-							"--===============3585321300151562773==",
-							"Content-Type: text/plain; charset=\"us-ascii\"",
-							"MIME-Version: 1.0",
-							"Content-Transfer-Encoding: 7bit",
-							"Content-Disposition: attachment; filename=\"config\"",
-							"",
-							"config system global",
-							"set hostname Fgt2",
-							"set admintimeout 60",
-							"end",
-							"config system interface",
-							"edit port1",
-							"set alias public",
-							"set mode static",
-							{
-								"Fn::Sub": "set ip ${FortiGate2PublicIP}"
-							},
-							"set allowaccess ping https ssh fgfm",
-							"set secondary-IP enable",
-							"config secondaryip",
-							"edit 1",
-							{
-								"Fn::Sub": "set ip ${FortiGate2SecondPublicIP}"
-							},
-							"set allowaccess ping https ssh",
-							"next",
-							"end",
-							"next",
-							"edit port2",
-							"set alias private",
-							"set mode dhcp",
-							"set defaultgw disable",
-							"set dns-server-override disable",
-							"set allowaccess ping fgfm",
-							"set mtu-override enable",
-							"set mtu 9001",
-							"next",
-							"end",
-							"config router static",
-							"edit 1",
-							"set device port1",
-							{
-								"Fn::Sub": "set gateway ${PublicSubnet2RouterIP}"
-							},
-							"next",
-							"edit 2",
-							{
-								"Fn::Sub": "set dst ${VPCCIDR}"
-							},
-							"set device port2",
-							"set dynamic-gateway enable",
-							"next",
-							"end",
-							"config system dns",
-							{
-								"Fn::Sub": "set primary ${PublicSubnet2DnsIP}"
-							},
-							"end",
-							"config firewall ippool",
-							"edit cluster-ippool",
-							{
-								"Fn::Sub": ["set startip ${Fgt1IPPool}", {
-									"Fgt1IPPool": {
-										"Fn::Select": ["0", {
-											"Fn::Split": ["/", {
-												"Ref": "FortiGate2SecondPublicIP"
-											}]
-										}]
-									}
-								}]
-							},
-							{
-								"Fn::Sub": ["set endip ${Fgt1IPPool}", {
-									"Fgt1IPPool": {
-										"Fn::Select": ["0", {
-											"Fn::Split": ["/", {
-												"Ref": "FortiGate2SecondPublicIP"
-											}]
-										}]
-									}
-								}]
-							},
-							"next",
-							"end",
-							"config firewall policy",
-							"edit 1",
-							"set name outbound-all",
-							"set srcintf port2",
-							"set dstintf port1",
-							"set srcaddr all",
-							"set dstaddr all",
-							"set action accept",
-							"set schedule always",
-							"set service ALL",
-							"set logtraffic all",
-							"set ippool enable",
-							"set poolname cluster-ippool",
-							"set nat enable",
-							"next",
-							"end",
-							"config system automation-trigger",
-							"edit healthcheck-trigger",
-							"set event-type event-log",
-							"set logid 22922",
-							"next",
-							"end",
-							"config system automation-action",
-							"edit healthcheck-action",
-							"set action-type aws-lambda",
-							"set aws-api-path healthcheck",
-							"set aws-api-stage prod",
-							{
-								"Fn::Sub": "set aws-region ${AWS::Region}"
-							},
-							{
-								"Fn::Sub": "set aws-api-id ${HealthCheckAPI}"
-							},
-							{
-								"Fn::Sub": "set aws-api-key ${HealthCheckAPIKey}"
-							},
-							"next",
-							"end",
-							"config system automation-stitch",
-							"edit healthcheck-stitch",
-							"set trigger healthcheck-trigger",
-							"set action healthcheck-action",
-							"next",
-							"end",
-							"config system link-monitor",
-							"edit fgt-peer",
-							"set srcintf port2",
-							{
-								"Fn::Sub": ["set server ${peerip}", {
-									"peerip": {
-										"Fn::GetAtt": ["Fgt1ENI1", "PrimaryPrivateIpAddress"]
-									}
-								}]
-							},
-							"set update-cascade-interface disable",
-							"set update-static-route disable",
-							"next",
-							"end",
-							"",
-							"--===============3585321300151562773==",
-							"Content-Type: text/plain; charset=\"us-ascii\"",
-							"MIME-Version: 1.0",
-							"Content-Transfer-Encoding: 7bit",
-							"Content-Disposition: attachment; filename=\"license\"",
-							"",
-							{
-								"Fn::Sub": "${FortiGate2LicenseFile}"
-							},
-							"",
-							"--===============3585321300151562773==--"
+						"Fn::Join": ["", [
+							"{\n",
+							"'bucket' : '", {
+								"Ref": "InitS3Bucket"
+							}, "',\n",
+							"'region' : '", {
+								"Ref": "InitS3BucketRegion"
+							}, "',\n",
+							"'license' : '/", {
+								"Ref": "FortiGate2LicenseFile"
+							}, "',\n",
+							"'config' : '/fgt2.txt'\n",
+							"}"
 						]]
 					}
 				}
@@ -1377,7 +1151,7 @@
 							"Ref": "AWS::Region"
 						}, "LambdaCode"]
 					},
-					"S3Key": "ap-healthcheck-v1.zip"
+					"S3Key": "ap-healthcheck-v2.zip"
 				},
 				"Environment": {
 					"Variables": {
@@ -1389,6 +1163,19 @@
 						},
 						"HealthCheckPort": {
 							"Ref": "LambdaHealthCheckPort"
+						},
+						"VPCEndpointURL": {
+							"Fn::Join": [
+								"", ["https://", {
+									"Fn::Select": ["1", {
+										"Fn::Split": [":", {
+											"Fn::Select": ["0", {
+												"Fn::GetAtt": ["VPCEndpointEC2", "DnsEntries"]
+											}]
+										}]
+									}]
+								}]
+							]
 						}
 					}
 				},
@@ -1558,6 +1345,345 @@
 							"*"
 						]
 					}]
+				}
+			}
+		},
+		"LambdaRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [{
+						"Effect": "Allow",
+						"Principal": {
+							"Service": [
+								"lambda.amazonaws.com"
+							]
+						},
+						"Action": [
+							"sts:AssumeRole"
+						]
+					}]
+				},
+				"Path": "/",
+				"Policies": [{
+					"PolicyName": "S3AccessRole",
+					"PolicyDocument": {
+						"Version": "2012-10-17",
+						"Statement": [{
+								"Effect": "Allow",
+								"Action": [
+									"s3:PutObject"
+								],
+								"Resource": "*"
+							},
+							{
+								"Effect": "Allow",
+								"Action": [
+									"logs:*"
+								],
+								"Resource": "*"
+							}
+						]
+					}
+				}]
+			}
+		},
+		"InitFunction": {
+			"Type": "AWS::Lambda::Function",
+			"DependsOn": "LambdaRole",
+			"Properties": {
+				"Code": {
+					"ZipFile": {
+						"Fn::Join": ["\n", [
+							"import ast",
+							"import boto3",
+							"import cfnresponse",
+							"import json",
+							"import logging",
+							"logger = logging.getLogger()",
+							"logger.setLevel(logging.INFO)",
+							"s3 = boto3.client('s3')",
+							"",
+							"template = '''\\",
+							"config system global",
+							"set hostname {Hostname}",
+							"set admintimeout 60",
+							"end",
+							"config system interface",
+							"edit port1",
+							"set alias public",
+							"set mode static",
+							"set ip {Port1IP1}",
+							"set allowaccess ping https ssh fgfm",
+							"set secondary-IP enable",
+							"config secondaryip",
+							"edit 1",
+							"set ip {Port1IP2}",
+							"set allowaccess ping https ssh",
+							"next",
+							"end",
+							"next",
+							"edit port2",
+							"set alias private",
+							"set mode dhcp",
+							"set defaultgw disable",
+							"set dns-server-override disable",
+							"set allowaccess ping fgfm",
+							"set mtu-override enable",
+							"set mtu 9001",
+							"next",
+							"end",
+							"config router static",
+							"edit 1",
+							"set device port1",
+							"set gateway {PublicSubnetRouterIP}",
+							"next",
+							"edit 2",
+							"set dst {VPCCIDR}",
+							"set device port2",
+							"set dynamic-gateway enable",
+							"next",
+							"end",
+							"config firewall ippool",
+							"edit cluster-ippool",
+							"set startip {IPPool}",
+							"set endip {IPPool}",
+							"next",
+							"end",
+							"config firewall policy",
+							"edit 1",
+							"set name outbound-all",
+							"set srcintf port2",
+							"set dstintf port1",
+							"set srcaddr all",
+							"set dstaddr all",
+							"set action accept",
+							"set schedule always",
+							"set service ALL",
+							"set logtraffic all",
+							"set ippool enable",
+							"set poolname cluster-ippool",
+							"set nat enable",
+							"next",
+							"end",
+							"config system automation-trigger",
+							"edit healthcheck-trigger",
+							"set event-type event-log",
+							"set logid 22922",
+							"next",
+							"end",
+							"config system automation-action",
+							"edit healthcheck-action",
+							"set action-type aws-lambda",
+							"set aws-api-path healthcheck",
+							"set aws-api-stage prod",
+							"set aws-region {Region}",
+							"set aws-api-id {HealthCheckAPI}",
+							"set aws-api-key {HealthCheckAPIKey}",
+							"next",
+							"end",
+							"config system automation-stitch",
+							"edit healthcheck-stitch",
+							"set trigger healthcheck-trigger",
+							"set action healthcheck-action",
+							"next",
+							"end",
+							"config system link-monitor",
+							"edit fgt-peer",
+							"set srcintf port2",
+							"set server {PeerIP}",
+							"set update-cascade-interface disable",
+							"set update-static-route disable",
+							"next",
+							"end\\",
+							"'''",
+							"",
+							"def handler(event, context):",
+							"    dict1 = ast.literal_eval(event['ResourceProperties']['FGT1Info'])",
+							"    dict2 = ast.literal_eval(event['ResourceProperties']['FGT2Info'])",
+							"    fgt1_conf = template.format(**dict1)",
+							"    fgt2_conf = template.format(**dict2)",
+							"    fgt1_result = False",
+							"    fgt2_result = False",
+							"    logger.info('<-- event received: {}'.format(json.dumps(event)))",
+							"",
+							"    try:",
+							"        resp = s3.put_object(Body=fgt1_conf, Bucket=event['ResourceProperties']['S3Bucket'], Key='fgt1.txt')",
+							"    except Exception as error:",
+							"        logger.error('<--!! Exception: {}'.format(error))",
+							"        responseData = {'msg':'error'}",
+							"        cfnresponse.send(event, context, cfnresponse.FAILED, responseData)",
+							"    if resp['ResponseMetadata']['HTTPStatusCode'] == 200:",
+							"        fgt1_result = True",
+							"        logger.info('<-- s3 put_object fgt1.txt successful')",
+							"",
+							"    try:",
+							"        resp = s3.put_object(Body=fgt2_conf, Bucket=event['ResourceProperties']['S3Bucket'], Key='fgt2.txt')",
+							"    except Exception as error:",
+							"        logger.error('<--!! Exception: {}'.format(error))",
+							"        responseData = {'msg':'error'}",
+							"        cfnresponse.send(event, context, cfnresponse.FAILED, responseData)",
+							"    if resp['ResponseMetadata']['HTTPStatusCode'] == 200:",
+							"        fgt2_result = True",
+							"        logger.info('<-- s3 put_object fgt2.txt successful')",
+							"",
+							"    if fgt1_result is True and fgt2_result is True:",
+							"        responseData = {'msg':'200'}",
+							"        cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)",
+							"    else:",
+							"        responseData = {'msg':'error'}",
+							"        cfnresponse.send(event, context, cfnresponse.FAILED, responseData)",
+							""
+						]]
+					}
+				},
+				"Role": {
+					"Fn::GetAtt": [
+						"LambdaRole",
+						"Arn"
+					]
+				},
+				"Timeout": 120,
+				"Handler": "index.handler",
+				"Runtime": "python2.7",
+				"MemorySize": 128
+			}
+		},
+		"RunInitFunction": {
+			"Type": "Custom::InitFunction",
+			"DependsOn": "InitFunction",
+			"Properties": {
+				"ServiceToken": {
+					"Fn::GetAtt": [
+						"InitFunction",
+						"Arn"
+					]
+				},
+				"S3Bucket": {
+					"Ref": "InitS3Bucket"
+				},
+				"FGT1Info": {
+					"Fn::Join": [
+						"", ["{",
+							"'VPCCIDR':'",
+							{
+								"Ref": "VPCCIDR"
+							},
+							"',",
+							"'Region':'",
+							{
+								"Ref": "AWS::Region"
+							},
+							"',",
+							"'HealthCheckAPI':'",
+							{
+								"Ref": "HealthCheckAPI"
+							},
+							"',",
+							"'HealthCheckAPIKey':'",
+							{
+								"Ref": "HealthCheckAPIKey"
+							},
+							"',",
+							"'PublicSubnetRouterIP':'",
+							{
+								"Ref": "PublicSubnet1RouterIP"
+							},
+							"',",
+							"'Port1IP1':'",
+							{
+								"Ref": "FortiGate1PublicIP"
+							},
+							"',",
+							"'Port1IP2':'",
+							{
+								"Ref": "FortiGate1SecondPublicIP"
+							},
+							"',",
+							"'IPPool':'",
+							{
+								"Fn::Select": ["0", {
+									"Fn::Split": ["/", {
+										"Ref": "FortiGate1SecondPublicIP"
+									}]
+								}]
+							},
+							"',",
+							"'PeerIP':'",
+							{
+								"Fn::Select": ["0", {
+									"Fn::Split": ["/", {
+										"Ref": "FortiGate2PrivateIP"
+									}]
+								}]
+							},
+							"',",
+							"'Hostname':'Fgt1'",
+							"}"
+						]
+					]
+				},
+				"FGT2Info": {
+					"Fn::Join": [
+						"", ["{",
+							"'VPCCIDR':'",
+							{
+								"Ref": "VPCCIDR"
+							},
+							"',",
+							"'Region':'",
+							{
+								"Ref": "AWS::Region"
+							},
+							"',",
+							"'HealthCheckAPI':'",
+							{
+								"Ref": "HealthCheckAPI"
+							},
+							"',",
+							"'HealthCheckAPIKey':'",
+							{
+								"Ref": "HealthCheckAPIKey"
+							},
+							"',",
+							"'PublicSubnetRouterIP':'",
+							{
+								"Ref": "PublicSubnet2RouterIP"
+							},
+							"',",
+							"'Port1IP1':'",
+							{
+								"Ref": "FortiGate2PublicIP"
+							},
+							"',",
+							"'Port1IP2':'",
+							{
+								"Ref": "FortiGate2SecondPublicIP"
+							},
+							"',",
+							"'IPPool':'",
+							{
+								"Fn::Select": ["0", {
+									"Fn::Split": ["/", {
+										"Ref": "FortiGate2SecondPublicIP"
+									}]
+								}]
+							},
+							"',",
+							"'PeerIP':'",
+							{
+								"Fn::Select": ["0", {
+									"Fn::Split": ["/", {
+										"Ref": "FortiGate1PrivateIP"
+									}]
+								}]
+							},
+							"',",
+							"'Hostname':'Fgt2'",
+							"}"
+						]
+					]
 				}
 			}
 		}
