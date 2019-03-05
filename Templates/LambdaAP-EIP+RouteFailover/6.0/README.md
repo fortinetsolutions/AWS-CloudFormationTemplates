@@ -135,7 +135,7 @@ In this section the parameters will request general information for the existing
 ![Example Diagram](./content/params2.png)
 
 ### FortiGate Instance Configuration
-For this section the parameters will request general instance information such as instance type, key pair, and availability zone to deploy the instances into.  Also FortiOS specific information will be requested such as BYOL license file content and IP addresses for AWS resources within the VPC such as the IP of the AWS intrinsic router and DNS server for the public and private subnets.  The AWS intrinsic router is always the first host IP for each subnet.  The AWS intrinsic DNS server is always the second host IP for each subnet.  Reference [AWS Documentation](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html#VPC_Sizing) for further information on host IPs used by AWS services within a subnet.
+For this section the parameters will request general instance information such as instance type, key pair, and availability zone to deploy the instances into.  Also FortiOS specific information will be requested such as the init S3 bucket, bucket region, and FortiGate License filenames if you are using the BYOL template. Additional items such as the IP addresses for AWS resources within the VPC such as the IP of the AWS intrinsic router for the public and private subnets.  The AWS intrinsic router is always the first host IP for each subnet.  Reference [AWS Documentation](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html#VPC_Sizing) for further information on host IPs used by AWS services within a subnet.
 
 ![Example Diagram](./content/params3.png)
 

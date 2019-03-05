@@ -1,6 +1,6 @@
 {
 	"AWSTemplateFormatVersion": "2010-09-09",
-	"Description": "(v1.0) AWS CloudFormation Template to deploy a Lambda based Active-Active Route Failover solution with two FortiGates",
+	"Description": "(v2.0) AWS CloudFormation Template to deploy a Lambda based Active-Active Route Failover solution with two FortiGates",
 	"Metadata": {
 		"AWS::CloudFormation::Interface": {
 			"ParameterGroups": [{
@@ -34,7 +34,8 @@
 						"default": "Lambda Configuration"
 					},
 					"Parameters": [
-						"LambdaHealthCheckPort"
+						"LambdaHealthCheckPort",
+						"EmailNotification"
 					]
 				},
 				{
@@ -129,6 +130,11 @@
 			"Type": "Number",
 			"Default": "80",
 			"Description": "Provide the listener port for the external ELB"
+		},
+		"EmailNotification": {
+			"Type": "String",
+			"Default": "admin@example.com",
+			"Description": "Provide an email address to receive notifications when the CloudWatch Failover Alarm is triggered"
 		}
 	},
 	"Mappings": {
@@ -372,12 +378,26 @@
 							"next",
 							"end",
 							"config router static",
-							"edit 0",
+							"edit 1",
 							{
 								"Fn::Sub": "set dst ${VPCCIDR}"
 							},
 							"set device port2",
 							"set dynamic-gateway enable",
+							"next",
+							"end",
+							"config firewall policy",
+							"edit 1",
+							"set name outbound-all",
+							"set srcintf port2",
+							"set dstintf port1",
+							"set srcaddr all",
+							"set dstaddr all",
+							"set action accept",
+							"set schedule always",
+							"set service ALL",
+							"set logtraffic all",
+							"set nat enable",
 							"next",
 							"end",
 							"config system automation-trigger",
@@ -487,7 +507,7 @@
 							"next",
 							"end",
 							"config router static",
-							"edit 0",
+							"edit 1",
 							{
 								"Fn::Sub": "set dst ${VPCCIDR}"
 							},
@@ -499,6 +519,20 @@
 							"edit healthcheck-trigger",
 							"set event-type event-log",
 							"set logid 22922",
+							"next",
+							"end",
+							"config firewall policy",
+							"edit 1",
+							"set name outbound-all",
+							"set srcintf port2",
+							"set dstintf port1",
+							"set srcaddr all",
+							"set dstaddr all",
+							"set action accept",
+							"set schedule always",
+							"set service ALL",
+							"set logtraffic all",
+							"set nat enable",
 							"next",
 							"end",
 							"config system automation-action",
@@ -1201,7 +1235,7 @@
 							"Ref": "AWS::Region"
 						}, "LambdaCode"]
 					},
-					"S3Key": "healthcheck.zip"
+					"S3Key": "aa-healthcheck-v2.zip"
 				},
 				"Environment": {
 					"Variables": {
@@ -1227,6 +1261,19 @@
 						},
 						"HealthCheckPort": {
 							"Ref": "LambdaHealthCheckPort"
+						},
+						"VPCEndpointURL": {
+							"Fn::Join": [
+								"", ["https://", {
+									"Fn::Select": ["1", {
+										"Fn::Split": [":", {
+											"Fn::Select": ["0", {
+												"Fn::GetAtt": ["VPCEndpointEC2", "DnsEntries"]
+											}]
+										}]
+									}]
+								}]
+							]
 						}
 					}
 				},
