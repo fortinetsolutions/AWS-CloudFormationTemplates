@@ -1199,7 +1199,7 @@
 							"LambdaCode"
 						]
 					},
-					"S3Key": "56_worker_functionv3.zip"
+					"S3Key": "56_worker_functionv4.zip"
 				},
 				"Environment": {
 					"Variables": {
