@@ -1,5 +1,10 @@
 # Lambda A-P failover for AWS EIP & Routes 
 
+## Launch FGT LambdaAP-EIP+RouteFailover ExistingVPC BYOL.template
+
+<a href="https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=lambda-ap-byol&templateURL=https://s3-us-west-2.amazonaws.com/fortinet-aws/FGT_LambdaAP-EIP%2BRouteFailover_ExistingVPC_BYOL.template"><img alt="Launch Stack" src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png"></a>
+
+
 ## Table of Contents
   - [Overview](./README.md#overview)
   - [Solution Components](./README.md#solution-components)
