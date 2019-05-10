@@ -166,49 +166,49 @@
 	"Mappings": {
 		"RegionMap": {
 			"ap-northeast-1": {
-				"fgtami": "ami-a08961df"
+				"fgtami": "ami-03277c48ba2d95c16"
 			},
 			"ap-northeast-2": {
-				"fgtami": "ami-e10ba28f"
+				"fgtami": "ami-08896f8e0e354762a"
 			},
 			"ap-south-1": {
-				"fgtami": "ami-64c0e30b"
+				"fgtami": "ami-00901c760f63b7a72"
 			},
 			"ap-southeast-1": {
-				"fgtami": "ami-7dcdf801"
+				"fgtami": "ami-000dffc36dbafbb50"
 			},
 			"ap-southeast-2": {
-				"fgtami": "ami-b504d3d7"
+				"fgtami": "ami-092d86f2f8040249f"
 			},
 			"ca-central-1": {
-				"fgtami": "ami-7888081c"
+				"fgtami": "ami-0d7c684bbdaacac5d"
 			},
 			"eu-central-1": {
-				"fgtami": "ami-cebb9925"
+				"fgtami": "ami-0e97afa541db741f6"
 			},
 			"eu-west-1": {
-				"fgtami": "ami-ff3c0886"
+				"fgtami": "ami-02d0f5339a9667466"
 			},
 			"eu-west-2": {
-				"fgtami": "ami-5965873e"
+				"fgtami": "ami-01b3d33c8abae70e7"
 			},
 			"eu-west-3": {
-				"fgtami": "ami-8a9c2df7"
+				"fgtami": "ami-0810041b78a2c60a9"
 			},
 			"sa-east-1": {
-				"fgtami": "ami-b091ccdc"
+				"fgtami": "ami-0324621ee893b57b5"
 			},
 			"us-east-1": {
-				"fgtami": "ami-f460e28b"
+				"fgtami": "ami-0e4b6c71f7d19b95c"
 			},
 			"us-east-2": {
-				"fgtami": "ami-c0300da5"
+				"fgtami": "ami-00cecd51393b3aafe"
 			},
 			"us-west-1": {
-				"fgtami": "ami-481b0528"
+				"fgtami": "ami-001df10fa5c2879b1"
 			},
 			"us-west-2": {
-				"fgtami": "ami-b97100c1"
+				"fgtami": "ami-08ab4bd57113e6069"
 			}
 		}
 	},

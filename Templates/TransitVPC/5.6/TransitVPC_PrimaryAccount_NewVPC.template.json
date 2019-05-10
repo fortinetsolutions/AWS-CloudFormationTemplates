@@ -192,64 +192,64 @@
 	"Mappings": {
 		"FortiRegionMap": {
 			"ap-northeast-1": {
-				"OnDemand": "ami-a08961df",
-				"BYOL": "ami-b19870ce"
+				"OnDemand": "ami-03277c48ba2d95c16",
+				"BYOL": "ami-00cc02c5023ff4639"
 			},
 			"ap-northeast-2": {
-				"OnDemand": "ami-e10ba28f",
-				"BYOL": "ami-090aa367"
+				"OnDemand": "ami-08896f8e0e354762a",
+				"BYOL": "ami-0c8845d1c01e3659a"
 			},
 			"ap-south-1": {
-				"OnDemand": "ami-64c0e30b",
-				"BYOL": "ami-dccae9b3"
+				"OnDemand": "ami-00901c760f63b7a72",
+				"BYOL": "ami-00b6a7b0048857764"
 			},
 			"ap-southeast-1": {
-				"OnDemand": "ami-7dcdf801",
-				"BYOL": "ami-ecbe8b90"
+				"OnDemand": "ami-000dffc36dbafbb50",
+				"BYOL": "ami-0fb590bcb4f1cc019"
 			},
 			"ap-southeast-2": {
-				"OnDemand": "ami-b504d3d7",
-				"BYOL": "ami-3508df57"
+				"OnDemand": "ami-092d86f2f8040249f",
+				"BYOL": "ami-0af5349c1f602a235"
 			},
 			"ca-central-1": {
-				"OnDemand": "ami-7888081c",
-				"BYOL": "ami-168a0a72"
+				"OnDemand": "ami-0d7c684bbdaacac5d",
+				"BYOL": "ami-014aeec09890481f4"
 			},
 			"eu-central-1": {
-				"OnDemand": "ami-cebb9925",
-				"BYOL": "ami-9e81a375"
+				"OnDemand": "ami-0e97afa541db741f6",
+				"BYOL": "ami-0e325322df4b19db1"
 			},
 			"eu-west-1": {
-				"OnDemand": "ami-ff3c0886",
-				"BYOL": "ami-931622ea"
+				"OnDemand": "ami-02d0f5339a9667466",
+				"BYOL": "ami-0ff9261330e4367be"
 			},
 			"eu-west-2": {
-				"OnDemand": "ami-5965873e",
-				"BYOL": "ami-5c698b3b"
+				"OnDemand": "ami-01b3d33c8abae70e7",
+				"BYOL": "ami-0ae6bc9517acb5dd9"
 			},
 			"eu-west-3": {
-				"OnDemand": "ami-8a9c2df7",
-				"BYOL": "ami-b39f2ece"
+				"OnDemand": "ami-0810041b78a2c60a9",
+				"BYOL": "ami-097365ecf21cd0940"
 			},
 			"sa-east-1": {
-				"OnDemand": "ami-b091ccdc",
-				"BYOL": "ami-098cd165"
+				"OnDemand": "ami-0324621ee893b57b5",
+				"BYOL": "ami-0e1c89951a2f81c43"
 			},
 			"us-east-1": {
-				"OnDemand": "ami-f460e28b",
-				"BYOL": "ami-15189a6a"
+				"OnDemand": "ami-0e4b6c71f7d19b95c",
+				"BYOL": "ami-0acbbe4a29f077dc3"
 			},
 			"us-east-2": {
-				"OnDemand": "ami-c0300da5",
-				"BYOL": "ami-0f2e136a"
+				"OnDemand": "ami-00cecd51393b3aafe",
+				"BYOL": "ami-0dbb5de7e55b8498a"
 			},
 			"us-west-1": {
-				"OnDemand": "ami-481b0528",
-				"BYOL": "ami-c3120ca3"
+				"OnDemand": "ami-001df10fa5c2879b1",
+				"BYOL": "ami-0862c5e9d55d5398e"
 			},
 			"us-west-2": {
-				"OnDemand": "ami-b97100c1",
-				"BYOL": "ami-bb7f0ec3"
+				"OnDemand": "ami-08ab4bd57113e6069",
+				"BYOL": "ami-0ef01023e7605bd9a"
 			}
 		},
 		"CodeRegionMap": {
