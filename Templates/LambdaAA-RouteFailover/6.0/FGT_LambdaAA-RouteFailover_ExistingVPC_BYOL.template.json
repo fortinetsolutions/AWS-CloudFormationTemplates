@@ -182,63 +182,63 @@
 		"RegionMap": {
 			"ap-northeast-1": {
 				"LambdaCode": "fortibucket-ap-northeast-1",
-				"fgtami": "ami-01717134c621e9735"
+				"fgtami": "ami-021c40c8d7d07a99a"
 			},
 			"ap-northeast-2": {
 				"LambdaCode": "fortibucket-ap-northeast-2",
-				"fgtami": "ami-09e9633d56e9dd64a"
+				"fgtami": "ami-09c6e2b31c5aeeef5"
 			},
 			"ap-south-1": {
 				"LambdaCode": "fortibucket-ap-south-1",
-				"fgtami": "ami-0e218bda8681b18e1"
+				"fgtami": "ami-066e2d633f25457cf"
 			},
 			"ap-southeast-1": {
 				"LambdaCode": "fortibucket-ap-southeast-1",
-				"fgtami": "ami-0f41a6c5e50d38dc2"
+				"fgtami": "ami-0b09627a8727a840e"
 			},
 			"ap-southeast-2": {
 				"LambdaCode": "fortibucket-ap-southeast-2",
-				"fgtami": "ami-0f670cae9c606b94a"
+				"fgtami": "ami-03812d85cf5ab60b6"
 			},
 			"ca-central-1": {
 				"LambdaCode": "fortibucket-ca-central-1",
-				"fgtami": "ami-06855da319cfcde7c"
+				"fgtami": "ami-0e2dfde704479020d"
 			},
 			"eu-central-1": {
 				"LambdaCode": "fortibucket-eu-central-1",
-				"fgtami": "ami-0f1a383a05eb44602"
+				"fgtami": "ami-084fbc093774e3d55"
 			},
 			"eu-west-1": {
 				"LambdaCode": "fortibucket-eu-west-1",
-				"fgtami": "ami-09756fbedaac05076"
+				"fgtami": "ami-01e8b02ab1ac6f0be"
 			},
 			"eu-west-2": {
 				"LambdaCode": "fortibucket-eu-west-2",
-				"fgtami": "ami-00d7818f03addbb4b"
+				"fgtami": "ami-0fee8ad3dbfdc59f7"
 			},
 			"eu-west-3": {
 				"LambdaCode": "fortibucket-eu-west-3",
-				"fgtami": "ami-0698b8b6c81f9fdde"
+				"fgtami": "ami-01f28c942780fe93d"
 			},
 			"sa-east-1": {
 				"LambdaCode": "fortibucket-sa-east-1",
-				"fgtami": "ami-0c3a6acc24a8f6f24"
+				"fgtami": "ami-0e2e26cbaae02e210"
 			},
 			"us-east-1": {
 				"LambdaCode": "fortibucket-us-east-1",
-				"fgtami": "ami-081a50d612399ef3a"
+				"fgtami": "ami-0545ab5cfcb04ae1f"
 			},
 			"us-east-2": {
 				"LambdaCode": "fortibucket-us-east-2",
-				"fgtami": "ami-033a6d6ec5389bf58"
+				"fgtami": "ami-06c0b5327ae077f9b"
 			},
 			"us-west-1": {
 				"LambdaCode": "fortibucket-us-west-1",
-				"fgtami": "ami-0a18a6cb761d70cfe"
+				"fgtami": "ami-0a2dd80d792806156"
 			},
 			"us-west-2": {
 				"LambdaCode": "fortibucket-us-west-2",
-				"fgtami": "ami-0cac552cdf25122d0"
+				"fgtami": "ami-0e02bbdf523a30000"
 			}
 		}
 	},
