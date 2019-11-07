@@ -9,9 +9,9 @@ terraform --version
 
 
 ## step 2 > download and stage demo terraform templates
-wget https://s3.amazonaws.com/fortigym/demo__transit-gateway.zip
-sudo unzip demo__transit-gateway.zip
-cd demo__transit-gateway/
+wget https://hacorp-base.s3.amazonaws.com/TransitGateway-ECMP-VPN.zip
+sudo unzip TransitGateway-ECMP-VPN.zip
+cd TransitGateway-ECMP-VPN/
 sudo cp examples/FGT_TGW_ECMP_VPN_NewVPCs_PAYG/* ./
 cat terraform.tfvars
 
