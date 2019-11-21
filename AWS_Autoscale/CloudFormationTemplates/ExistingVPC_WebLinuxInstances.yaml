@@ -1,0 +1,401 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation Template to Add Linux Web Server Instances to an Existing VPC
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Linux Instance Configuration
+      Parameters:
+      - VPCID
+      - AZForInstance1
+      - AZForInstance2
+      - Private1Subnet
+      - Private2Subnet
+      - KeyPair
+      - CIDRForInstanceAccess
+      - InstanceType
+    - Label:
+        default: ELB Configuration
+      Parameters:
+      - HealthCheckPort
+      - DomainName
+      - WebDNSPrefix
+    ParameterLabels:
+      VPCID:
+        default: Please enter the VPC specific details here
+Parameters:
+  VPCID:
+    Type: AWS::EC2::VPC::Id
+    Description: Enter the VPC that you want to use
+  AZForInstance1:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: Enter the AZ for the primary instance
+  AZForInstance2:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: Enter the AZ for the backup instance
+  Private1Subnet:
+    Type: AWS::EC2::Subnet::Id
+    Description: Enter the value of the Private1 subnet
+  Private2Subnet:
+    Type: AWS::EC2::Subnet::Id
+    Description: Enter the value of the Private2 subnet
+  CIDRForInstanceAccess:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: Enter the CIDR from which instance needs to be accessed
+  InstanceType:
+    Type: String
+    Default: c4.large
+    AllowedValues:
+    - m3.medium
+    - m3.large
+    - m3.xlarge
+    - m3.2xlarge
+    - c4.large
+    - c4.xlarge
+    - c4.2xlarge
+    - c3.large
+    - c3.xlarge
+    - c3.2xlarge
+    Description: Enter the instance type and size that you want for the Linux Instances
+  KeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Enter the keypair that you want to associate with the launch of the
+      Instances
+  HealthCheckPort:
+    Type: Number
+    Default: '22'
+    Description: Enter the Health Check port used port for the Web ELB
+  DomainName:
+    Type: String
+    Default: fortiengineering.com
+    Description: Enter the Domain Name for Route53 DNS Record Sets
+  WebDNSPrefix:
+    Type: String
+    Default: httpserver
+    Description: Enter the Prefix for Web Server Route53 DNS Record Sets
+Mappings:
+    RegionMap:
+      ap-northeast-1:
+          ubuntuami: ami-adceb9cb
+      ap-northeast-2:
+          ubuntuami: ami-35a3015b
+      ap-south-1:
+          ubuntuami: ami-88d98ae7
+      ap-southeast-1:
+          ubuntuami: ami-a55c1dd9
+      ap-southeast-2:
+          ubuntuami: ami-e1c43f83
+      ca-central-1:
+          ubuntuami: ami-c7a622a3
+      eu-central-1:
+          ubuntuami: ami-714f2b1e
+      eu-west-1:
+          ubuntuami: ami-c1167eb8
+      eu-west-2:
+          ubuntuami: ami-e0bc5987
+      eu-west-3:
+          ubuntuami: ami-6bad1b16
+      sa-east-1:
+          ubuntuami: ami-9a2d63f6
+      us-east-1:
+          ubuntuami: ami-0b383171
+      us-east-2:
+          ubuntuami: ami-4f80b52a
+      us-west-1:
+          ubuntuami: ami-9cb2bdfc
+      us-west-2:
+          ubuntuami: ami-c62eaabe
+Conditions: {}
+Resources:
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+  InstancePolicies:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: root
+      PolicyDocument:
+        Statement:
+        - Effect: Allow
+          Action:
+          - cloudwatch:*
+          Resource:
+          - "*"
+        - Effect: Allow
+          Action:
+          - ec2:*
+          Resource:
+          - "*"
+      Roles:
+      - Ref: InstanceRole
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+      - Ref: InstanceRole
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Ref: VPCID
+      GroupDescription: Allow SSH and Web
+      SecurityGroupIngress:
+      - IpProtocol: TCP
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp:
+          Ref: CIDRForInstanceAccess
+      - IpProtocol: TCP
+        FromPort: '80'
+        ToPort: '80'
+        CidrIp:
+          Ref: CIDRForInstanceAccess
+      - IpProtocol: TCP
+        FromPort: '443'
+        ToPort: '443'
+        CidrIp:
+          Ref: CIDRForInstanceAccess
+  WebLinux1Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', ubuntuami]
+      UserData:
+        Fn::Base64: |
+           #!/bin/bash
+           apt-get update -y
+           apt-get install -y apache2
+           cd /home/ubuntu
+           wget https://s3.amazonaws.com/fortigym/test.html
+           wget https://s3.amazonaws.com/fortigym/44KB.txt
+           wget https://s3.amazonaws.com/fortigym/64KB.txt
+           wget https://s3.amazonaws.com/fortigym/128KB.txt
+           varNAME=WebLinux1-Instance
+           varIID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
+           varIP=`curl -s http://169.254.169.254/latest/meta-data/local-ipv4`
+           varAZ=`curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
+           sed -i 's@--NAME--@'"$varNAME"'@' /home/ubuntu/test.html
+           sed -i 's@--IID--@'"$varIID"'@' /home/ubuntu/test.html
+           sed -i 's@--IP--@'"$varIP"'@' /home/ubuntu/test.html
+           sed -i 's@--AZ--@'"$varAZ"'@' /home/ubuntu/test.html
+           mkdir /var/www/html/pathA
+           cp /home/ubuntu/test.html /var/www/html/pathA/test.html
+           cp /home/ubuntu/44KB.txt /var/www/html/pathA/44KB.txt
+           cp /home/ubuntu/64KB.txt /var/www/html/pathA/64KB.txt
+           cp /home/ubuntu/128KB.txt /var/www/html/pathA/128KB.txt		   
+           varMOTD='PathA Test Page'
+           sed -i 's@--MOTD--@'"$varMOTD"'@' /var/www/html/pathA/test.html
+           mkdir /var/www/html/pathB
+           cp /home/ubuntu/44KB.txt /var/www/html/pathB/44KB.txt
+           cp /home/ubuntu/64KB.txt /var/www/html/pathB/64KB.txt
+           cp /home/ubuntu/128KB.txt /var/www/html/pathB/128KB.txt
+           cp /home/ubuntu/test.html /var/www/html/pathB/test.html
+           varMOTD='PathB Test Page'
+           sed -i 's@--MOTD--@'"$varMOTD"'@' /var/www/html/pathB/test.html
+           mkdir /var/www/html/pathC
+           cp /home/ubuntu/44KB.txt /var/www/html/pathC/44KB.txt
+           cp /home/ubuntu/64KB.txt /var/www/html/pathC/64KB.txt
+           cp /home/ubuntu/128KB.txt /var/www/html/pathC/128KB.txt
+           cp /home/ubuntu/test.html /var/www/html/pathC/test.html
+           varMOTD='PathC Test Page'
+           sed -i 's@--MOTD--@'"$varMOTD"'@' /var/www/html/pathC/test.html
+           a2enmod ssl
+           service apache2 restart
+           a2ensite default-ssl.conf
+           service apache2 reload
+      InstanceType:
+        Ref: InstanceType
+      KeyName:
+        Ref: KeyPair
+      IamInstanceProfile:
+        Ref: InstanceProfile
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: 'true'
+        DeviceIndex: '0'
+        GroupSet:
+        - Ref: SecurityGroup
+        SubnetId:
+          Ref: Private1Subnet
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-WebLinux1-EC2"
+  WebLinux2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', ubuntuami]
+      UserData:
+        Fn::Base64: |
+           #!/bin/bash
+           apt-get update -y
+           apt-get install -y apache2
+           cd /home/ubuntu
+           wget https://s3.amazonaws.com/fortigym/test.html
+           wget https://s3.amazonaws.com/fortigym/44KB.txt
+           wget https://s3.amazonaws.com/fortigym/64KB.txt
+           wget https://s3.amazonaws.com/fortigym/128KB.txt
+           varNAME=WebLinux2-Instance
+           varIID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
+           varIP=`curl -s http://169.254.169.254/latest/meta-data/local-ipv4`
+           varAZ=`curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
+           sed -i 's@--NAME--@'"$varNAME"'@' /home/ubuntu/test.html
+           sed -i 's@--IID--@'"$varIID"'@' /home/ubuntu/test.html
+           sed -i 's@--IP--@'"$varIP"'@' /home/ubuntu/test.html
+           sed -i 's@--AZ--@'"$varAZ"'@' /home/ubuntu/test.html
+           mkdir /var/www/html/pathA
+           cp /home/ubuntu/test.html /var/www/html/pathA/test.html
+           cp /home/ubuntu/44KB.txt /var/www/html/pathA/44KB.txt
+           cp /home/ubuntu/64KB.txt /var/www/html/pathA/64KB.txt
+           cp /home/ubuntu/128KB.txt /var/www/html/pathA/128KB.txt		   
+           varMOTD='PathA Test Page'
+           sed -i 's@--MOTD--@'"$varMOTD"'@' /var/www/html/pathA/test.html
+           mkdir /var/www/html/pathB
+           cp /home/ubuntu/44KB.txt /var/www/html/pathB/44KB.txt
+           cp /home/ubuntu/64KB.txt /var/www/html/pathB/64KB.txt
+           cp /home/ubuntu/128KB.txt /var/www/html/pathB/128KB.txt
+           cp /home/ubuntu/test.html /var/www/html/pathB/test.html
+           varMOTD='PathB Test Page'
+           sed -i 's@--MOTD--@'"$varMOTD"'@' /var/www/html/pathB/test.html
+           mkdir /var/www/html/pathC
+           cp /home/ubuntu/44KB.txt /var/www/html/pathC/44KB.txt
+           cp /home/ubuntu/64KB.txt /var/www/html/pathC/64KB.txt
+           cp /home/ubuntu/128KB.txt /var/www/html/pathC/128KB.txt
+           cp /home/ubuntu/test.html /var/www/html/pathC/test.html
+           varMOTD='PathC Test Page'
+           sed -i 's@--MOTD--@'"$varMOTD"'@' /var/www/html/pathC/test.html
+           a2enmod ssl
+           service apache2 restart
+           a2ensite default-ssl.conf
+           service apache2 reload
+      InstanceType:
+        Ref: InstanceType
+      KeyName:
+        Ref: KeyPair
+      IamInstanceProfile:
+        Ref: InstanceProfile
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: 'true'
+        DeviceIndex: '0'
+        GroupSet:
+        - Ref: SecurityGroup
+        SubnetId:
+          Ref: Private2Subnet
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-WebLinux2-EC2"
+  WebElasticLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name:
+        Fn::Join:
+        - ''
+        - - Ref: AWS::StackName
+          - "-WebELB"
+      Scheme: internal
+      Subnets:
+      - Ref: Private1Subnet
+      - Ref: Private2Subnet
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-WebELB"
+      Type: network
+  WebTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name:
+        Fn::Join:
+        - ''
+        - - Ref: AWS::StackName
+          - "-WebTG"
+      Port: 80
+      Protocol: TCP
+      HealthCheckProtocol: HTTP
+      HealthCheckPort: 80
+      TargetType: instance
+      Targets:
+      - Id:
+          Ref: WebLinux1Instance
+        Port: 80
+      - Id:
+          Ref: WebLinux2Instance
+        Port: 80
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-WebTG"
+      VpcId:
+        Ref: VPCID
+  WebListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: WebTargetGroup
+      LoadBalancerArn:
+        Ref: WebElasticLoadBalancer
+      Port: 80
+      Protocol: TCP
+  RecordWebELB:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      Comment: Hosted Zone Name for Public ELB
+      HostedZoneName:
+        Fn::Join:
+        - ''
+        - - Ref: DomainName
+          - "."
+      RecordSets:
+      - Name:
+          Fn::Join:
+          - ''
+          - - Ref: WebDNSPrefix
+            - "."
+            - Ref: DomainName
+            - "."
+        Type: CNAME
+        TTL: 300
+        ResourceRecords:
+        - !GetAtt WebElasticLoadBalancer.DNSName
+    DependsOn: WebElasticLoadBalancer
+Outputs:
+  WebLinux1InstanceIP:
+    Value: !GetAtt WebLinux1Instance.PublicIp
+    Description: Connect to Linux 1 instance using ssh to this IP
+  WebLinux1InstanceID:
+    Value:
+      Ref: WebLinux1Instance
+    Description: Instance ID of WebLinux1Instance
+  WebLinux2InstanceIP:
+    Value: !GetAtt WebLinux2Instance.PublicIp
+    Description: Connect to Linux 2 instance using ssh to this IP
+  WebLinux2InstanceID:
+    Value:
+      Ref: WebLinux2Instance
+    Description: Instance ID of WebLinux2Instance

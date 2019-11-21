@@ -1,0 +1,265 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation Template to launch VPC with 2 Public Subnets and 2
+  Private Subnets in a VPC.
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: VPC Configuration
+      Parameters:
+      - VPCCIDR
+      - AZForSubnet1
+      - AZForSubnet2
+      - Public1Subnet
+      - Private1Subnet
+      - Public2Subnet
+      - Private2Subnet
+Parameters:
+  VPCCIDR:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: Enter the VPC CIDR that you want to use
+  AZForSubnet1:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: Enter the AZ for the primary subnets
+  AZForSubnet2:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: Enter the AZ for the secondary subnets
+  Public1Subnet:
+    Type: String
+    Default: 10.0.0.0/24
+    Description: Enter the value of the Public1 subnet
+  Public2Subnet:
+    Type: String
+    Default: 10.0.2.0/24
+    Description: Enter the value of the Public2 subnet
+  Private1Subnet:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: Enter the value of the Private1 subnet
+  Private2Subnet:
+    Type: String
+    Default: 10.0.3.0/24
+    Description: Enter the value of the Public1 subnet
+Conditions: {}
+Resources:
+  VPCID:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock:
+        Ref: VPCCIDR
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-VPCID"
+  Subnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: Public1Subnet
+      AvailabilityZone:
+        Ref: AZForSubnet1
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-PublicSubnet1"
+  Subnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: Private1Subnet
+      AvailabilityZone:
+        Ref: AZForSubnet1
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-PrivateSubnet2"
+  Subnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: Public2Subnet
+      AvailabilityZone:
+        Ref: AZForSubnet2
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-PublicSubnet3"
+  Subnet4:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: Private2Subnet
+      AvailabilityZone:
+        Ref: AZForSubnet2
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-PrivateSubnet4"
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-IGW"
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: VPCID
+      InternetGatewayId:
+        Ref: InternetGateway
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-PublicRT"
+  RouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-InternalRouteTable1"
+  RouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-InternalRouteTable2"
+  Route1:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+  Route2:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: RouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+  Route3:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: RouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+  SubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: Subnet1
+      RouteTableId:
+        Ref: RouteTable
+  SubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: Subnet3
+      RouteTableId:
+        Ref: RouteTable
+  SubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: Subnet2
+      RouteTableId:
+        Ref: RouteTable1
+  SubnetRouteTableAssociation4:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: Subnet4
+      RouteTableId:
+        Ref: RouteTable2
+Outputs:
+  SubnetID1:
+    Value:
+      Ref: Subnet1
+    Description: Subnet ID of Public Subnet 1
+  SubnetID2:
+    Value:
+      Ref: Subnet2
+    Description: Subnet ID of Private Subnet 1
+  SubnetID3:
+    Value:
+      Ref: Subnet3
+    Description: Subnet ID of Public Subnet 2
+  SubnetID4:
+    Value:
+      Ref: Subnet4
+    Description: Subnet ID of Private Subnet 2
+  AZ1:
+    Value:
+      Ref: AZForSubnet1
+    Description: AZ of Subnet 1
+  AZ2:
+    Value:
+      Ref: AZForSubnet2
+    Description: AZ of Subnet 2
+  VPCID:
+    Value:
+      Ref: VPCID
+    Description: VPC ID
+  VPCCIDR:
+      Value: !GetAtt VPCID.CidrBlock
+      Description: VPC CIDR
+

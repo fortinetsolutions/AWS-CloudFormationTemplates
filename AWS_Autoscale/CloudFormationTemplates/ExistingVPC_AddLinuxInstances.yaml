@@ -1,0 +1,300 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation Template to Add Linux Traffic Generator Instances to an Existing VPC
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Linux Instance Configuration
+      Parameters:
+      - VPCID
+      - AZForInstance1
+      - AZForInstance2
+      - Public1Subnet
+      - Public2Subnet
+      - KeyPair
+      - CIDRForInstanceAccess
+      - CIDRForInternalAccess
+      - InstanceType
+    ParameterLabels:
+      VPCID:
+        default: Please enter the VPC specific details here
+Parameters:
+  VPCID:
+    Type: AWS::EC2::VPC::Id
+    Description: Enter the VPC that you want to use
+  AZForInstance1:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: Enter the AZ for the primary instance
+  AZForInstance2:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: Enter the AZ for the backup instance
+  Public1Subnet:
+    Type: AWS::EC2::Subnet::Id
+    Description: Enter the value of the Public1 subnet
+  Public2Subnet:
+    Type: AWS::EC2::Subnet::Id
+    Description: Enter the value of the Public2 subnet
+  CIDRForInstanceAccess:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: Enter the CIDR from which instance needs to be accessed
+  CIDRForInternalAccess:
+    Type: String
+    Default: 10.0.0.0/0
+    Description: Enter the VPCCIDR from which instance can access each other
+  InstanceType:
+    Type: String
+    Default: c4.large
+    AllowedValues:
+    - m3.medium
+    - m3.large
+    - m3.xlarge
+    - m3.2xlarge
+    - c4.large
+    - c4.xlarge
+    - c4.2xlarge
+    - c3.large
+    - c3.xlarge
+    - c3.2xlarge
+    Description: Enter the instance type and size that you want for the Linux Instances
+  KeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Enter the keypair that you want to associate with the launch of the
+      Instances
+Mappings:
+    RegionMap:
+      ap-northeast-1:
+          ubuntuami: ami-adceb9cb
+      ap-northeast-2:
+          ubuntuami: ami-35a3015b
+      ap-south-1:
+          ubuntuami: ami-88d98ae7
+      ap-southeast-1:
+          ubuntuami: ami-a55c1dd9
+      ap-southeast-2:
+          ubuntuami: ami-e1c43f83
+      ca-central-1:
+          ubuntuami: ami-c7a622a3
+      eu-central-1:
+          ubuntuami: ami-714f2b1e
+      eu-west-1:
+          ubuntuami: ami-c1167eb8
+      eu-west-2:
+          ubuntuami: ami-e0bc5987
+      eu-west-3:
+          ubuntuami: ami-6bad1b16
+      sa-east-1:
+          ubuntuami: ami-9a2d63f6
+      us-east-1:
+          ubuntuami: ami-0b383171
+      us-east-2:
+          ubuntuami: ami-4f80b52a
+      us-west-1:
+          ubuntuami: ami-9cb2bdfc
+      us-west-2:
+          ubuntuami: ami-c62eaabe
+Conditions: {}
+Resources:
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+  InstancePolicies:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: root
+      PolicyDocument:
+        Statement:
+        - Effect: Allow
+          Action:
+          - cloudformation:list*
+          Resource:
+          - "*"
+        - Effect: Allow
+          Action:
+          - cloudformation:describe*
+          Resource:
+          - "*"
+      Roles:
+      - Ref: InstanceRole
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+      - Ref: InstanceRole
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Ref: VPCID
+      GroupDescription: Allow SSH and Web
+      SecurityGroupIngress:
+      - IpProtocol: TCP
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp:
+          Ref: CIDRForInstanceAccess
+      - IpProtocol: TCP
+        FromPort: '3389'
+        ToPort: '3389'
+        CidrIp:
+          Ref: CIDRForInstanceAccess
+      - IpProtocol: "-1"
+        CidrIp:
+          Ref: CIDRForInternalAccess
+  TGLinux1Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', ubuntuami]
+      UserData:
+        Fn::Base64: |
+           #!/bin/bash
+           apt-get update -y
+           apt-get install -y awscli
+           apt-get install -y default-jre
+           apt-get install -y xrdp
+           apt-get install -y xfce4
+           apt-get install -y xfce4-goodies
+           apt-get install -y tightvncserver
+           apt-get install -y firefox
+           sed -i "/^exit 0/isudo /home/ubuntu/apache-jmeter-3.3/bin/jmeter-server" /etc/rc.local
+           echo $'net.ipv4.tcp_tw_reuse = 1' >> /etc/sysctl.conf
+           echo $'net.ipv4.tcp_tw_recycle = 1' >> /etc/sysctl.conf
+           echo $'net.ipv4.ip_local_port_range = 1024 65535' >> /etc/sysctl.conf
+           echo $'fs.file-max = 2097152' >> /etc/sysctl.conf
+           sysctl -p /etc/sysctl.conf
+           sed -i "/^# End of file/i*                soft    nofile      500000" /etc/security/limits.conf
+           sed -i "/^# End of file/i*                hard    nofile      500000" /etc/security/limits.conf
+           sed -i "/^# End of file/iroot             soft    nofile      500000" /etc/security/limits.conf
+           sed -i "/^# End of file/iroot             hard    nofile      500000" /etc/security/limits.conf
+           cd /home/ubuntu
+           wget https://s3.amazonaws.com/fortigym/jmetercluster.sh
+           chmod +x ./jmetercluster.sh
+           ./jmetercluster.sh
+           wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-3.3.tgz
+           wget https://s3.amazonaws.com/fortigym/HTTP-44KB-Test1.jmx
+           tar -xvf apache-jmeter-3.3.tgz
+           sed -i 's@^HEAP="-Xms512m -Xmx512m"@'HEAP='\"-Xms512m -Xmx2048m'\"'@' /home/ubuntu/apache-jmeter-3.3/bin/jmeter
+           sed -i 's@^remote_hosts=127.0.0.1@'remote_hosts=jmaster1:1099,jslave1:1099'@' /home/ubuntu/apache-jmeter-3.3/bin/jmeter.properties
+           sed -i 's@^#jmeter.save.saveservice.thread_counts=true@'jmeter.save.saveservice.thread_counts=true'@' /home/ubuntu/apache-jmeter-3.3/bin/jmeter.properties
+           echo $'PasswordAuthentication yes' >> /etc/ssh/sshd_config
+           /etc/init.d/ssh restart
+           echo xfce4-session > /home/ubuntu/.xsession
+           cp /home/ubuntu/.xsession /etc/skel
+           sed -i '0,/-1/s//ask-1/' /etc/xrdp/xrdp.ini
+           service xrdp restart
+           /home/ubuntu/apache-jmeter-3.3/bin/jmeter-server
+      InstanceType:
+        Ref: InstanceType
+      KeyName:
+        Ref: KeyPair
+      IamInstanceProfile:
+        Ref: InstanceProfile
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: 'true'
+        DeviceIndex: '0'
+        GroupSet:
+        - Ref: SecurityGroup
+        SubnetId:
+          Ref: Public1Subnet
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-TGLinux1-EC2"
+  TGLinux2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', ubuntuami]
+      UserData:
+        Fn::Base64: |
+           #!/bin/bash
+           apt-get update -y
+           apt-get install -y awscli
+           apt-get install -y default-jre
+           apt-get install -y xrdp
+           apt-get install -y xfce4
+           apt-get install -y xfce4-goodies
+           apt-get install -y tightvncserver
+           apt-get install -y firefox
+           sed -i "/^exit 0/isudo /home/ubuntu/apache-jmeter-3.3/bin/jmeter-server" /etc/rc.local
+           echo $'net.ipv4.tcp_tw_reuse = 1' >> /etc/sysctl.conf
+           echo $'net.ipv4.tcp_tw_recycle = 1' >> /etc/sysctl.conf
+           echo $'net.ipv4.ip_local_port_range = 1024 65535' >> /etc/sysctl.conf
+           echo $'fs.file-max = 2097152' >> /etc/sysctl.conf
+           sysctl -p /etc/sysctl.conf
+           sed -i "/^# End of file/i*                soft    nofile      500000" /etc/security/limits.conf
+           sed -i "/^# End of file/i*                hard    nofile      500000" /etc/security/limits.conf
+           sed -i "/^# End of file/iroot             soft    nofile      500000" /etc/security/limits.conf
+           sed -i "/^# End of file/iroot             hard    nofile      500000" /etc/security/limits.conf
+           cd /home/ubuntu
+           wget https://s3.amazonaws.com/fortigym/jmetercluster.sh
+           chmod +x ./jmetercluster.sh
+           ./jmetercluster.sh
+           wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-3.3.tgz
+           wget https://s3.amazonaws.com/fortigym/HTTP-44KB-Test1.jmx
+           tar -xvf apache-jmeter-3.3.tgz
+           sed -i 's@^HEAP="-Xms512m -Xmx512m"@'HEAP='\"-Xms512m -Xmx2048m'\"'@' /home/ubuntu/apache-jmeter-3.3/bin/jmeter
+           sed -i 's@^remote_hosts=127.0.0.1@'remote_hosts=jmaster1:1099,jslave1:1099'@' /home/ubuntu/apache-jmeter-3.3/bin/jmeter.properties
+           sed -i 's@^#jmeter.save.saveservice.thread_counts=true@'jmeter.save.saveservice.thread_counts=true'@' /home/ubuntu/apache-jmeter-3.3/bin/jmeter.properties
+           echo $'PasswordAuthentication yes' >> /etc/ssh/sshd_config
+           /etc/init.d/ssh restart
+           echo xfce4-session > /home/ubuntu/.xsession
+           cp /home/ubuntu/.xsession /etc/skel
+           sed -i '0,/-1/s//ask-1/' /etc/xrdp/xrdp.ini
+           service xrdp restart
+           /home/ubuntu/apache-jmeter-3.3/bin/jmeter-server
+      InstanceType:
+        Ref: InstanceType
+      KeyName:
+        Ref: KeyPair
+      IamInstanceProfile:
+        Ref: InstanceProfile
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: 'true'
+        DeviceIndex: '0'
+        GroupSet:
+        - Ref: SecurityGroup
+        SubnetId:
+          Ref: Public2Subnet
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-TGLinux2-EC2"
+Outputs:
+  TGLinux1InstancePublicIP:
+    Value: !GetAtt TGLinux1Instance.PublicIp
+    Description: Connect to Linux 1 instance using ssh to this Public IP
+  TGLinux2InstancePublicIP:
+    Value: !GetAtt TGLinux2Instance.PublicIp
+    Description: Connect to Linux 2 instance using ssh to this Public IP
+  TGLinux1InstancePrivateIP:
+    Value: !GetAtt TGLinux1Instance.PrivateIp
+    Description: Connect to Linux 1 instance using ssh to this Private IP
+  TGLinux2InstancePrivateIP:
+    Value: !GetAtt TGLinux2Instance.PrivateIp
+    Description: Connect to Linux 2 instance using ssh to this Private IP
+  TGLinux1InstanceID:
+    Value:
+      Ref: TGLinux1Instance
+    Description: Instance ID of TGLinux1Instance
+  TGLinux2InstanceID:
+    Value:
+      Ref: TGLinux2Instance
+    Description: Instance ID of TGLinux2Instance

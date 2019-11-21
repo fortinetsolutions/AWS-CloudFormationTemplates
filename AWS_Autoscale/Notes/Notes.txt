@@ -1,0 +1,25 @@
+…or create a new repository on the command line
+
+git
+===
+echo "# terraform_lambda_python_autoscale" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git remote add origin https://github.com/40netse/terraform_lambda_python_autoscale.git
+git push -u origin master
+
+django
+=
+sudo apt-get install python3 python3-pip python3-venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+pip install <package_name>
+sudo snap install terraform
+terraform init
+terraform apply
+apt-get install awscli
+
+Command to generate testing certificate: openssl req -newkey rsa:2048 -nodes -keyout mdw_key.pem -x509 -days 365 -out mdw_cert.pem
+

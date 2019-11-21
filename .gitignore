@@ -1,12 +1,23 @@
 # Created by .ignore support plugin (hsz.mobi)
 .DS_Store
 *~
+**/.idea
+**/__pycache__
+AWS_Autoscale/lambda_code/autoscale/autoscale/*.pyc
+**/hold
+**/venv
+**/.terraform
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/site-packages
 \#*#
 *.swp
 *.pyc
 debug.log
-Notes.txt
-.idea/*
-venv/*
 .repo_conf/*.retry
-.idea/
+**/.idea
+**/__pycache__
+AWS_Autoscale/build/*
+AWS_Autoscale/test/*
+AWS_Autoscale/fgtautoscale
+AWS_Autoscale/lambda_code/autoscale/manage.py
