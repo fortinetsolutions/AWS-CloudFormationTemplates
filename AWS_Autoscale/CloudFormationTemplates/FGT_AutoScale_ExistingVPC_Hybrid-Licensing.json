@@ -28,9 +28,9 @@
 						"SsmSecureStringParamName",
 						"InitS3Bucket",
 						"InternalLBDNSName",
-						"AlbListnerPort",
+						"AlbListenerPort",
 						"AlbTargetGroupPort",
-						"NlbListnerPort",
+						"NlbListenerPort",
 						"NlbTargetGroupPort",
 						"APIGatewayURL",
 						"EnvironmentTag"
@@ -147,7 +147,7 @@
 			"MinLength": "1",
 			"Description": "Provide the DNS Name of the Internal Load Balancer"
 		},
-		"AlbListnerPort": {
+		"AlbListenerPort": {
 			"Type": "Number",
 			"Default": "80",
 			"Description": "Provide the HTTP listener port for the external ALB"
@@ -157,7 +157,7 @@
 			"Default": "8001",
 			"Description": "Provide the HTTP target group port for the external ALB"
 		},
-		"NlbListnerPort": {
+		"NlbListenerPort": {
 			"Type": "Number",
 			"Default": "514",
 			"Description": "Provide the TCP listener port for the external NLB"
@@ -643,7 +643,7 @@
 					"Ref": "ExternalNLB"
 				},
 				"Port": {
-					"Ref": "NlbListnerPort"
+					"Ref": "NlbListenerPort"
 				},
 				"Protocol": "TCP"
 			}
@@ -760,7 +760,7 @@
 					"Ref": "ExternalALB"
 				},
 				"Port": {
-					"Ref": "AlbListnerPort"
+					"Ref": "AlbListenerPort"
 				},
 				"Protocol": "HTTP"
 			}
@@ -1495,11 +1495,23 @@
 			"Value": "admin",
 			"Description": "Username for the Fortigates"
 		},
-		"InitialPassword": {
+		"SsmParameterName": {
 			"Value": {
 				"Ref": "SsmSecureStringParamName"
 			},
 			"Description": "The latest version of this SSM Secure String Parameter"
+		},
+		"Alb": {
+			"Value": {
+				"Ref": "ExternalALB"
+			},
+			"Description": "The External Application Load Balancer"
+		},
+		"Nlb": {
+			"Value": {
+				"Ref": "ExternalNLB"
+			},
+			"Description": "The External Network Load Balancer"
 		}
 	}
 }

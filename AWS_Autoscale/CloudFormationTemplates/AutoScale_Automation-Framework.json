@@ -10,7 +10,8 @@
 					},
 					"Parameters": [
 						"ProjectName",
-						"Environment"
+						"Environment",
+						"BucketName"
 					]
 				}
 			]
@@ -19,62 +20,18 @@
 	"Parameters": {
 		"ProjectName": {
 			"Type": "String",
-			"Default": "autoscale",
+			"Default": "fortigate-autoscale",
 			"Description": "Used to create the Lambda Function Name"
 		},
 		"Environment": {
 			"Type": "String",
 			"Default": "dev",
 			"Description": "Concatenated to Project Name to make lambda function name unique"
-		}
-	},
-	"Mappings": {
-		"RegionMap": {
-			"us-east-1": {
-				"LambdaCode": "fortibucket-us-east-1"
-			},
-			"us-east-2": {
-				"LambdaCode": "fortibucket-us-east-2"
-			},
-			"eu-west-1": {
-				"LambdaCode": "fortibucket-eu-west-1"
-			},
-			"eu-west-2": {
-				"LambdaCode": "fortibucket-eu-west-2"
-			},
-			"eu-west-3": {
-				"LambdaCode": "fortibucket-eu-west-3"
-			},
-			"eu-central-1": {
-				"LambdaCode": "fortibucket-eu-central-1"
-			},
-			"ap-northeast-1": {
-				"LambdaCode": "fortibucket-ap-northeast-1"
-			},
-			"ap-northeast-2": {
-				"LambdaCode": "fortibucket-ap-northeast-2"
-			},
-			"ap-southeast-1": {
-				"LambdaCode": "fortibucket-ap-southeast-1"
-			},
-			"ap-southeast-2": {
-				"LambdaCode": "fortibucket-ap-southeast-2"
-			},
-			"ap-south-1": {
-				"LambdaCode": "fortibucket-ap-south-1"
-			},
-			"sa-east-1": {
-				"LambdaCode": "fortibucket-sa-east-1"
-			},
-			"us-west-1": {
-				"LambdaCode": "fortibucket-us-west-1"
-			},
-			"us-west-2": {
-				"LambdaCode": "fortibucket-us-west-2"
-			},
-			"ca-central-1": {
-				"LambdaCode": "fortibucket-ca-central-1"
-			}
+		},
+		"BucketName": {
+			"Type": "String",
+			"Default": "fortibucket",
+			"Description": "S3 Bucket that holds lambda zip file"
 		}
 	},
 	"Resources": {
@@ -97,9 +54,12 @@
 						"",
 						[
 							{
-								"Ref": "AWS::StackName"
+								"Ref": "ProjectName"
 							},
-							"-autoscale-dev"
+							"-",
+							{
+								"Ref": "Environment"
+							}
 						]
 					]
 				},
@@ -217,9 +177,13 @@
 						"",
 						[
 							{
-								"Ref": "AWS::StackName"
+								"Ref": "ProjectName"
 							},
-							"-autoscale-dev-autoscale.views.start_scheduled"
+							"-",
+							{
+								"Ref": "Environment"
+							},
+							".views.start_scheduled"
 						]
 					]
 				},
@@ -276,15 +240,31 @@
 				},
 				"Code": {
 					"S3Bucket": {
-						"Fn::FindInMap": [
-							"RegionMap",
-							{
-								"Ref": "AWS::Region"
-							},
-							"LambdaCode"
+						"Fn::Join": [
+							"",
+							[
+								{
+									"Ref": "BucketName"
+								},
+								"-",
+								{
+									"Ref": "AWS::Region"
+								}
+							]
 						]
 					},
-					"S3Key": "autoscale-dev.zip"
+					"S3Key": {
+						"Fn::Join": [
+							"",
+							[
+								"autoscale-",
+								{
+									"Ref": "Environment"
+								},
+								".zip"
+							]
+						]
+					}
 				},
 				"Role": {
 					"Fn::GetAtt": [

@@ -4,14 +4,18 @@ stack_prefix=mdw
 stack1=$stack_prefix-base
 stack2=$stack_prefix-addprivatelinux
 stack3=$stack_prefix-addpubliclinux
-stack5=$stack_prefix-framework
+stack5=$stack_prefix-fwrk
 stack6=$stack_prefix-asg
 
 region=us-east-1
 
-config_bucket=mdw-autoscale
-license_bucket=asg-mdw-licenses
-lb_dns_name=arn:aws:elasticloadbalancing:us-east-1:730386877786:loadbalancer/net/mdw-addprivatelinux-WebELB/97fac67dce808c7d
+config_bucket=mdw-config
+lambda_bucket=fortimdw
+license_bucket=mdw-license-bucket
+password_parameter_name=mdw_password
+admin_https_port=443
+lb_dns_name=mdw-lb-dbc9d5f4ee5e9c0c.elb.us-east-1.amazonaws.com
+api_gateway=https://3zco01g4v3.execute-api.us-east-1.amazonaws.com/dev/sns
 config_object=current.conf
 domain=fortiengineering.com
 fgtdns=$stack_prefix-fortias
