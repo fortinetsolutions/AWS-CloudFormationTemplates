@@ -1,0 +1,1274 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description" : "Fortigate Fabric Connectors Demo Solution with AWS Transit Gateways",
+    "Parameters" : {
+        "CloudHubVPCCIDR" : {
+            "Description" : "Enter the CIDR range for CloudHub VPC",
+            "Type" : "String",
+            "Default" : "10.0.0.0/16"
+        },
+        "CloudHubPublicSubnetCIDR" : {
+            "Description" : "Enter the CIDR range for CloudHub public subnet 1",
+            "Type" : "String",
+            "Default" : "10.0.0.0/24"
+        },
+        "SpokeVPCCIDR" : {
+            "Description" : "Enter the CIDR range for Spoke VPC",
+            "Type" : "String",
+            "Default" : "10.1.0.0/16"
+        },
+        "SpokePrivateSubnetCIDR" : {
+            "Description" : "Enter the CIDR range for Spoke subnet 1",
+            "Type" : "String",
+            "Default" : "10.1.0.0/24"
+        },
+        "WorkLoadInstanceType": {
+            "Description": "Workload & enduser EC2 instance type",
+            "Type": "String",
+            "Default": "t2.small",
+            "AllowedValues": [
+                "t1.micro",
+                "t2.nano",
+                "t2.micro",
+                "t2.small",
+                "t2.medium",
+                "t2.large",
+                "m1.small",
+                "m1.medium",
+                "m1.large",
+                "m1.xlarge",
+                "m2.xlarge",
+                "m2.2xlarge",
+                "m2.4xlarge",
+                "m3.medium",
+                "m3.large",
+                "m3.xlarge",
+                "m3.2xlarge",
+                "m4.large",
+                "m4.xlarge",
+                "m4.2xlarge",
+                "m4.4xlarge",
+                "c1.xlarge",
+                "c3.large",
+                "c3.xlarge",
+                "c3.2xlarge",
+                "c3.4xlarge",
+                "c3.8xlarge",
+                "c4.large",
+                "c4.xlarge",
+                "c5.large"
+            ]
+        },
+        "FortigateInstanceType": {
+            "Description": "fortigate vm instance type",
+            "Type": "String",
+            "Default": "t2.small",
+            "AllowedValues": [
+                "t2.small",
+                "c4.large",
+                "c4.xlarge",
+                "c4.2xlarge",
+                "c4.4xlarge",
+                "c4.8xlarge",
+                "c5.2xlarge",
+                "c5.large",
+                "c5.xlarge",
+                "c5.9xlarge",
+                "c5n.large",
+                "c5n.xlarge",
+                "c5n.2xlarge",
+                "c5n.4xlarge",
+                "c5n.9xlarge"
+            ]
+        },
+        "KeyName": {
+            "Description": "Name of an existing EC2 KeyPair to enable SSH access to the web server",
+            "Type": "AWS::EC2::KeyPair::KeyName"
+        },
+        "CIDRForWorkLoadInstanceAccess": {
+            "Type": "String",
+            "Description": "Enter the CIDR from which the workload instances needs to be accessed from public in the format 1.1.1.1/32"
+        },
+        "AwsAccessKey": {
+            "Description": "access key of your aws account",
+            "NoEcho": "true",
+            "Type": "String",
+            "Default": ""
+        },
+        "AwsSecretKey": {
+            "Description": "secret key of your aws account",
+            "NoEcho": "true",
+            "Type": "String",
+            "Default": ""
+        }
+    },
+    "Mappings" : {
+        "AWSInstanceType2Arch": {
+            "VmType": {
+                "Arch": "HVM64"
+            }
+        },
+        "UbuntuAWSRegionArch2AMI": {
+            "ap-southeast-1": {
+                "HVM64": "ami-010162ac5374d76d3"
+            },
+            "us-east-1": {
+                "HVM64": "ami-0cfee17793b08a293"
+            },
+            "us-west-1": {
+                "HVM64": "ami-09eb5e8a83c7aa890"
+            },
+            "eu-west-1": {
+                "HVM64": "ami-03746875d916becc0"
+            },
+            "eu-west-2": {
+                "HVM64": "ami-0cbe2951c7cd54704"
+            },
+            "ca-central-1": {
+                "HVM64": "ami-0eb3e12d3927c36ef"
+            },
+            "sa-east-1": {
+                "HVM64": "ami-09beb384ba644b754"
+            },
+            "us-west-2": {
+                "HVM64": "ami-0b37e9efc396e4c38"
+            },
+            "ap-northeast-1": {
+                "HVM64": "ami-096c57cee908da809"
+            },
+            "ap-southeast-2": {
+                "HVM64": "ami-000c2343cf03d7fd7"
+            },
+            "ap-south-1": {
+                "HVM64": "ami-03dcedc81ea3e7e27"
+            },
+            "eu-central-1": {
+                "HVM64": "ami-0085d4f8878cddc81"
+            },
+            "us-east-2": {
+                "HVM64": "ami-0f93b5fd8f220e428"
+            },
+            "ap-northeast-2": {
+                "HVM64": "ami-0a25005e83c56767a"
+            },
+            "eu-west-3": {
+                "HVM64": "ami-080d4d4c37b0aa206"
+            }
+        },
+        "FortigateAWSRegionArch2AMI": {
+            "us-east-1": {
+                "HVM64": "ami-0532fcbf3ada1987a"
+            },
+            "us-west-1": {
+                "HVM64": "ami-0aa77e91cb3eab854"
+            },
+            "eu-west-1": {
+                "HVM64": "ami-0c1f71f51fb106a31"
+            },
+            "eu-west-2": {
+                "HVM64": "ami-0d333d8821f37aa36"
+            },
+            "ca-central-1": {
+                "HVM64": "ami-0b1d312dc1c41030e"
+            },
+            "sa-east-1": {
+                "HVM64": "ami-0851b028d263ced22"
+            },
+            "ap-southeast-1": {
+                "HVM64": "ami-01b05e38c6388f84f"
+            },
+            "us-west-2": {
+                "HVM64": "ami-00a5f7f2848b21194"
+            },
+            "ap-northeast-1": {
+                "HVM64": "ami-0b7ea934fc0a83064"
+            },
+            "ap-southeast-2": {
+                "HVM64": "ami-029bca18bc8f272cd"
+            },
+            "ap-south-1": {
+                "HVM64": "ami-08509cefe5c6372a8"
+            },
+            "eu-central-1": {
+                "HVM64": "ami-0a4498f9a72cf2537"
+            },
+            "us-east-2": {
+                "HVM64": "ami-07c2582e55a222dd3"
+            },
+            "ap-northeast-2": {
+                "HVM64": "ami-0c9c34c5ac1adc829"
+            },
+            "eu-west-3": {
+                "HVM64": "ami-0a97f4194a0515b21"
+            }
+        }
+    },
+    "Resources" : {
+        "CloudHubVPC" : {
+            "Type" : "AWS::EC2::VPC",
+            "Properties" : {
+                "CidrBlock" : { "Ref" : "CloudHubVPCCIDR" },
+                "EnableDnsHostnames" : "true",
+                "EnableDnsSupport" : "true",
+                "InstanceTenancy" : "default",
+                "Tags" : [
+                    {
+                        "Key": "Name",
+                        "Value": "CloudHubVPC"
+                    }
+                ]
+              }
+          },
+        "CloudHubIGW" : {
+            "Type" : "AWS::EC2::InternetGateway",
+            "Properties" : {
+                "Tags" : [
+                    {
+                        "Key": "Name",
+                        "Value": "CloudHubIGW"
+                    }
+                ]
+            }
+        },
+        "CloudHubIGWAttachment" : {
+            "Type" : "AWS::EC2::VPCGatewayAttachment",
+            "DependsOn" : "CloudHubIGW",
+            "Properties" : {
+                "VpcId" : { "Ref" : "CloudHubVPC" },
+                "InternetGatewayId" : { "Ref" : "CloudHubIGW" }
+            }
+        },
+        "CloudHubPublicSubnet" : {
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "VpcId" : { "Ref" : "CloudHubVPC" },
+                "CidrBlock" : { "Ref" : "CloudHubPublicSubnetCIDR" },
+                "AvailabilityZone" : {
+                    "Fn::Select" : [
+                        "0",
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                },
+                "Tags" : [
+                    {
+                        "Key": "Name",
+                        "Value": "CloudHubPublicSubnet"
+                    }
+
+                ]
+            }
+        },
+        "CloudHubPublicRT" : {
+            "Type" : "AWS::EC2::RouteTable",
+            "Properties" : {
+                "VpcId" : { "Ref" : "CloudHubVPC" },
+                "Tags" : [ 
+                    { 
+                        "Key" : "Name", 
+                        "Value" : "CloudHubPublicRouteTable" 
+                    } 
+                ]
+            }
+        },
+        "CloudHubPublicSubnetRouteTableAssociation" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "SubnetId" : { "Ref" : "CloudHubPublicSubnet" },
+                "RouteTableId" : { "Ref" : "CloudHubPublicRT" }
+             }
+        },
+        "CloudHubPublicRoute" : {
+            "Type" : "AWS::EC2::Route",
+            "DependsOn" : "CloudHubIGW",
+            "Properties" : {
+                "RouteTableId" : { "Ref" : "CloudHubPublicRT" },
+                "DestinationCidrBlock" : "0.0.0.0/0",
+                "GatewayId" : { "Ref" : "CloudHubIGW" }
+            }
+        },
+        "SpokeVPC" : {
+            "Type" : "AWS::EC2::VPC",
+            "Properties" : {
+                "CidrBlock" : { "Ref" : "SpokeVPCCIDR" },
+                "EnableDnsHostnames" : "true",
+                "EnableDnsSupport" : "true",
+                "InstanceTenancy" : "default",
+                "Tags" : [
+                    {
+                        "Key": "Name",
+                        "Value": "SpokeVPC"
+                    }
+                ]
+              }
+          },
+          "SpokePrivateSubnet" : {
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "VpcId" : { "Ref" : "SpokeVPC" },
+                "CidrBlock" : { "Ref" : "SpokePrivateSubnetCIDR" },
+                "AvailabilityZone" : {
+                    "Fn::Select" : [
+                        "0",
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                },
+                "Tags" : [
+                    {
+                        "Key": "Name",
+                        "Value": "SpokePrivateSubnet"
+                    }
+
+                ]
+            }
+        },
+        "SpokePrivateRT" : {
+            "Type" : "AWS::EC2::RouteTable",
+            "Properties" : {
+                "VpcId" : { "Ref" : "SpokeVPC" },
+                "Tags" : [ 
+                    { 
+                        "Key" : "Name", 
+                        "Value" : "SpokePrivateRouteTable" 
+                    } 
+                ]
+            }
+        },
+        "SpokePrivateSubnetRouteTableAssociation" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "SubnetId" : { "Ref" : "SpokePrivateSubnet" },
+                "RouteTableId" : { "Ref" : "SpokePrivateRT" }
+             }
+        },
+        "TransitGateway" : {
+            "Type" : "AWS::EC2::TransitGateway",
+            "Properties" : {
+                "AutoAcceptSharedAttachments" : "disable",
+                "DefaultRouteTableAssociation" : "enable",
+                "DefaultRouteTablePropagation" : "enable",
+                "VpnEcmpSupport" : "enable",
+                "DnsSupport" : "enable",
+                "AmazonSideAsn" : "64512",
+                "Tags" : [ 
+                    { 
+                        "Key" : "Name", 
+                        "Value" : "TransitGateway" 
+                    } 
+                ]
+            }
+        },
+        "TranistGatewayRouteTable" : {
+            "Type" : "AWS::EC2::TransitGatewayRouteTable",
+            "DependsOn" : "TransitGateway",
+            "Properties" : {
+                "TransitGatewayId" : { "Ref" : "TransitGateway" },
+                "Tags" : [ 
+                    { 
+                        "Key" : "Name", 
+                        "Value" : "TransitGatewayRouteTable" 
+                    } 
+                ]
+            }
+        },
+        "FortiGateSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "FortiGate Network Security Group",
+                "GroupName" : "FortiGateSG",
+                "VpcId" : { "Ref" : "CloudHubVPC" },
+                "SecurityGroupIngress" : [
+                    {
+                        "IpProtocol" : "-1",
+                        "FromPort" : 0,
+                        "ToPort" : 0,
+                        "CidrIp" : "0.0.0.0/0"
+                     },
+                     {
+                        "IpProtocol" : "-1",
+                        "FromPort" : 0,
+                        "ToPort" : 0,
+                        "CidrIp" : { "Ref" : "CloudHubVPCCIDR" }
+                     }
+                ],
+                "SecurityGroupEgress" : [
+                    {
+                        "IpProtocol" : "-1",
+                        "FromPort" : 0,
+                        "ToPort" : 0,
+                        "CidrIp" : "0.0.0.0/0"
+                     }
+                ]
+            }
+        },
+        "FortiGateNetworkInterface" : {
+            "Type" : "AWS::EC2::NetworkInterface",
+            "Properties" : {
+                "SubnetId" : { "Ref" : "CloudHubPublicSubnet" },
+                "SourceDestCheck" : "false",
+                "GroupSet" : [
+                    { 
+                        "Ref" : "FortiGateSecurityGroup" 
+                    }
+                ],
+                "Tags" : [ 
+                    { 
+                        "Key" : "Name", 
+                        "Value" : "FortiGateNetworkInterface" 
+                    } 
+                ]
+            }
+        },
+        "ElasticIpAddress" : {
+            "Type" : "AWS::EC2::EIP",
+            "Properties" : {
+                "Domain" : "vpc"
+            }
+        },
+        "ElasticIpAddressAssociation" : {
+            "Type" : "AWS::EC2::EIPAssociation",
+            "Properties" : {
+                "AllocationId" : { "Fn::GetAtt" : [ "ElasticIpAddress", "AllocationId" ] },
+                "NetworkInterfaceId" : { "Ref" : "FortiGateNetworkInterface" }
+            }
+        },
+        "CloudHubCustomerGateway" : {
+            "Type" : "AWS::EC2::CustomerGateway",
+            "Properties" : {
+                "BgpAsn" : "65000",
+                "IpAddress" : { "Ref" : "ElasticIpAddress" },
+                "Type" : "ipsec.1",
+                "Tags" : [ 
+                    { 
+                        "Key" : "Name", 
+                        "Value" : "CloudHubCustomerGateway" 
+                    } 
+                ]
+            }
+        },
+        "CloudHubVPNConnection" : {
+            "Type" : "AWS::EC2::VPNConnection",
+            "DependsOn" : "CloudHubCustomerGateway",
+            "Properties" : {
+                "CustomerGatewayId" : { "Ref" : "CloudHubCustomerGateway"  },
+                "StaticRoutesOnly" : false,
+                "Type" : "ipsec.1",
+                "TransitGatewayId" : {"Ref" : "TransitGateway" },
+                "VpnTunnelOptionsSpecifications" : [ 
+                    {
+                        "PreSharedKey" : "vcIlaqy_1nmxuH_5Kc_WCbtOlDGXh1rH",
+                        "TunnelInsideCidr" : "169.254.9.68/30"
+                    },
+                    {
+                        "PreSharedKey" : "1mVBQOKqADVgSihSfl95V5vEG0IESwLN",
+                        "TunnelInsideCidr" : "169.254.10.8/30"        
+                    }
+                ],
+                "Tags" : [ 
+                    { 
+                        "Key" : "Name", 
+                        "Value" : "CloudHubVPNConnection" 
+                    }
+                ]
+            }
+        },
+        "LambdaFunctionRole" : {
+            "DependsOn" : [ "CloudHubVPNConnection" ],
+            "Type" : "AWS::IAM::Role",
+            "Properties" : {
+                "AssumeRolePolicyDocument" : {
+                    "Version" : "2012-10-17",
+                    "Statement" : [
+                        {
+                            "Effect" : "Allow",
+                            "Principal" : {
+                                "Service" : [
+                                    "lambda.amazonaws.com"
+                                ]
+                            },
+                            "Action" : ["sts:AssumeRole"]
+                        }
+                    ]
+                },
+                "Path" : "/"
+            }
+        },
+        "LambdaFunctionRolePolicy" : {
+            "DependsOn" : ["LambdaFunctionRole"],
+            "Type" : "AWS::IAM::Policy",
+            "Properties" : {
+                "PolicyName" : "LambdaFunctionRolePolicy",
+                "Roles" : [{"Ref" : "LambdaFunctionRole"}],
+                "PolicyDocument" : {
+                    "Version" : "2012-10-17",
+                    "Statement" : [
+                        {
+                            "Effect" : "Allow",
+                            "Action" : [ 
+                                "logs:CreateLogGroup",
+                                "logs:CreateLogStream",
+                                "logs:PutLogEvents" 
+                            ],
+                            "Resource" : ["*"]
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": ["ec2:*","ec2:DescribeVpnConnections"],
+                            "Resource": ["*"]
+                        }
+                    ]
+                }
+            }
+        },
+        "VPNOutsideIP" : {
+            "DependsOn" : ["LambdaFunctionRolePolicy"],
+            "Type" : "Custom::VPNOutsideIPGenerator",
+            "Properties" : {
+                "ServiceToken" : {"Fn::GetAtt" : [ "VPNOutsideIPGenerator", "Arn" ] },
+                "VPNID" : { "Ref" : "CloudHubVPNConnection" }
+            }
+        },
+        "VPNOutsideIPGenerator" : {
+            "DependsOn" : ["LambdaFunctionRolePolicy"],
+            "Type" : "AWS::Lambda::Function",
+            "Properties" : {
+                "Handler" : "index.lambda_handler",
+                "Timeout" : "15",
+                "Role" : {"Fn::GetAtt" : [ "LambdaFunctionRole", "Arn" ] },
+                "Runtime" : "python3.6",
+                "Code" : {
+                    "ZipFile" : "import logging\nimport boto3\nimport cfnresponse\n\ndef lambda_handler(event, context):\n    logger = logging.getLogger()\n    logger.setLevel(logging.INFO)\n    vpn_connection_id = event['ResourceProperties'].get('VPNID', None)\n    ec2client = boto3.client('ec2')\n    response = ec2client.describe_vpn_connections(VpnConnectionIds=[ vpn_connection_id ])\n    responseData = {}\n    responseData['OutsideIpAddress1'] = response['VpnConnections'][0]['VgwTelemetry'][0]['OutsideIpAddress']\n    responseData['OutsideIpAddress2'] = response['VpnConnections'][0]['VgwTelemetry'][1]['OutsideIpAddress']\n    logger.info('responseData {}'.format(responseData))\n    cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)\n"
+                }
+            }
+        },
+        "Boto3PackageLayer": {
+            "Type": "AWS::Lambda::LayerVersion",
+            "Properties": {
+                "CompatibleRuntimes": [
+                    "python3.6",
+                    "python3.7"
+                ],
+                "Content": {
+                    "S3Bucket": {"Fn::Join" : [ "-", ["fg-layer", { "Ref": "AWS::Region"}] ]},
+                    "S3Key": "lambdaLayer.zip"
+                },
+                "Description": "boto3 package Layer",
+                "LayerName": "boto3-pack-layer",
+                "LicenseInfo": "MIT"
+            }
+        },
+        "SpokeVPCCleanup" : {
+            "DependsOn" : ["LambdaFunctionRolePolicy"],
+            "Type" : "AWS::Lambda::Function",
+            "Properties" : {
+                "Handler" : "index.lambda_handler",
+                "Timeout" : "300",
+                "Role" : {"Fn::GetAtt" : [ "LambdaFunctionRole", "Arn" ] },
+                "Layers" : [{ "Ref": "Boto3PackageLayer"}],
+                "Runtime" : "python3.6",
+                "Environment": {
+                    "Variables" : 
+                    {
+                        "SPOKE_GATEWAY_ATTACHMENT_ID" : { "Ref" : "SpokeTransitGatwayAttachment" },
+                        "WORKLOAD_INSTANCE_ID" : { "Ref" : "WorkLoadInstance" },
+                        "WORKLOAD_NETWORK_INTERFACE_ID" : { "Ref" : "WorkLoadNetworkInterface1" },
+                        "WORKLOAD_SECURITY_GROUP_ID" : { "Ref" : "WorkLoadInstanceSecurityGroup" },
+                        "SPOKE_SUBNET_ID" : { "Ref" : "SpokePrivateSubnet" },
+                        "SPOKE_ROUTE_TABLE_ID" : { "Ref" : "SpokePrivateRT" },
+                        "SPOKE_VPC_ID" : { "Ref" : "SpokeVPC" }
+
+                    }
+                },
+                "Code" : {
+                    "ZipFile" : "import logging\nimport boto3\nimport time\nimport os\ndef lambda_handler(event, context):\n    ec2 = boto3.client('ec2')\n    instance=os.environ['WORKLOAD_INSTANCE_ID']\n    instances=[ instance ]\n    transitgatewayids=os.environ['SPOKE_GATEWAY_ATTACHMENT_ID']\n    securitygroupid=os.environ['WORKLOAD_SECURITY_GROUP_ID']\n    networkinterfaceid=os.environ['WORKLOAD_NETWORK_INTERFACE_ID']\n    subnetid=os.environ['SPOKE_SUBNET_ID']\n    routetableid=os.environ['SPOKE_ROUTE_TABLE_ID']\n    vpcid=os.environ['SPOKE_VPC_ID']\n    print (\"Start : %s\" % time.ctime())\n    ec2.terminate_instances(InstanceIds=instances)\n    time.sleep( 40 )\n    ec2.delete_transit_gateway_vpc_attachment(TransitGatewayAttachmentId=transitgatewayids)\n    time.sleep( 30 )\n    ec2.delete_network_interface(NetworkInterfaceId=networkinterfaceid)\n    time.sleep( 25 )\n    ec2.delete_security_group(GroupId=securitygroupid)\n    time.sleep( 40 )\n    ec2.delete_subnet(SubnetId=subnetid)\n    time.sleep( 35 )\n    ec2.delete_route_table(RouteTableId=routetableid)\n    time.sleep( 30 )\n    ec2.delete_vpc(VpcId=vpcid)\n"
+                }
+            }
+        },
+        "SpokeTransitGatwayAttachment" : {
+            "Type" : "AWS::EC2::TransitGatewayAttachment",
+            "DependsOn" : "TransitGateway",
+            "Properties" : {
+                "SubnetIds" : [ { "Ref" : "SpokePrivateSubnet" } ],
+                "TransitGatewayId" : { "Ref" : "TransitGateway" },
+                "VpcId" : { "Ref" : "SpokeVPC" },
+                "Tags" : [ 
+                    { 
+                        "Key" : "Name", 
+                        "Value" : "SpokeTransitGatewayAttachment" 
+                    }
+                ]
+            }
+        },
+        "SpokeTransitGatewayRoute" : {
+            "Type": "AWS::EC2::TransitGatewayRouteTableAssociation",
+            "DependsOn" : [ "TransitGateway", "SpokePrivateRT", "FortiGateEc2Instance" ],
+            "Properties" : {
+                "TransitGatewayAttachmentId" : { "Ref" : "SpokeTransitGatwayAttachment" },
+                "TransitGatewayRouteTableId" : { "Ref" : "TranistGatewayRouteTable" }
+            }
+        },
+        "SpokePrivateRoute" : {
+            "Type" : "AWS::EC2::Route",
+            "DependsOn" : [ "TransitGateway", "SpokePrivateRT", "FortiGateEc2Instance" ],
+            "Properties" : {
+                "RouteTableId" : { "Ref" : "SpokePrivateRT" },
+                "DestinationCidrBlock" : "0.0.0.0/0",
+                "TransitGatewayId" : { "Ref" : "TransitGateway" }
+            }
+        },
+        "FortiGateEc2Instance" : {
+            "Type": "AWS::EC2::Instance",
+            "DependsOn" : [ "CloudHubVPNConnection", "VPNOutsideIP" ],
+            "Properties" : {
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        "0",
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                },
+                "KeyName": { "Ref": "KeyName" },
+                "InstanceType": { "Ref": "FortigateInstanceType" },
+                "ImageId": {
+                    "Fn::FindInMap": [
+                        "FortigateAWSRegionArch2AMI",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        {
+                            "Fn::FindInMap": [
+                                "AWSInstanceType2Arch",
+                                "VmType",
+                                "Arch"
+                            ]
+                        }
+                    ]
+                },
+                "UserData" : {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "\n",
+                            [
+                                "config system global",
+                                "set hostname 'CloudHubFortigate01'",
+                                "set admintimeout 30",
+                                "end",
+                                "config system sdn-connector",
+                                "edit AWS",
+                                "set name \"awsconnector\"",
+                                "set status enable",
+                                "set type aws",
+                                {
+                                    "Fn::Sub": [
+                                        "set access-key ${AwsAccessKey}",
+                                        {
+                                            "AwsAccessKey": {
+                                                "Ref": "AwsAccessKey"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "Fn::Sub": [
+                                        "set secret-key ${AwsSecretKey}",
+                                        {
+                                            "AwsSecretKey": {
+                                                "Ref": "AwsSecretKey"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "Fn::Sub": [
+                                        "set region ${AwsRegion}",
+                                        {
+                                            "AwsRegion": {
+                                                "Ref": "AWS::Region"
+                                            }
+                                        }
+                                    ]
+                                },
+                                "set update-interval 1",
+                                "next",
+                                "end",
+                                "config vpn ipsec phase1-interface",
+                                "edit \"tgw-vpn1\"",
+                                "set interface \"port1\"",
+                                {
+                                    "Fn::Sub" : [
+                                        "set local-gw ${fgpip}",
+                                        {
+                                            "fgpip" : {
+
+                                                "Fn::GetAtt" : [ "FortiGateNetworkInterface", "PrimaryPrivateIpAddress" ]
+                                            }
+                                        }
+                                    ]
+                                },
+                                "set keylife 28800",
+                                "set peertype any",
+                                "set proposal aes128-sha1",
+                                "set dhgrp 2",
+                                {
+                                    "Fn::Sub" : [
+                                        "set remote-gw ${vpnoutsideip1}",
+                                        {
+                                            "vpnoutsideip1" : {
+                                                "Fn::GetAtt" : [ "VPNOutsideIP", "OutsideIpAddress1" ]
+                                            }
+                                        }
+
+                                    ]
+                                },
+                                {
+                                    "Fn::Sub" : [
+                                        "set psksecret ${vpnsharedkey1}",
+                                        {
+                                            "vpnsharedkey1" : "1mVBQOKqADVgSihSfl95V5vEG0IESwLN"
+                                        }
+                                    ]
+                                },
+                                "set dpd-retryinterval 10",
+                                "next",
+                                "edit \"tgw-vpn2\"",
+                                "set interface \"port1\"",
+                                {
+                                    "Fn::Sub" : [
+                                        "set local-gw ${fgpip}",
+                                        {
+                                            "fgpip" : {
+
+                                                "Fn::GetAtt" : [ "FortiGateNetworkInterface", "PrimaryPrivateIpAddress" ]
+                                            }
+                                        }
+                                    ]
+                                },
+                                "set keylife 28800",
+                                "set peertype any",
+                                "set proposal aes128-sha1",
+                                "set dhgrp 2",
+                                {
+                                    "Fn::Sub" : [
+                                        "set remote-gw ${vpnoutsideip2}",
+                                        {
+                                            "vpnoutsideip2" : {
+                                                "Fn::GetAtt" : [ "VPNOutsideIP", "OutsideIpAddress2" ]
+                                            }
+                                        }
+
+                                    ]
+                                },
+                                {
+                                    "Fn::Sub" : [
+                                        "set psksecret ${vpnsharedkey2}",
+                                        {
+                                            "vpnsharedkey2" : "vcIlaqy_1nmxuH_5Kc_WCbtOlDGXh1rH"
+                                        }
+                                    ]
+                                },
+                                "set dpd-retryinterval 10",
+                                "next",
+                                "end",
+                                "config vpn ipsec phase2-interface",
+                                "edit \"tgw-vpn1\"",
+                                "set phase1name \"tgw-vpn1\"",
+                                "set proposal aes128-sha1",
+                                "set dhgrp 2",
+                                "set keylifeseconds 3600", 
+                                "next",
+                                "edit \"tgw-vpn2\"",
+                                "set phase1name \"tgw-vpn2\"",
+                                "set proposal aes128-sha1",
+                                "set dhgrp 2",
+                                "set keylifeseconds 3600",
+                                "next",
+                                "end",
+                                "config system interface",
+                                "edit \"loopback\"",
+                                "set type loopback",
+                                "set vdom \"root\"",
+                                {
+                                    "Fn::Sub" : [
+                                        "set ip ${loopbackip1} 255.255.255.255",
+                                        {
+                                            "loopbackip1" : "100.64.0.1"
+                                        }
+                                    ]
+                                },
+                                "set allowaccess ping https ssh fgfm",
+                                "next",
+                                "edit \"tgw-vpn1\"",
+                                {
+                                    "Fn::Sub" : [
+                                        "set description ${vpnid}-0",
+                                        {
+                                            "vpnid" : {
+                                                "Ref" : "CloudHubVPNConnection"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "Fn::Sub" : [
+                                        "set ip ${vpninsideip0} 255.255.255.255",
+                                        {
+                                            "vpninsideip0" : "169.254.10.10"
+                                        }
+                                    ]                                
+                                },
+                                {
+                                    "Fn::Sub" : [
+                                        "set remote-ip ${vpninsideremoteip0} 255.255.255.255",
+                                        {
+                                            "vpninsideremoteip0" : "169.254.10.9" 
+                                        }
+                                    ]
+                                },
+                                "next",
+                                "edit \"tgw-vpn2\"",
+                                {
+                                    "Fn::Sub" : [
+                                        "  set description ${vpnid}-1",
+                                        {
+                                            "vpnid" : {
+                                                "Ref" : "CloudHubVPNConnection"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "Fn::Sub" : [
+                                        "set ip ${vpninsideip1} 255.255.255.255",
+                                        {
+                                            "vpninsideip1" : "169.254.9.70"
+                                        }
+                                    ]                                
+                                },
+                                {
+                                    "Fn::Sub" : [
+                                        "set remote-ip ${vpninsideremoteip1} 255.255.255.255",
+                                        {
+                                            "vpninsideremoteip1" : "169.254.9.69" 
+                                        }
+                                    ]
+                                },
+                                "next",
+                                "end",
+                                "config system zone",
+                                "edit \"transit-gw\"",
+                                "set interface \"tgw-vpn1\" \"tgw-vpn2\"",
+                                "next",
+                                "end",
+                                "config firewall ippool",
+                                "edit \"ippool\"",
+                                {
+                                    "Fn::Sub" : [
+                                        "set startip ${loopbackip1}",
+                                        {
+                                            "loopbackip1" : "100.64.0.1"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "Fn::Sub" : [
+                                        "set endip ${loopbackip1}",
+                                        {
+                                            "loopbackip1" : "100.64.0.1"
+                                        }
+                                    ]
+                                },
+                                "next",
+                                "end",
+                                "config firewall policy",
+                                "edit 1",
+                                "set name \"vpc-loopback_access\"",
+                                "set srcintf \"transit-gw\"",
+                                "set dstintf \"loopback\"",
+                                "set srcaddr \"all\"",
+                                "set dstaddr \"all\"",
+                                "set action accept",
+                                "set schedule \"always\"",
+                                "set service \"ALL\"",
+                                "set utm-status enable",
+                                "set logtraffic all",
+                                "set ips-sensor \"default\"",
+                                "set application-list \"default\"",
+                                "set ssl-ssh-profile \"certificate-inspection\"",
+                                "next",
+                                "edit 2",
+                                "set name \"vpc-vpc_access\"",
+                                "set srcintf \"transit-gw\"",
+                                "set dstintf \"transit-gw\"",
+                                "set srcaddr \"all\"",
+                                "set dstaddr \"all\"",
+                                "set action accept",
+                                "set schedule \"always\"",
+                                "set service \"ALL\"",
+                                "set utm-status enable",
+                                "set logtraffic all",
+                                "set ippool enable",
+                                "set poolname \"ippool\"",
+                                "set av-profile \"default\"",
+                                "set webfilter-profile \"default\"",
+                                "set ips-sensor \"default\"",
+                                "set application-list \"default\"",
+                                "set ssl-ssh-profile \"certificate-inspection\"",
+                                "set nat enable",
+                                "next",
+                                "edit 3",
+                                "set name \"vpc-internet_access\"",
+                                "set srcintf \"transit-gw\"",
+                                "set dstintf \"port1\"",
+                                "set srcaddr \"all\"",
+                                "set dstaddr \"all\"",
+                                "set action accept",
+                                "set schedule \"always\"",
+                                "set service \"ALL\"",
+                                "set utm-status enable",
+                                "set logtraffic all",
+                                "set av-profile \"default\"",
+                                "set webfilter-profile \"default\"",
+                                "set ips-sensor \"default\"",
+                                "set application-list \"default\"",
+                                "set ssl-ssh-profile \"certificate-inspection\"",
+                                "set nat enable",
+                                "next",
+                                "end",
+                                "config router prefix-list",
+                                "edit \"pflist-default-route\"",
+                                "config rule",
+                                "edit 1",
+                                "set prefix 0.0.0.0 0.0.0.0",
+                                "unset ge",
+                                "unset le",
+                                "next",
+                                "end",
+                                "next",
+                                "edit \"pflist-loopback\"",
+                                "config rule",
+                                "edit 1",
+                                {
+                                    "Fn::Sub" : [
+                                        "set prefix ${loopbackip1} 255.255.255.255",
+                                        {
+                                            "loopbackip1" : "100.64.0.1"
+                                        }
+                                    ]
+                                },
+                                "unset ge",
+                                "unset le",
+                                "next",
+                                "end",
+                                "next",
+                                "end",
+                                "config router route-map",
+                                "edit \"rmap-outbound\"",
+                                "config rule",
+                                "edit 1",
+                                "set match-ip-address \"pflist-default-route\"",
+                                "next",
+                                "edit 2",
+                                "set match-ip-address \"pflist-loopback\"",
+                                "next",
+                                "end",
+                                "next",
+                                "end",
+                                "config router bgp",
+                                "set as 65000",
+                                {
+                                    "Fn::Sub" : [
+                                        "set router-id ${loopbackip1}",
+                                        {
+                                            "loopbackip1" : "100.64.0.1"
+                                        }
+                                    ]
+                                },
+                                "set ebgp-multipath enable",
+                                "config neighbor",
+                                {
+                                    "Fn::Sub" : [
+                                        "edit ${vpninsideremoteip0}",
+                                        {
+                                            "vpninsideremoteip0" : "169.254.10.9" 
+                                        }
+                                    ]
+                                },
+                                {
+                                    "Fn::Sub" : [
+                                        "set description ${vpnid}-0",
+                                        {
+                                            "vpnid" : {
+                                                "Ref" : "CloudHubVPNConnection"
+                                            }
+                                        }
+                                    ]
+                                },
+                                "set capability-default-originate enable",
+                                "set remote-as 64512",
+                                "set route-map-out \"rmap-outbound\"",
+                                "set link-down-failover enable",
+                                "next",
+                                {
+                                    "Fn::Sub" : [
+                                        "edit ${vpninsideremoteip1}",
+                                        {
+                                            "vpninsideremoteip1" : "169.254.9.69" 
+                                        }
+                                    ]
+                                },
+                                {
+                                    "Fn::Sub" : [
+                                        "set description ${vpnid}-1",
+                                        {
+                                            "vpnid" : {
+                                                "Ref" : "CloudHubVPNConnection"
+                                            }
+                                        }
+                                    ]
+                                },
+                                "set capability-default-originate enable",
+                                "set remote-as 64512",
+                                "set route-map-out \"rmap-outbound\"",
+                                "set link-down-failover enable",
+                                "next",
+                                "end",
+                                "config redistribute \"connected\"",
+                                "set status enable",
+                                "end",
+                                "end",
+                                "config firewall vip",
+                                "edit ssh-wl",
+                                "set extintf \"port1\"",
+                                {
+                                    "Fn::Sub": [
+                                        "set extip ${fgpip}",
+                                        {
+                                            "fgpip": {
+                                                "Fn::GetAtt" : [ "FortiGateNetworkInterface", "PrimaryPrivateIpAddress" ]
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "Fn::Sub": [
+                                        "  set mappedip ${wlpip}",
+                                        {
+                                            "wlpip": {
+                                                "Fn::GetAtt": [ "WorkLoadNetworkInterface1", "PrimaryPrivateIpAddress" ]
+                                            }
+                                        }
+                                    ]
+                                },
+                                "set portforward enable",
+                                "set protocol tcp",
+                                "set extport 2222",
+                                "set mappedport 22",
+                                "next",
+                                "end",
+                                "config firewall address",
+                                "edit firewallip",
+                                "set type dynamic",
+                                "set comment \"firewallip\"",
+                                "set visibility enable",
+                                "set associated-interface \"\"",
+                                "set color 0",
+                                "set sdn \"aws\"",
+                                "set filter \"Tag.Name=FortigateEc2Instance01\"",
+                                "next",
+                                "end",
+                                "config firewall policy",
+                                "edit 0",
+                                "set name \"ssh-workload-policy\"",
+                                "set srcintf \"port1\"",
+                                "set dstintf \"transit-gw\"",
+                                "set srcaddr \"all\"",
+                                "set dstaddr \"ssh-wl\"",
+                                "set action accept",
+                                "set schedule \"always\"",
+                                "set service \"ALL\"",
+                                "set logtraffic all",
+                                "set nat enable",
+                                "next",
+                                "end",
+                                "config firewall address",
+                                "edit workloadip",
+                                "set type dynamic",
+                                "set comment \"testip\"",
+                                "set visibility enable",
+                                "set associated-interface \"\"",
+                                "set color 0",
+                                "set sdn \"aws\"",
+                                "set filter \"Tag.Name=workloadEc2Instance\"",
+                                "next",
+                                "end"
+                            ]
+                        ]
+                    }
+                },
+                "NetworkInterfaces": [
+                    {
+                        "NetworkInterfaceId": {
+                            "Ref": "FortiGateNetworkInterface"
+                        },
+                        "DeviceIndex": "0"
+                    }
+                ],
+                "Tags" : [ 
+                    { 
+                        "Key" : "Name", 
+                        "Value" : "FortigateEc2Instance01" 
+                    }
+                ]
+            }
+        },
+        "WorkLoadInstanceSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "allow connections from specified CIDR ranges",
+                "VpcId": {
+                    "Ref": "SpokeVPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "WorkLoadInstanceSecurityGroup"
+                    }
+                ],
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "22",
+                        "ToPort": "22",
+                        "CidrIp": { "Ref": "CIDRForWorkLoadInstanceAccess"}
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8888",
+                        "ToPort": "8888",
+                        "CidrIp": { "Ref": "CIDRForWorkLoadInstanceAccess"}
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "2222",
+                        "ToPort": "2222",
+                        "CidrIp": { "Ref": "CIDRForWorkLoadInstanceAccess"}
+                    }
+                ],
+                "SecurityGroupEgress": [
+                    {
+                        "IpProtocol": "-1",
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+    "WorkLoadNetworkInterface1": {
+        "Type": "AWS::EC2::NetworkInterface",
+        "Properties": {
+            "SubnetId": {
+                "Ref": "SpokePrivateSubnet"
+            },
+            "Description": "Interface for publicsubnet",
+            "GroupSet": [
+                {
+                    "Ref": "WorkLoadInstanceSecurityGroup"
+                }
+            ],
+            "SourceDestCheck": "false",
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "WorkLoad-NIC"
+                }
+            ]
+        }
+    },
+    "WorkLoadInstance": {
+        "Type": "AWS::EC2::Instance",
+        "Properties": {
+            "AvailabilityZone": {
+                "Fn::Select": [
+                    "0",
+                    {
+                        "Fn::GetAZs": ""
+                    }
+                ]
+            },
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "workloadEc2Instance"
+                }
+            ],
+            "KeyName": {
+                "Ref": "KeyName"
+            },
+            "UserData": {
+                "Fn::Base64": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            "#!/bin/bash\n",
+                            "azureuser=ubuntu\n",
+                            "echo '=====================================installing the test website in workload VM========================================'\n",
+                            "cd /home/$azureuser\n",
+                            "git clone https://github.com/brannondorsey/SlowLoris\n",
+                            "cd SlowLoris\n",
+                            "sudo apt-get update -y\n",
+                            "sleep 60\n",
+                            "sudo apt install docker.io -y\n",
+                            "sudo docker pull httpd\n",
+                            "sleep 40\n",
+                            "sudo docker run -d --name apache -p 8888:80 -v '/home/ubuntu/SlowLoris/www':/usr/local/apache2/htdocs/ httpd:2.4\n"
+                        ]
+                    ]
+                }
+            },
+            "InstanceType": {
+                "Ref": "WorkLoadInstanceType"
+            },
+            "ImageId": {
+                "Fn::FindInMap": [
+                    "UbuntuAWSRegionArch2AMI",
+                    {
+                        "Ref": "AWS::Region"
+                    },
+                    {
+                        "Fn::FindInMap": [
+                            "AWSInstanceType2Arch",
+                            "VmType",
+                            "Arch"
+                        ]
+                    }
+                ]
+            },
+            "NetworkInterfaces": [
+                {
+                    "NetworkInterfaceId": {
+                        "Ref": "WorkLoadNetworkInterface1"
+                    },
+                    "DeviceIndex": "0"
+                }
+            ]
+        }
+    }
+    },
+    "Outputs" : {
+        "WorkLoadPrivateIpAddress" : {
+            "Description" : "Work Load Instance Private IP Address",
+            "Value" : {
+                "Fn::GetAtt" : [ "WorkLoadNetworkInterface1", "PrimaryPrivateIpAddress" ]
+            }
+        },
+        "FortiGateWebInterfaceURL" : {
+            "Description" : "FortiGate Instance Web Interface URL:",
+            "Value" : {
+                "Fn::Join" : [ "", ["https://", { "Ref": "ElasticIpAddress"}] ]
+            }
+        }
+    }
+}
