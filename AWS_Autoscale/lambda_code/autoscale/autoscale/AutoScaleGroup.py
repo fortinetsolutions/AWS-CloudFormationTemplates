@@ -677,9 +677,9 @@ class AutoScaleGroup(object):
         self.table.put_item(Item=instance)
         logger.info('lch_launch_instance6(): State = %s' % instance['State'])
         if 'MasterId' in self.asg and f.ec2['InstanceId'] == self.asg['MasterId']:
-            # key = 'Fortigate-S3-License-Bucket'
-            # license_bucket = f.get_tag(key)
-            # f.load_vpn_certificates(license_bucket)
+            key = 'Fortigate-S3-License-Bucket'
+            license_bucket = f.get_tag(key)
+            f.write_certificate_to_master(license_bucket, key)
             logger.info('lch_launch_instance7(): ADDING MASTER')
         else:
             logger.info('lch_launch_instance7(): ADDING SLAVE')

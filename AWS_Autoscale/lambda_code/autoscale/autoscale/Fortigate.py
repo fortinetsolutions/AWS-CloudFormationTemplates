@@ -145,8 +145,8 @@ class Fortigate(object):
         self.config_firewall()
         return
 
-    # def write_certificate_to_master(self, bucket, key):
-    #     logger.info("write_certificate_to_master(1): bucket = %s, key = %s" % (bucket, key))
+    def write_certificate_to_master(self, bucket, key):
+        logger.info("write_certificate_to_master(1): bucket = %s, key = %s" % (bucket, key))
     #     broken right here
     #     # bucket = l['Bucket']
     #     # object_key = l['TypeId']
@@ -502,7 +502,6 @@ class Fortigate(object):
                                                                        LifecycleActionResult=action)
         except ClientError:
             logger.exception("Invalid complete_life_cycle_action(): ClientError, instance = %s" % self.instance_id)
-            pass
         return
 
 

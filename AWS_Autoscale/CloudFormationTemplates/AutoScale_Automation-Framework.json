@@ -177,13 +177,9 @@
 						"",
 						[
 							{
-								"Ref": "ProjectName"
+								"Ref": "AWS::StackName"
 							},
-							"-",
-							{
-								"Ref": "Environment"
-							},
-							".views.start_scheduled"
+							"-autoscale-dev-autoscale.views.start_scheduled"
 						]
 					]
 				},
