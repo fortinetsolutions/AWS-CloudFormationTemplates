@@ -7,6 +7,13 @@ This solution deploys a FortiGate-VM Security Fabric connection using an [AWS Cl
 
 ![](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/SSC/content/deployment-steps.png)
 
+1.  **[Subscribe](https://aws.amazon.com/marketplace/pp/B00PCZSWDA?qid=1559349002372%26sr=0-1%26ref_=srh_res_product_title%26trk=ba_a131L000005vElgQAE%26trkCampaign=AWSMP_Seller_Led_Fortinet_Fortigate%26sc_channel=ba%26sc_campaign=AWSMP_Seller-led-Fortinet_Fortigate%26sc_outcome=Marketplace%26sc_geo=NAMER%26sc_country=mult%26sc_publisher=Others)** for a free trial of FortiGate-VM on AWS Marketplace
+2.  **[Deploy](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=fortinet-fabric-connector-aws&templateURL=https://s3-us-west-2.amazonaws.com/fortinet-aws/fabric-connector-aws.template)**  the CloudFormation Template Stack
+3.  **[Configure  Networking](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MARKETING/02_Collateral/DeploymentGuide/dg-fortigate-aws.pdf#page=24)**  for correct traffic flow
+4.  **[Configure Security](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MARKETING/02_Collateral/DeploymentGuide/dg-fortigate-aws.pdf#page=27)** policies  in the management console
+5.  **[Test Use Cases](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MARKETING/02_Collateral/DeploymentGuide/dg-fortigate-aws.pdf#page=34)** in the integrated demo environment
+
+<br/><br/>
 
 Watch this [video demonstration](https://www.youtube.com/watch?v=ugBcxymf1s4%26feature=youtu.be) of how to deploy the solution and utilize the demo.
 
