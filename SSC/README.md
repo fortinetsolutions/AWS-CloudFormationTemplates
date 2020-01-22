@@ -42,9 +42,9 @@ Use Case Testing:
 ### Additional Information
 ---
  - [FortiGate-VM Data sheet](https://www.fortinet.com/content/dam/fortinet/assets/data-sheets/FortiGate_VM_AWS.pdf)
-    - [FortiGate-VM for AWS Cookbook](https://docs2.fortinet.com/vm/aws/fortigate/6.2/aws-cookbook/6.2.0/685891/about-fortigate-vm-for-aws)
-    - [AWS Solution Architectures](https://www.fortinet.com/products/public-cloud-security/aws/usecases1.html)
-    - [FortiCare Support Portal](https://support.fortinet.com/?_ga=2.5831988.6234537.1579113033-1006566595.1571781627)
+ - [FortiGate-VM for AWS Cookbook](https://docs2.fortinet.com/vm/aws/fortigate/6.2/aws-cookbook/6.2.0/685891/about-fortigate-vm-for-aws)
+ - [AWS Solution Architectures](https://www.fortinet.com/products/public-cloud-security/aws/usecases1.html)
+ - [FortiCare Support Portal](https://support.fortinet.com/?_ga=2.5831988.6234537.1579113033-1006566595.1571781627)
 
 <br/><br/>
 
