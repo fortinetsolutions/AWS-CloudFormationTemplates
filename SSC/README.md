@@ -17,7 +17,7 @@ This solution deploys a FortiGate-VM Security Fabric connection using an [AWS Cl
 
 Watch this [video demonstration](https://www.youtube.com/watch?v=ugBcxymf1s4%26feature=youtu.be) of how to deploy the solution and utilize the demo.
 
-
+<br/><br/>
 
 ### Architecture
 ---
