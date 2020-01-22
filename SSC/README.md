@@ -5,7 +5,7 @@ FortiGate NGFWs that are protecting applications in the AWS public cloud can be 
 This solution deploys a FortiGate-VM Security Fabric connection using an [AWS CloudFormation template](https://github.com/fortinetsolutions/AWS-CloudFormationTemplates/blob/master/SSC/CloudFormationTemplate.json). It provisions two VPCs—one for the FortiGate Cloud Services hub, which facilitates interconnectivity and traffic inspection, and one for a single spoke VPC where a test workload instance is present. Users can deploy the FortiGate connection, use the demo environment to test it, and then clean up the test environment once the demo is completed. If they want to continue using the FortiGate solution to protect their existing production environment, this approach enables them to do so without redeploying the NGFW.
 
 
-![](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/SSC/content/deployment-steps.png)
+![](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/SSC/content/deployment_steps.png "CFT topology")
 
 1.  **[Subscribe](https://aws.amazon.com/marketplace/pp/B00PCZSWDA?qid=1559349002372%26sr=0-1%26ref_=srh_res_product_title%26trk=ba_a131L000005vElgQAE%26trkCampaign=AWSMP_Seller_Led_Fortinet_Fortigate%26sc_channel=ba%26sc_campaign=AWSMP_Seller-led-Fortinet_Fortigate%26sc_outcome=Marketplace%26sc_geo=NAMER%26sc_country=mult%26sc_publisher=Others)** for a free trial of FortiGate-VM on AWS Marketplace
 2.  **[Deploy](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=fortinet-fabric-connector-aws&templateURL=https://s3-us-west-2.amazonaws.com/fortinet-aws/fabric-connector-aws.template)**  the CloudFormation Template Stack
@@ -22,7 +22,7 @@ Watch this [video demonstration](https://www.youtube.com/watch?v=ugBcxymf1s4%26f
 ### Architecture
 ---
 
-![](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/SSC/content/deployment_steps.png "CFT topology")
+![](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/SSC/content/architecture.png)
 
 The FortiGate–Security Fabric connection is developed using a reference architecture of hub-and-spoke topology within AWS. The hub is a virtual private cloud (VPC) in AWS in which the FortiGate VM resides. The spokes consist of one or more AWS VPCs that host VM-based workloads; this architecture enables the organization to isolate workloads in their own spoke VPCs. Each spoke VPC can include multiple subnets or a single subnet with a web server or other workloads deployed.
 
