@@ -26,7 +26,9 @@ The [Deployment Guide](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MA
 
 
 [Introduction](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MARKETING/02_Collateral/DeploymentGuide/dg-fortigate-aws.pdf#page=5)
+
 [Deploying the FortiGate CFT Solution](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MARKETING/02_Collateral/DeploymentGuide/dg-fortigate-aws.pdf#page=6)
+
 [How to configure the FortiGate](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MARKETING/02_Collateral/DeploymentGuide/dg-fortigate-aws.pdf#page=24)
 
 Use Case Testing:
