@@ -22,7 +22,7 @@ Watch this [video demonstration](https://www.youtube.com/watch?v=ugBcxymf1s4%26f
 ### Architecture
 ---
 
-![](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/SSC/content/architecture.png "CFT topology")
+![](https://raw.githubusercontent.com/fortinetsolutions/AWS-CloudFormationTemplates/master/SSC/content/deployment_steps.png "CFT topology")
 
 The FortiGate–Security Fabric connection is developed using a reference architecture of hub-and-spoke topology within AWS. The hub is a virtual private cloud (VPC) in AWS in which the FortiGate VM resides. The spokes consist of one or more AWS VPCs that host VM-based workloads; this architecture enables the organization to isolate workloads in their own spoke VPCs. Each spoke VPC can include multiple subnets or a single subnet with a web server or other workloads deployed.
 
