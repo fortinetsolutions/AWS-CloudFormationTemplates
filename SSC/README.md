@@ -36,6 +36,7 @@ Use Case Testing:
  - [Enabling Web Filtering](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MARKETING/02_Collateral/DeploymentGuide/dg-fortigate-aws.pdf#page=39)
   - [Intrusion Prevention](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MARKETING/02_Collateral/DeploymentGuide/dg-fortigate-aws.pdf#page=44)
   - [Botnet C&C IP Blocking](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MARKETING/02_Collateral/DeploymentGuide/dg-fortigate-aws.pdf#page=51)
+
 [Cleaning up Demo Resources](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MARKETING/02_Collateral/DeploymentGuide/dg-fortigate-aws.pdf#page=52)
 
 
