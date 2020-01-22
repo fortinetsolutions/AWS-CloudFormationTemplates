@@ -32,7 +32,7 @@ The [Deployment Guide](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MA
 [How to configure the FortiGate](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MARKETING/02_Collateral/DeploymentGuide/dg-fortigate-aws.pdf#page=24)
 
 Use Case Testing:
-   - [Blocking an URL](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MARKETING/02_Collateral/DeploymentGuide/dg-fortigate-aws.pdf#page=34)
+ - [Blocking an URL](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MARKETING/02_Collateral/DeploymentGuide/dg-fortigate-aws.pdf#page=34)
  - [Enabling Web Filtering](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MARKETING/02_Collateral/DeploymentGuide/dg-fortigate-aws.pdf#page=39)
   - [Intrusion Prevention](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MARKETING/02_Collateral/DeploymentGuide/dg-fortigate-aws.pdf#page=44)
   - [Botnet C&C IP Blocking](https://www.fortinet.com/content/dam/maindam/PUBLIC/02_MARKETING/02_Collateral/DeploymentGuide/dg-fortigate-aws.pdf#page=51)
