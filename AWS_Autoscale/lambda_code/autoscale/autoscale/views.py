@@ -635,11 +635,12 @@ def sns(request):
         # If ACTIVE and we received a new Subscription Confirmation, delete everything in the table and start over
         #
         elif table_status == 'ACTIVE':
-            table = g.db_resource.Table(g.name)
-            response = table.scan()
-            if 'Items' in response:
-                for r in response['Items']:
-                    table.delete_item(Key={"Type": r['Type'], "TypeId": r['TypeId']})
+            pass
+#            table = g.db_resource.Table(g.name)
+#            response = table.scan()
+#            if 'Items' in response:
+#                for r in response['Items']:
+#                   table.delete_item(Key={"Type": r['Type'], "TypeId": r['TypeId']})
         #
         # If CREATING, this is the second Subscription Confirmation and AWS is still busy creating the table
         #   just ignore this request
