@@ -293,7 +293,7 @@ class Fortigate(object):
     #
     def detach_second_interface(self):
         if self.ec2['State']['Name'] == 'terminated':
-            logger.info("detach_network_interface(), instance is already terminated: id = %s, state = %s" %
+            logger.info("detach_network_interface(1), instance is already terminated: id = %s, state = %s" %
                         (self.instance_id, self.ec2['State']['Name']))
             return
         attachment_id = None
@@ -304,9 +304,9 @@ class Fortigate(object):
                 attachment_id = i['Attachment']['AttachmentId']
                 nic_id = i['NetworkInterfaceId']
         if nic_id is None:
-            self.lch_action('CONTINUE')
             return
         if attachment_id is not None:
+            logger.info("detach_network_interface(2), attachment id = %s, nic id = %s" % (attachment_id, nic_id))
             try:
                 r = self.ec2_client.detach_network_interface(AttachmentId=attachment_id, Force=True)
             except Exception as ex:

@@ -353,4 +353,7 @@ Outputs:
     Value:
       Ref: VPCID
     Description: VPC ID
+  VPCCIDR:
+    Value: !GetAtt VPCID.CidrBlock
+    Description: VPC CIDR
 

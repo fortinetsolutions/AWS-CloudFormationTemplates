@@ -136,7 +136,81 @@ def respond_to_subscription_request(request):
     return process_message(message, data)
 
 
-def process_autoscale_group(asg_name):
+def redo_lifecycle_hooks(name):
+    logger.info("redo_lifecycle_hooks(): autoscale group name = %s" % name)
+    asg_client = boto3.client('autoscaling')
+    rt = asg_client.describe_lifecycle_hooks(AutoScalingGroupName=name)
+    for hook in rt['LifecycleHooks']:
+        r = asg_client.delete_lifecycle_hook(
+            LifecycleHookName=hook['LifecycleHookName'],
+            AutoScalingGroupName=hook['AutoScalingGroupName']
+        )
+        metadata = None
+        if 'NotificationMetadata' in hook:
+            metadata = hook['NotificationMetadata']
+        logger.info("redo_lifecycle_hooks(1): hook name = %s, metadata = %s" % (hook['LifecycleHookName'], metadata))
+        if metadata is None:
+            r = asg_client.put_lifecycle_hook(
+                LifecycleHookName=hook['LifecycleHookName'],
+                AutoScalingGroupName=hook['AutoScalingGroupName'],
+                LifecycleTransition=hook['LifecycleTransition'],
+                RoleARN=hook['RoleARN'],
+                NotificationTargetARN=hook['NotificationTargetARN'],
+                HeartbeatTimeout=hook['HeartbeatTimeout'],
+                DefaultResult=hook['DefaultResult']
+            )
+        else:
+            r = asg_client.put_lifecycle_hook(
+                LifecycleHookName=hook['LifecycleHookName'],
+                AutoScalingGroupName=hook['AutoScalingGroupName'],
+                LifecycleTransition=hook['LifecycleTransition'],
+                RoleARN=hook['RoleARN'],
+                NotificationTargetARN=hook['NotificationTargetARN'],
+                NotificationMetadata=metadata,
+                HeartbeatTimeout=hook['HeartbeatTimeout'],
+                DefaultResult=hook['DefaultResult']
+            )
+    return
+
+
+def confirm_subscription(account, region, topic_name):
+    logger.info("confirm_subscription(): topic = %s" % topic_name)
+    topic_arn = 'arn:aws:sns:{0}:{1}:{2}'.format(region, account, topic_name)
+    sns_client = boto3.client('sns')
+    rt = sns_client.list_subscriptions_by_topic(TopicArn=topic_arn)
+    if 'Subscriptions' in rt:
+        if len(rt['Subscriptions']) > 0:
+            sub = rt['Subscriptions'][0]
+            subscription_arn = sub['SubscriptionArn']
+            subscription_protocol = sub['Protocol']
+            subscription_endpoint = sub['Endpoint']
+            logger.info("confirm_subscription(): subscription_arn = %s" % subscription_arn)
+            if subscription_arn == 'PendingConfirmation':
+                r = sns_client.subscribe(
+                    TopicArn=topic_arn,
+                    Protocol=subscription_protocol,
+                    Endpoint=subscription_endpoint
+                )
+                logger.info("confirm_subscription(PENDING): r = %s" % r)
+                return
+            rs = sns_client.get_subscription_attributes(SubscriptionArn=subscription_arn)
+            if 'Attributes' in rs:
+                a = rs['Attributes']
+                if 'PendingConfirmation' in a:
+                    if a['PendingConfirmation'] == 'true':
+                        logger.info("CONFIRM_SUBSCRIPTION(): \
+                            Subscription %s unconfirmed. Unsubscribing and re-subscribing %s" %
+                                    (subscription_arn, topic_arn))
+                        sns_client.unsubscribe(SubscriptionArn=subscription_arn)
+                        r = sns_client.subscribe(
+                            TopicArn=topic_arn,
+                            Protocol=subscription_protocol,
+                            Endpoint=subscription_endpoint
+                        )
+    return
+
+
+def process_autoscale_group(asg_name, account, region):
     logger.info("process_autoscale_group(): asg = %s" % asg_name)
     table_found = False
     data = None
@@ -166,7 +240,11 @@ def process_autoscale_group(asg_name):
             if item['UpdateCountdown'] > 1:
                 item['UpdateCountdown'] = item['UpdateCountdown'] - 1
                 mt.put_item(Item=item)
+                if 'TargetGroup' in item:
+                    topic_name = item['TargetGroup']
+                    confirm_subscription(account, region, topic_name)
             if item['UpdateCountdown'] == 1:
+                redo_lifecycle_hooks(asg_name)
                 logger.info("process_autoscale_group(7): UPDATING Autoscale Group Counts")
                 counts_updated = False
                 while counts_updated is False:
@@ -304,11 +382,16 @@ def start_scheduled(event, context):
             logger.info("Found table %s" % t['TableNames'])
             for i in range(len(t['TableNames'])):
                 tn = t['TableNames'][i]
+                logger.info("Compare table %s to %s" % (tn, master_table_name))
                 if tn == master_table_name:
+                    logger.info("Setting table found to TRUE")
                     table_found = True
+                else:
+                    confirm_subscription(account, region, tn)
     except Exception as ex:
-        logger.debug('list_tables(): ex = %s' % ex)
+        logger.info('list_tables(): ex = %s' % ex)
         table_found = False
+    logger.info("start_scheduled(): table_found = %s" % table_found)
     if table_found is False:
         logger.info("start_scheduled(): No Master Table Found")
         return
@@ -327,7 +410,7 @@ def start_scheduled(event, context):
             r = mt.query(KeyConditionExpression=Key('Type').eq(TYPE_AUTOSCALE_GROUP))
         except dbc.exceptions.ResourceNotFoundException:
             logger.exception("start_scheduled_except_2()")
-            re
+            return
         if 'Items' in r:
             logger.debug("found items in r:")
             if len(r['Items']) > 0:
@@ -344,7 +427,7 @@ def start_scheduled(event, context):
                         logger.info("start_scheduled6(): cleanup_autoscale_group_database = %s" % group_name)
                         cleanup_database(mt, group_name)
                         return
-                    process_autoscale_group(asg['TypeId'])
+                    process_autoscale_group(asg['TypeId'], account, region)
     return
 
 #

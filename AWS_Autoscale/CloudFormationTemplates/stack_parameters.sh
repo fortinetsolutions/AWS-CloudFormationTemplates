@@ -2,8 +2,6 @@
 
 stack_prefix=mdw
 stack1=$stack_prefix-base
-stack2=$stack_prefix-addprivatelinux
-stack3=$stack_prefix-addpubliclinux
 stack5=$stack_prefix-fwrk
 stack6=$stack_prefix-asg
 
@@ -24,3 +22,4 @@ fazprefix=$stack_prefix-fortianalyzer
 webdns=httpservermdw
 admin_port=443
 cooldown=300
+environment_tag=dev
