@@ -259,7 +259,7 @@ class Fortigate(object):
         #
         # Describe the network interface and see if it is "available"
         #
-        logger.info("delete_second_interface(): eni = %s" % item['ENIId'])
+        logger.info("delete_second_interface(1): eni = %s" % item['ENIId'])
         try:
             r = self.ec2_client.describe_network_interfaces(NetworkInterfaceIds=[item['ENIId']])
         except Exception as ex:
@@ -276,14 +276,13 @@ class Fortigate(object):
             # If the ENI is no longer attached (i.e. 'available'), delete it. Also, respond to the lifecycle event
             # and allow the instance to change state to "Proceed:terminate"
             if i['Status'] == 'available':
-                logger.info("delete_second_interface(): eni = %s is available" % item['ENIId'])
+                logger.info("delete_second_interface(2): eni = %s is available" % item['ENIId'])
                 self.ec2_client.delete_network_interface(NetworkInterfaceId=item['ENIId'])
-                self.lch_action('CONTINUE')
                 try:
                     t.delete_item(TableName=self.auto_scale_group.name,
                                   Key={"Type": TYPE_ENI_ID, "TypeId": item['ENIId']})
                 except Exception as ex:
-                    logger.exception("delete_second_interface(): message = %s, instance = %s" %
+                    logger.exception("delete_second_interface(4): message = %s, instance = %s" %
                                      (ex, self.instance_id))
         return
 
@@ -304,9 +303,9 @@ class Fortigate(object):
                 attachment_id = i['Attachment']['AttachmentId']
                 nic_id = i['NetworkInterfaceId']
         if nic_id is None:
-            self.lch_action('CONTINUE')
             return
         if attachment_id is not None:
+            logger.info("detach_network_interface(2), attachment id = %s, nic id = %s" % (attachment_id, nic_id))
             try:
                 r = self.ec2_client.detach_network_interface(AttachmentId=attachment_id, Force=True)
             except Exception as ex:
@@ -323,27 +322,45 @@ class Fortigate(object):
         return
 
     def add_member_to_autoscale_group(self, master_ip, password):
-        callback_url = self.auto_scale_group.endpoint_url + "/" + "callback/" + self.auto_scale_group.name
+        callback_url = self.auto_scale_group.endpoint_url + "/" + "callback/" + self.auto_scale_group.table_name
         status = -1
         if self.ec2['PrivateIpAddress'] == master_ip:
             data = {
                   "status": "enable",
                   "role": "master",
                   "sync-interface": "port1",
-                  "psksecret": self.auto_scale_group.name,
+                  "psksecret": self.auto_scale_group.table_name,
                   "callback-url": callback_url
             }
             logger.info('posting auto-scale config: {}' .format(data))
             try:
                 status = self.api.login(self.ec2['PublicIpAddress'], 'admin', password)
             except Exception as ex:
-                logger.exception("login.exception(): message = %s, instance = %s" % (ex, self.instance_id))
-                return
-            content = self.api.put(api='cmdb', path='system', name='auto-scale', data=data)
-            try:
-                msg = json.loads(content)
-            except json.decoder.JSONDecodeError:
+                logger.exception("login.exception(1): message = %s, instance = %s" % (ex, self.instance_id))
                 return -1
+            logger.info('posting master autoscale config: {%d}' % status)
+            if status != 0:
+                return -1
+            logger.info('before api put content: data = {}' .format(data))
+            try:
+                content = self.api.put(api='cmdb', path='system', name='auto-scale', data=data)
+            except Exception as ex:
+                logger.exception("api put exception(): message = %s, instance = %s" % (ex, self.instance_id))
+                return -1
+            if isinstance(content, str):
+                logger.info('add_member_to_autoscale_group(): api put failed')
+                return -1
+            logger.info('after api put content: {}' .format(content))
+            if isinstance(content, bytes):
+                try:
+                    msg = json.loads(content)
+                except json.decoder.JSONDecodeError:
+                    logger.exception("login.exception(2): content = %s, data = %s" % (content, data))
+                    return -1
+            else:
+                logger.info('add_member_to_autoscale_group(): not bytes object')
+                return -1
+            logger.info('posting api put status: {}' .format(msg['status']))
             if msg['status'] == 'success':
                 self.ec2_client.create_tags(Resources=[self.instance_id],
                                             Tags=[{'Key': 'Fortinet-Autoscale', 'Value': 'Master'}])
@@ -356,19 +373,33 @@ class Fortigate(object):
                   "role": "slave",
                   "master-ip": master_ip,
                   "sync-interface": "port1",
-                  "psksecret": self.auto_scale_group.name,
+                  "psksecret": self.auto_scale_group.table_name,
                   "callback-url": callback_url
             }
-            logger.info('posting auto-scale config: {}' .format(data))
+            logger.info('posting slave autoscale config: {}' .format(data))
             try:
-                self.api.login(self.ec2['PublicIpAddress'], 'admin', password)
+                status = self.api.login(self.ec2['PublicIpAddress'], 'admin', password)
             except Exception as ex:
                 logger.exception("login.exception(): message = %s, instance = %s" % (ex, self.instance_id))
                 return -1
-            content = self.api.put(api='cmdb', path='system', name='auto-scale', data=data)
+            logger.info('posting slave autoscale config: {%d}' % status)
+            if status != 0:
+                return -1
+            logger.info('before api put content: data = {}' .format(data))
             try:
-                msg = json.loads(content)
-            except json.decoder.JSONDecodeError:
+                content = self.api.put(api='cmdb', path='system', name='auto-scale', data=data)
+            except Exception as ex:
+                logger.exception("api put exception(): message = %s, instance = %s" % (ex, self.instance_id))
+                return -1
+            logger.info('after api put content: {}' .format(content))
+            if isinstance(content, bytes):
+                try:
+                    msg = json.loads(content)
+                except json.decoder.JSONDecodeError:
+                    logger.exception("login.exception(2): content = %s, data = %s" % (content, data))
+                    return -1
+            else:
+                logger.info('add_member_to_autoscale_group(): not bytes object')
                 return -1
             if msg['status'] == 'success':
                 self.ec2_client.create_tags(Resources=[self.instance_id],
@@ -427,8 +458,8 @@ class Fortigate(object):
         # Something bad happened in the attach. ABANDON
         #
         if snic is None:
+            logger.info("BAD RESOURCE ABANDON Instance. ec2_resource(): snic = %s" % snic)
             self.lch_action('ABANDON')
-        logger.info("ec2_resource(): snic = %s" % snic)
         #
         # TODO: May want to add delete on termination attribute to second interface
         # for now, it's easier to LCH_TERMINATION without it
@@ -447,6 +478,7 @@ class Fortigate(object):
             return None
 
         if a is None or 'AttachmentId' not in a:
+            logger.info("BAD AttachmentId: ABANDON LCH")
             self.lch_action('ABANDON')
 
         self.update_ec2_info()
@@ -503,5 +535,3 @@ class Fortigate(object):
         except ClientError:
             logger.exception("Invalid complete_life_cycle_action(): ClientError, instance = %s" % self.instance_id)
         return
-
-

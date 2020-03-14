@@ -19,6 +19,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.core.cache import caches
 from boto3.dynamodb.conditions import Key
+from botocore.exceptions import ClientError
 from django.utils.encoding import smart_str
 
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
@@ -136,7 +137,86 @@ def respond_to_subscription_request(request):
     return process_message(message, data)
 
 
-def process_autoscale_group(asg_name):
+def redo_lifecycle_hooks(name):
+    logger.info("redo_lifecycle_hooks(): autoscale group name = %s" % name)
+    asg_client = boto3.client('autoscaling')
+    rt = asg_client.describe_lifecycle_hooks(AutoScalingGroupName=name)
+    for hook in rt['LifecycleHooks']:
+        r = asg_client.delete_lifecycle_hook(
+            LifecycleHookName=hook['LifecycleHookName'],
+            AutoScalingGroupName=hook['AutoScalingGroupName']
+        )
+        metadata = None
+        if 'NotificationMetadata' in hook:
+            metadata = hook['NotificationMetadata']
+        logger.info("redo_lifecycle_hooks(1): hook name = %s, metadata = %s" % (hook['LifecycleHookName'], metadata))
+        if metadata is None:
+            r = asg_client.put_lifecycle_hook(
+                LifecycleHookName=hook['LifecycleHookName'],
+                AutoScalingGroupName=hook['AutoScalingGroupName'],
+                LifecycleTransition=hook['LifecycleTransition'],
+                RoleARN=hook['RoleARN'],
+                NotificationTargetARN=hook['NotificationTargetARN'],
+                HeartbeatTimeout=hook['HeartbeatTimeout'],
+                DefaultResult=hook['DefaultResult']
+            )
+        else:
+            r = asg_client.put_lifecycle_hook(
+                LifecycleHookName=hook['LifecycleHookName'],
+                AutoScalingGroupName=hook['AutoScalingGroupName'],
+                LifecycleTransition=hook['LifecycleTransition'],
+                RoleARN=hook['RoleARN'],
+                NotificationTargetARN=hook['NotificationTargetARN'],
+                NotificationMetadata=metadata,
+                HeartbeatTimeout=hook['HeartbeatTimeout'],
+                DefaultResult=hook['DefaultResult']
+            )
+    return
+
+
+def confirm_subscription(account, region, topic_name):
+    logger.debug("confirm_subscription(): topic = %s" % topic_name)
+    topic_arn = 'arn:aws:sns:{0}:{1}:{2}'.format(region, account, topic_name)
+    sns_client = boto3.client('sns')
+    try:
+        rt = sns_client.list_subscriptions_by_topic(TopicArn=topic_arn)
+    except sns_client.exceptions.NotFoundException:
+        logger.exception("confirm_subscription(1): exception - topic not found")
+        return -2
+    if 'Subscriptions' in rt:
+        if len(rt['Subscriptions']) > 0:
+            sub = rt['Subscriptions'][0]
+            subscription_arn = sub['SubscriptionArn']
+            subscription_protocol = sub['Protocol']
+            subscription_endpoint = sub['Endpoint']
+            logger.debug("confirm_subscription(2): topic = %s, subscription_arn = %s" %
+                        (topic_name, subscription_arn))
+            if subscription_arn == 'PendingConfirmation':
+                r = sns_client.subscribe(
+                    TopicArn=topic_arn,
+                    Protocol=subscription_protocol,
+                    Endpoint=subscription_endpoint
+                )
+                logger.info("confirm_subscription(PENDING): r = %s" % r)
+                return 0
+            rs = sns_client.get_subscription_attributes(SubscriptionArn=subscription_arn)
+            if 'Attributes' in rs:
+                a = rs['Attributes']
+                if 'PendingConfirmation' in a:
+                    if a['PendingConfirmation'] == 'true':
+                        logger.info("CONFIRM_SUBSCRIPTION(): \
+                            Subscription %s unconfirmed. Unsubscribing and re-subscribing %s" %
+                                    (subscription_arn, topic_arn))
+                        sns_client.unsubscribe(SubscriptionArn=subscription_arn)
+                        r = sns_client.subscribe(
+                            TopicArn=topic_arn,
+                            Protocol=subscription_protocol,
+                            Endpoint=subscription_endpoint
+                        )
+    return 0
+
+
+def process_autoscale_group(asg_name, account, region):
     logger.info("process_autoscale_group(): asg = %s" % asg_name)
     table_found = False
     data = None
@@ -148,10 +228,10 @@ def process_autoscale_group(asg_name):
             if t['ResponseMetadata']['HTTPStatusCode'] == STATUS_OK:
                 table_found = True
     except g.db_client.exceptions.ResourceNotFoundException:
-        logger.debug("process_autoscale_group_exception_1()")
+        logger.exception("process_autoscale_group_exception_1()")
         table_found = False
     if table_found is True:
-        logger.info("process_autoscale_group(4): FOUND autoscale scale group table")
+        logger.debug("process_autoscale_group(4): FOUND autoscale scale group table")
         mt = g.db_resource.Table(asg_name)
         try:
             a = mt.get_item(Key={"Type": TYPE_AUTOSCALE_GROUP, "TypeId": "0000"})
@@ -166,14 +246,16 @@ def process_autoscale_group(asg_name):
             if item['UpdateCountdown'] > 1:
                 item['UpdateCountdown'] = item['UpdateCountdown'] - 1
                 mt.put_item(Item=item)
+                if 'TargetGroup' in item:
+                    topic_name = item['TargetGroup']
+                    status = confirm_subscription(account, region, topic_name)
+                    logger.info("process_autoscale_group(6): confirm_subscription() status = %d" % status)
             if item['UpdateCountdown'] == 1:
+                redo_lifecycle_hooks(asg_name)
                 logger.info("process_autoscale_group(7): UPDATING Autoscale Group Counts")
-                counts_updated = False
-                while counts_updated is False:
-                    counts_updated = g.update_instance_counts()
+                g.update_instance_counts(asg_name)
                 item['UpdateCountdown'] = 0
                 mt.put_item(Item=item)
-        logger.info("process_autoscale_group(5):")
         try:
             r = mt.query(KeyConditionExpression=Key('Type').eq(TYPE_ENI_ID))
         except Exception as ex:
@@ -188,17 +270,32 @@ def process_autoscale_group(asg_name):
         except Exception as ex:
             logger.exception('mt_query: ex = %s' % ex)
             return
-        logger.info("process_autoscale_group(10): instances count = %s" % len(instances['Items']))
         if 'Items' in instances:
             if len(instances['Items']) > 0:
+                logger.info("process_autoscale_group(10): name = %s, instances count = %s" %
+                            (asg_name, len(instances['Items'])))
                 for i in instances['Items']:
-                    logger.info("process_autoscale_group(11): state = %s, countdown = %d" %
-                                (i['State'], i['CountDown']))
-                    if 'State' in i and (i['State'] == "LCH_LAUNCH" or i['State'] == "ADD_TO_AUTOSCALE_GROUP"):
+                    logger.debug("process_autoscale_group(11): state = %s, countdown = %d" %
+                                 (i['State'], i['CountDown']))
+                    if 'State' in i and (i['State'] == 'Waiting_For_License'):
+                        logger.info("process_autoscale_group(11): instance = %s" % i)
+                        value = i['CountDown']
+                        value = value - 60
+                        logger.debug("process_autoscale_group(Waiting_For_License): DECREMENT CountDown")
+                        i['CountDown'] = value
+                        mt.put_item(Item=i)
+                    if 'State' in i and (i['State'] == 'ADD_TO_AUTOSCALE_GROUP'):
                         if 'CountDown' in i and i['CountDown'] > 0:
                             value = i['CountDown']
                             value = value - 60
-                            logger.info("process_autoscale_group(12): DECREMENT CountDown")
+                            logger.debug("process_autoscale_group(12): DECREMENT CountDown")
+                            i['CountDown'] = value
+                            mt.put_item(Item=i)
+                    if 'State' in i and (i['State'] == "LCH_LAUNCH"):
+                        if 'CountDown' in i and i['CountDown'] > 0:
+                            value = i['CountDown']
+                            value = value - 60
+                            logger.debug("process_autoscale_group(12): DECREMENT CountDown")
                             i['CountDown'] = value
                             mt.put_item(Item=i)
                         elif 'CountDown' in i and i['CountDown'] == 0:
@@ -208,7 +305,7 @@ def process_autoscale_group(asg_name):
                                 lch_token = e['Item']['LifecycleToken']
                                 action = 'CONTINUE'
                                 time.sleep(random.randint(1, 5))
-                                logger.info("process_autoscale_group(14): COMPLETE LCH lch_token = %s" % lch_token)
+                                logger.debug("process_autoscale_group(14): COMPLETE LCH lch_token = %s" % lch_token)
                                 try:
                                     g.asg_client.complete_lifecycle_action(LifecycleHookName=lch_name,
                                                                            AutoScalingGroupName=g.name,
@@ -217,26 +314,27 @@ def process_autoscale_group(asg_name):
                                 except Exception as ex:
                                     logger.exception('process_autoscale_group EXCEPTION lch(): ex = %s' % ex)
                                     pass
-                            logger.info("process_autoscale_group(15): Putting Instance In Service: i = %s" % i)
-                            i['State'] = "InService"
+                            logger.info("process_autoscale_group(15): Putting Instance to Waiting_For_License: i = %s" % i)
+                            i['State'] = "Waiting_For_License"
                             mt.put_item(Item=i)
                         else:
                             pass
-                    if 'State' in i and (i['State'] == "InService" or i['State'] == 'ADD_TO_AUTOSCALE_GROUP'):
+                    if 'State' in i and (i['State'] == "InService" or i['State'] == 'ADD_TO_AUTOSCALE_GROUP') or \
+                            i['State'] == 'Waiting_For_License':
                         instance_id = i['TypeId']
                         instance_not_found = False
-                        logger.info("process_autoscale_group(20): status instance = %s" % instance_id)
+                        logger.debug("process_autoscale_group(20): status instance = %s" % instance_id)
                         r = None
                         try:
                             r = f.ec2_client.describe_instance_status(InstanceIds=[instance_id])
-                            logger.info("process_autoscale_group(20a): Found InService Instance = %s" % instance_id)
+                            logger.debug("process_autoscale_group(20a): Found InService Instance = %s" % instance_id)
                         except Exception as ex:
-                            logger.info('process_autoscale_group EXCEPTION instance id(): ex = %s' % ex)
+                            logger.exception('process_autoscale_group EXCEPTION instance id(): ex = %s' % ex)
                             instance_not_found = True
                         if r is not None and 'InstanceStatuses' in r:
                             if len(r['InstanceStatuses']) > 0:
                                 state = r['InstanceStatuses'][0]['InstanceState']['Name']
-                                logger.info('process_autoscale_group(20c): state = %s' % state)
+                                logger.debug('process_autoscale_group(20c): state = %s' % state)
                                 if state == 'terminated':
                                     instance_not_found = True
                                 if state == 'running':
@@ -256,7 +354,7 @@ def process_autoscale_group(asg_name):
                             try:
                                 mt.delete_item(Key={"Type": TYPE_INSTANCE_ID, "TypeId": instance_id})
                             except g.db_client.exceptions.ResourceNotFoundException:
-                                logger.info('process_autoscale_group delete item(): Not Found id = %s' %
+                                logger.exception('process_autoscale_group delete item(): Not Found id = %s' %
                                             instance_id)
     g.verify_byol_licenses()
     return
@@ -304,11 +402,21 @@ def start_scheduled(event, context):
             logger.info("Found table %s" % t['TableNames'])
             for i in range(len(t['TableNames'])):
                 tn = t['TableNames'][i]
+                logger.debug("Compare table %s to %s" % (tn, master_table_name))
                 if tn == master_table_name:
+                    logger.debug("Setting table found to TRUE")
                     table_found = True
+                else:
+                    topic = tn + '-byol'
+                    status = confirm_subscription(account, region, topic)
+                    logger.info("start_scheduled(byol): confirm_subscription() status = %d" % status)
+                    topic = tn + '-paygo'
+                    status = confirm_subscription(account, region, topic)
+                    logger.info("start_scheduled(paygo): confirm_subscription() status = %d" % status)
     except Exception as ex:
-        logger.debug('list_tables(): ex = %s' % ex)
+        logger.exception('list_tables(): ex = %s' % ex)
         table_found = False
+    logger.debug("start_scheduled(): table_found = %s" % table_found)
     if table_found is False:
         logger.info("start_scheduled(): No Master Table Found")
         return
@@ -323,28 +431,30 @@ def start_scheduled(event, context):
         table_found = False
     if table_found is True:
         mt = dbr.Table(master_table_name)
+        r = None
         try:
             r = mt.query(KeyConditionExpression=Key('Type').eq(TYPE_AUTOSCALE_GROUP))
         except dbc.exceptions.ResourceNotFoundException:
             logger.exception("start_scheduled_except_2()")
-            re
-        if 'Items' in r:
+            return
+        if r is not None and 'Items' in r:
             logger.debug("found items in r:")
             if len(r['Items']) > 0:
                 for asg in r['Items']:
-                    logger.info("start_scheduled() FOUND autoscale group = %s" % asg['TypeId'])
-                    group_name = asg['TypeId']
+                    logger.debug("start_scheduled() FOUND autoscale group = %s" % asg['TypeId'])
+                    gname = asg['TypeId']
+                    nbyol = gname + '-byol'
+                    npaygo = gname + '-paygo'
                     try:
-                        r = asg_client.describe_auto_scaling_groups(AutoScalingGroupNames=[group_name])
+                        r = asg_client.describe_auto_scaling_groups(AutoScalingGroupNames=[nbyol, npaygo])
                     except Exception as ex:
                         logger.exception("exeception start_scheduled() - describe_auto_scaling_groups(): ex = %s" % ex)
-                        cleanup_database(mt, group_name)
+                        #cleanup_database(mt, gname)
                         return
                     if len(r['AutoScalingGroups']) == 0:
-                        logger.info("start_scheduled6(): cleanup_autoscale_group_database = %s" % group_name)
-                        cleanup_database(mt, group_name)
+                        #cleanup_database(mt, gname)
                         return
-                    process_autoscale_group(asg['TypeId'])
+                    process_autoscale_group(asg['TypeId'], account, region)
     return
 
 #
@@ -432,22 +542,22 @@ def sns(request):
     try:
         data = json.loads(body)
     except ValueError:
-        logger.info('sns(): Notification Not Valid JSON: {}'.format(body))
+        logger.exception('sns(): Notification Not Valid JSON: {}'.format(body))
         return HttpResponseBadRequest('Not Valid JSON')
-    logger.info("sns(): request = %s" % (json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))))
+    logger.debug("sns(): request = %s" % (json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))))
     if 'Type' in data and data['Type'] != 'SubscriptionConfirmation':
         if 'Message' in data:
             try:
                 msg = json.loads(data['Message'])
             except ValueError:
-                logger.info('sns(): Notification Not Valid JSON: {}'.format(body))
+                logger.exception('sns(): Notification Not Valid JSON: {}'.format(body))
                 return HttpResponseBadRequest('Not Valid JSON')
             logger.info("sns(): message = %s" % (json.dumps(msg, sort_keys=True, indent=4, separators=(',', ': '))))
     if 'TopicArn' not in data:
         return HttpResponseBadRequest('Not Valid JSON')
     url = None
     if 'HTTP_HOST' in request.META:
-        logger.info("sns(): http_host = %s" % request.META['HTTP_HOST'])
+        logger.debug("sns(): http_host = %s" % request.META['HTTP_HOST'])
         host_url = request.META['HTTP_HOST']
         try:
             u, port = host_url.split(':')
@@ -460,7 +570,7 @@ def sns(request):
             url = 'http://' + request.META['HTTP_HOST']
         else:
             url = 'https://' + request.META['HTTP_HOST'] + '/dev'
-        logger.info("Callback url: %s" % url)
+        logger.debug("Callback url: %s" % url)
     #
     # Handle Subscription Request up front. The first Subscription request will trigger a DynamoDB table creation
     # and it will not be responded to. The second request will have an ACTIVE table and the subscription request
@@ -470,7 +580,7 @@ def sns(request):
         master_table_found = False
         asg_table_found = False
         g = AutoScaleGroup(data)
-        logger.debug('SubscriptionConfirmation 1(): g = %s' % g)
+        logger.info('SubscriptionConfirmation 1(): g = %s' % g)
         master_table_name = "fortinet_autoscale_" + g.region + "_" + g.account
         i = 0
         try:
@@ -481,7 +591,7 @@ def sns(request):
                     tn = t['TableNames'][i]
                     if tn == master_table_name:
                         master_table_found = True
-                    if tn == g.name:
+                    if tn == g.table_name:
                         asg_table_found = True
         except Exception as ex:
             logger.debug('list_tables(): ex = %s' % ex)
@@ -495,16 +605,17 @@ def sns(request):
             except Exception as ex:
                 logger.exception('SubscriptionConfirmation master_table_create(): table_status = %s' % ex)
         if asg_table_found is False:
-            logger.info("Creating Autoscale Group Table: %s" % g.name)
+            logger.info("Creating Autoscale Group Table: %s" % g.table_name)
             try:
                 g.db_client.create_table(AttributeDefinitions=attribute_definitions,
-                                         TableName=g.name, KeySchema=schema,
+                                         TableName=g.table_name, KeySchema=schema,
                                          ProvisionedThroughput=provisioned_throughput)
             except Exception as ex:
                 logger.exception('SubscriptionConfirmation master_table_create(): table_status = %s' % ex)
         if master_table_name is False or asg_table_found is False:
             response = HttpResponse("Creating Tables", status=100)
             return response
+        r = None
         try:
             r = g.db_client.describe_table(TableName=master_table_name)
         except Exception as ex:
@@ -520,22 +631,25 @@ def sns(request):
                         return response
         logger.info("Writing Master Table: auto scale group %s" % g.name)
         mt = g.db_resource.Table(master_table_name)
-        asg = {"Type": TYPE_AUTOSCALE_GROUP, "TypeId": g.name, "UpdateCountdown": 3}
+        asg = {"Type": TYPE_AUTOSCALE_GROUP, "TypeId": g.table_name, "UpdateCountdown": 3}
         master_table_written = False
         while master_table_written is False:
+            logger.debug("Writing Master Table(1)")
             try:
                 mt.put_item(Item=asg)
                 master_table_written = True
-            except g.db_client.exceptions.ResourceNotFoundException:
+            except ClientError as e:
+                logger.exception("Writing Master Table(exception)")
                 master_table_written = False
                 time.sleep(5)
         #
         # End of master table
         #
+        logger.debug("Writing Master Table(finished)")
         r = None
         table_status = 'NOTFOUND'
         try:
-            r = g.db_client.describe_table(TableName=g.name)
+            r = g.db_client.describe_table(TableName=g.table_name)
         except Exception as ex:
             logger.exception('DB Client describe_table exception %s' % ex)
             table_status = 'NOTFOUND'
@@ -549,31 +663,28 @@ def sns(request):
         if table_status == 'NOTFOUND':
             pass
         #
-        # If ACTIVE and we received a new Subscription Confirmation, delete everything in the table and start over
+        # If ACTIVE and we received a new Subscription Confirmation and both BYOL and PAYGO is
+        # already confirmed, delete everything in the table and start over
         #
         elif table_status == 'ACTIVE':
-            table = g.db_resource.Table(g.name)
-            response = table.scan()
-            if 'Items' in response:
-                for r in response['Items']:
-                    table.delete_item(Key={"Type": r['Type'], "TypeId": r['TypeId']})
+            pass
         #
         # If CREATING, this is the second Subscription Confirmation and AWS is still busy creating the table
         #   just ignore this request
         elif table_status == 'CREATING':
-            return
+            return HttpResponse("Instance Not Ready", status=100)
         else:
             #
             # Unknown status. 404
             #
             raise Http404
 
-        logger.info('SubscriptionConfirmation pre write_to_db()')
+        logger.debug('SubscriptionConfirmation pre write_to_db()')
         g.write_to_db(data, url)
 
-        logger.info('SubscriptionConfirmation post write_to_db(): g.status = %s' % g.status)
+        logger.debug('SubscriptionConfirmation post write_to_db(): g.status = %s' % g.status)
         if g.status == 'CREATING':
-            return
+            return HttpResponse("Instance Not Ready", status=100)
         if g.asg is None:
             raise Http404
 
@@ -588,44 +699,40 @@ def sns(request):
         #
         # if this is a TEST_NOTIFICATION, just respond 200. Autoscale group is likely in te process of being created
         #
-        logger.info("sns(notification 1))")
+        logger.debug("sns(notification 1))")
         g = AutoScaleGroup(data)
-        logger.info("sns(notification 2): name = %s" % g.name)
+        logger.debug("sns(notification 2): name = %s" % g.name)
         asg_name = g.name
         if 'Message' in data:
-            logger.info("sns(notification 3)")
+            logger.debug("sns(notification 3)")
             try:
                 msg = json.loads(data['Message'])
             except ValueError:
                 logger.exception('sns(): Notification Not Valid JSON: {}'.format(data['Message']))
                 return HttpResponseBadRequest('Not Valid JSON')
+            table_found = False
             if 'Event' in msg and msg['Event'] == 'autoscaling:TEST_NOTIFICATION':
                 try:
-                    t = g.db_client.describe_table(TableName=asg_name)
+                    t = g.db_client.describe_table(TableName=g.table_name)
                     if 'ResponseMetadata' in t:
                         if t['ResponseMetadata']['HTTPStatusCode'] == STATUS_OK:
-                            logger.info("sns(notification 4)")
+                            logger.debug("sns(notification 4)")
                             table_found = True
                 except g.db_client.exceptions.ResourceNotFoundException:
-                    logger.info("process_autoscale_group_exception_1()")
+                    logger.exception("process_autoscale_group_exception_1()")
                     table_found = False
-                logger.info("sns(notification 5)")
                 if table_found is True:
-                    logger.info("sns(notification 6)")
-                    logger.info("process_autoscale_group(4): FOUND autoscale scale group table")
-                    mt = g.db_resource.Table(asg_name)
+                    logger.debug("process_autoscale_group(4): FOUND autoscale scale group table")
+                    mt = g.db_resource.Table(g.table_name)
                     try:
                         a = mt.get_item(Key={"Type": TYPE_AUTOSCALE_GROUP, "TypeId": "0000"})
                     except g.db_client.exceptions.ResourceNotFoundException:
                         logger.exception("process_autoscale_group()")
                         return
-                logger.info("sns(notification 7): a = %s" % a)
-                if 'Item' in a and 'UpdateCountdown' in a['Item']:
-                    logger.info("sns(notification 8)")
-                    item = a['Item']
-                    item['UpdateCountdown'] = 0
-                    mt.put_item(Item=item)
-                logger.info("sns(notification 11)")
+                    if 'Item' in a and 'UpdateCountdown' in a['Item']:
+                        item = a['Item']
+                        item['UpdateCountdown'] = 0
+                        mt.put_item(Item=item)
                 return HttpResponse(0)
             g = AutoScaleGroup(data)
             g.write_to_db(data, url)
@@ -633,7 +740,7 @@ def sns(request):
                 raise Http404
             rc = g.process_notification(data)
             if rc == STATUS_NOT_OK:
-                response = HttpResponse("Instance Not Ready", status=100)
+                response = HttpResponse("Instance Not Ready", status=500)
             else:
                 response = HttpResponse(0)
             return response
@@ -641,7 +748,6 @@ def sns(request):
 
 @csrf_exempt
 def callback(request):
-    ip = None
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
         ip = x_forwarded_for.split(',')[0]

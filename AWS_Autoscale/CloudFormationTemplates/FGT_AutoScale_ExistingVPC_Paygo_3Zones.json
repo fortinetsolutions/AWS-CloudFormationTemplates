@@ -395,13 +395,13 @@
 				"Protocol": "https",
 				"DeliveryPolicy": {
 					"healthyRetryPolicy": {
-						"numRetries": 18,
-						"minDelayTarget": 50,
+						"numRetries": 50,
+						"minDelayTarget": 20,
 						"maxDelayTarget": 50,
-						"numMinDelayRetries": 8,
-						"numMaxDelayRetries": 8,
-						"numNoDelayRetries": 0,
-						"backoffFunction": "linear"
+						"numMinDelayRetries": 12,
+						"numMaxDelayRetries": 14,
+						"numNoDelayRetries": 2,
+						"backoffFunction": "exponential"
 					}
 				}
 			}
@@ -830,7 +830,7 @@
 					"Ref": "ASGPAYG"
 				},
 				"DefaultResult": "ABANDON",
-				"HeartbeatTimeout": "300",
+				"HeartbeatTimeout": "600",
 				"LifecycleHookName": {
 					"Fn::Join": [
 						"",
