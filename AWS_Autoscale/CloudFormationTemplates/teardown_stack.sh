@@ -219,3 +219,4 @@ aws s3 cp autoscale-dev-*.zip s3://fortimdw-us-east-1/autoscale-dev.zip
 cd -
 aws dynamodb list-tables | awk '{print $2}'|while read x; do echo "deleting table $x"; aws dynamodb delete-table --table-name $x; done
 echo "Done"
+
