@@ -51,7 +51,7 @@ resource aws_security_group "allow_public_subnets" {
     from_port = 0
     to_port = 0
     protocol = "-1"
-    cidr_blocks = ["${var.public_subnet_cidr1}"]
+    cidr_blocks = ["${var.public_subnet_cidr1}", "${var.cidr_for_access}"]
   }
   egress {
     from_port = 0
@@ -98,7 +98,7 @@ module "public-subnet-1" {
   vpc_id                     = "${module.vpc.vpc_id}"
   availability_zone          = "${var.availability_zone_1}"
   subnet_cidr                = "${var.public_subnet_cidr1}"
-  subnet_description         = "${var.private1_description}"
+  subnet_description         = "${var.public1_description}"
 }
 
 module "private-subnet-1" {
