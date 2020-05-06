@@ -27,33 +27,10 @@
             "Type": "String",
             "Default": "t2.small",
             "AllowedValues": [
-                "t1.micro",
-                "t2.nano",
                 "t2.micro",
                 "t2.small",
                 "t2.medium",
                 "t2.large",
-                "m1.small",
-                "m1.medium",
-                "m1.large",
-                "m1.xlarge",
-                "m2.xlarge",
-                "m2.2xlarge",
-                "m2.4xlarge",
-                "m3.medium",
-                "m3.large",
-                "m3.xlarge",
-                "m3.2xlarge",
-                "m4.large",
-                "m4.xlarge",
-                "m4.2xlarge",
-                "m4.4xlarge",
-                "c1.xlarge",
-                "c3.large",
-                "c3.xlarge",
-                "c3.2xlarge",
-                "c3.4xlarge",
-                "c3.8xlarge",
                 "c4.large",
                 "c4.xlarge",
                 "c5.large"
@@ -62,7 +39,7 @@
         "FortigateInstanceType": {
             "Description": "fortigate vm instance type",
             "Type": "String",
-            "Default": "t2.small",
+            "Default": "c5n.large",
             "AllowedValues": [
                 "t2.small",
                 "c4.large",
@@ -73,7 +50,6 @@
                 "c5.2xlarge",
                 "c5.large",
                 "c5.xlarge",
-                "c5.9xlarge",
                 "c5n.large",
                 "c5n.xlarge",
                 "c5n.2xlarge",
@@ -88,18 +64,6 @@
         "CIDRForWorkLoadInstanceAccess": {
             "Type": "String",
             "Description": "Enter the CIDR from which the workload instances needs to be accessed from public in the format 1.1.1.1/32"
-        },
-        "AwsAccessKey": {
-            "Description": "access key of your aws account",
-            "NoEcho": "true",
-            "Type": "String",
-            "Default": ""
-        },
-        "AwsSecretKey": {
-            "Description": "secret key of your aws account",
-            "NoEcho": "true",
-            "Type": "String",
-            "Default": ""
         }
     },
     "Mappings" : {
@@ -156,50 +120,50 @@
             }
         },
         "FortigateAWSRegionArch2AMI": {
-            "us-east-1": {
-                "HVM64": "ami-0532fcbf3ada1987a"
+            "ap-southeast-1": {
+                "HVM64": "ami-0178ca1a0dbfe62c7"
             },
-            "us-west-1": {
-                "HVM64": "ami-0aa77e91cb3eab854"
+           "us-east-1": {
+                "HVM64": "ami-0b3a07ff01ef9d97b"
+            },
+           "us-west-1": {
+               "HVM64": "ami-059bf3b352703af0b"
             },
             "eu-west-1": {
-                "HVM64": "ami-0c1f71f51fb106a31"
+                "HVM64": "ami-0255eb9792084e4ac"
             },
             "eu-west-2": {
-                "HVM64": "ami-0d333d8821f37aa36"
+                "HVM64": "ami-0666078c010cb391a"
             },
             "ca-central-1": {
-                "HVM64": "ami-0b1d312dc1c41030e"
+                "HVM64": "ami-04d85139686156210"
             },
             "sa-east-1": {
-                "HVM64": "ami-0851b028d263ced22"
-            },
-            "ap-southeast-1": {
-                "HVM64": "ami-01b05e38c6388f84f"
+                "HVM64": "ami-09ec94af8dd83c537"
             },
             "us-west-2": {
-                "HVM64": "ami-00a5f7f2848b21194"
+                "HVM64": "ami-00f25d8bf4aaa4613"
             },
             "ap-northeast-1": {
-                "HVM64": "ami-0b7ea934fc0a83064"
+                "HVM64": "ami-094e94d549d64a3ce"
             },
             "ap-southeast-2": {
-                "HVM64": "ami-029bca18bc8f272cd"
+                "HVM64": "ami-0a980e6dca63b0eb6"
             },
             "ap-south-1": {
-                "HVM64": "ami-08509cefe5c6372a8"
+                "HVM64": "ami-043bb481ef1af8740"
             },
             "eu-central-1": {
-                "HVM64": "ami-0a4498f9a72cf2537"
+                 "HVM64": "ami-040a3dda8188b4d9e"
             },
             "us-east-2": {
-                "HVM64": "ami-07c2582e55a222dd3"
+                "HVM64": "ami-03194de4065cca447"
             },
             "ap-northeast-2": {
-                "HVM64": "ami-0c9c34c5ac1adc829"
+                "HVM64": "ami-07cdd92177acffcee"
             },
             "eu-west-3": {
-                "HVM64": "ami-0a97f4194a0515b21"
+                "HVM64": "ami-02859c7a250c53024"
             }
         }
     },
@@ -349,7 +313,7 @@
             "Properties" : {
                 "AutoAcceptSharedAttachments" : "disable",
                 "DefaultRouteTableAssociation" : "enable",
-                "DefaultRouteTablePropagation" : "enable",
+                "DefaultRouteTablePropagation" : "disable",
                 "VpnEcmpSupport" : "enable",
                 "DnsSupport" : "enable",
                 "AmazonSideAsn" : "64512",
@@ -374,6 +338,55 @@
                 ]
             }
         },
+        "InstanceRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "ec2.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Description": "Role for Fabric Connector enablement",
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "ConnectorPolicy",
+						"PolicyDocument": {
+							"Version": "2012-10-17",
+							"Statement": [
+                                {
+                                   "Effect": "Allow",
+                                    "Action": "ec2:Describe*",
+                                    "Resource": "*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+		"InstanceProfile": {
+			"Type": "AWS::IAM::InstanceProfile",
+			"Properties": {
+				"Path": "/",
+				"Roles": [
+					{
+						"Ref": "InstanceRole"
+					}
+				]
+			}
+		},
         "FortiGateSecurityGroup" : {
             "Type" : "AWS::EC2::SecurityGroup",
             "Properties" : {
@@ -633,6 +646,9 @@
                 },
                 "KeyName": { "Ref": "KeyName" },
                 "InstanceType": { "Ref": "FortigateInstanceType" },
+				"IamInstanceProfile": {
+					"Ref": "InstanceProfile"
+				},
                 "ImageId": {
                     "Fn::FindInMap": [
                         "FortigateAWSRegionArch2AMI",
@@ -662,26 +678,7 @@
                                 "set name \"awsconnector\"",
                                 "set status enable",
                                 "set type aws",
-                                {
-                                    "Fn::Sub": [
-                                        "set access-key ${AwsAccessKey}",
-                                        {
-                                            "AwsAccessKey": {
-                                                "Ref": "AwsAccessKey"
-                                            }
-                                        }
-                                    ]
-                                },
-                                {
-                                    "Fn::Sub": [
-                                        "set secret-key ${AwsSecretKey}",
-                                        {
-                                            "AwsSecretKey": {
-                                                "Ref": "AwsSecretKey"
-                                            }
-                                        }
-                                    ]
-                                },
+                                "set use-metadata-iam enable",
                                 {
                                     "Fn::Sub": [
                                         "set region ${AwsRegion}",
