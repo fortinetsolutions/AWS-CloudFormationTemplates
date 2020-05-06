@@ -1,0 +1,46 @@
+checklist of required inputs
+
+github repo: https://github.com/40netse/terraform_lambda_python_autoscale.git
+github username:
+github password:
+
+AWS aws_access_key_id
+AWS aws_secret_access_key
+AWS default region
+
+Deployment Information:
+    deployment region:
+    deployment customer prefix:
+    deployment environment:
+    deployment s3 bucket for lambda upload:
+    deployment keypair:
+
+Launch the following EC2 instance with Public IP: Ubuntu Server 18.04 LTS (HVM),
+                                                  SSD Volume Type - ami-0a313d6098716f372 (64-bit x86) /
+                                                  ami-01ac7d9c1179d7b74 (64-bit Arm)
+ssh -i <keypair> ubuntu@<public ip>
+
+git clone <repo>
+    github user
+    github password
+
+cd terraform_lambda_python_autoscale              (comment: you can type "cd terr<tab>")
+
+./new_environment.sh
+    aws configure inputs:
+        AWS aws_access_key_id
+        AWS aws_secret_access_key
+        AWS region
+        default output (text, json, etc)
+
+    deployment configure inputs
+        deployment region          (region you would like to deploy the asg vpc into)
+        deployment s3 bucket       (name of an S3 bucket that does not exist that will be used to upload lambda code)
+        deployment keypair         (region specific keypair to be used for Fortigate and endpoint EC2 deployments)
+        deployment customer prefix (customer prefix to be used in naming all the resources e.g. asg-concur)
+        deployment environment     (customer environment for deployment. Also used in the name of resources.
+                                        (e.g. prod/test/stage))
+after completion:
+
+source venv/bin/activate
+./build_deployment.sh

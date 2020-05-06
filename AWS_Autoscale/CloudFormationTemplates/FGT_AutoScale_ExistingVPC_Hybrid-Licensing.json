@@ -426,13 +426,13 @@
 				"Protocol": "https",
 				"DeliveryPolicy": {
 					"healthyRetryPolicy": {
-						"numRetries": 14,
-						"minDelayTarget": 50,
+						"numRetries": 50,
+						"minDelayTarget": 20,
 						"maxDelayTarget": 50,
-						"numMinDelayRetries": 6,
-						"numMaxDelayRetries": 6,
-						"numNoDelayRetries": 0,
-						"backoffFunction": "linear"
+						"numMinDelayRetries": 12,
+						"numMaxDelayRetries": 14,
+						"numNoDelayRetries": 2,
+						"backoffFunction": "exponential"
 					}
 				}
 			}
@@ -469,13 +469,13 @@
 				"Protocol": "https",
 				"DeliveryPolicy": {
 					"healthyRetryPolicy": {
-						"numRetries": 14,
-						"minDelayTarget": 40,
-						"maxDelayTarget": 40,
-						"numMinDelayRetries": 6,
-						"numMaxDelayRetries": 6,
-						"numNoDelayRetries": 0,
-						"backoffFunction": "linear"
+						"numRetries": 50,
+						"minDelayTarget": 20,
+						"maxDelayTarget": 50,
+						"numMinDelayRetries": 12,
+						"numMaxDelayRetries": 14,
+						"numNoDelayRetries": 2,
+						"backoffFunction": "exponential"
 					}
 				}
 			}
@@ -1002,7 +1002,7 @@
 						]
 					]
 				},
-				"HealthCheckGracePeriod" : 300,
+				"HealthCheckGracePeriod" : 800,
 				"DesiredCapacity": {
 					"Ref": "ASGBYOLMinSize"
 				},
@@ -1317,7 +1317,7 @@
 						]
 					]
 				},
-				"HealthCheckGracePeriod" : 300,
+				"HealthCheckGracePeriod" : 800,
 				"DesiredCapacity": "0",
 				"NotificationConfigurations": [
 					{
