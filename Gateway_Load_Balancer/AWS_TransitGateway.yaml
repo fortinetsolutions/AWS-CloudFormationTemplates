@@ -1,0 +1,139 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  This template creates a TransitGateway.
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Transit Gateway Configuration
+        Parameters:
+          - VpcId
+          - TgwSubnets
+      - Label:
+          default: Transit Gateway Configuration
+        Parameters:
+          - TgwDescription
+          - AmazonSideAsn
+          - AutoAcceptSharedAttachments
+          - DefaultRouteTableAssociation
+          - DefaultRouteTablePropagation
+          - DnsSupport
+          - MulticastSupport
+          - VpnEcmpSupport
+    ParameterLabels:
+      VpcId:
+        default: Transit Gateway Attachment VPC
+      TgwSubnets:
+        default: The IDs of one or more subnets for the TGW Attachment to connect to
+      TgwDescription:
+        default: Transit Gateway Description
+      AmazonSideAsn:
+        default: A private Autonomous System Number (ASN) for the Amazon side of a BGP session
+      AutoAcceptSharedAttachments:
+        default: Enable or disable automatic acceptance of attachment requests
+      DefaultRouteTableAssociation:
+        default: Enable or disable automatic association with the default association route table
+      DefaultRouteTablePropagation:
+        default: Enable or disable automatic propagation of routes to the default propagation route table
+      DnsSupport:
+        default: Enable or disable DNS support
+      MulticastSupport:
+        default: Indicates whether multicast is enabled on the transit gateway
+      VpnEcmpSupport:
+        default: Enable or disable Equal Cost Multipath Protocol support
+Parameters:
+  VpcId:
+    Description: Transit Gateway Attachment VPC
+    Type: String
+  TgwSubnets:
+    Description: >-
+      List of subnets to associate with your TGW.
+      (e.g., ['subnet-123a351e', subnet-456a351e])
+    Type: CommaDelimitedList
+    ConstraintDescription: Must be a valid list of subnet ids
+  TgwDescription:
+    Description: >-
+      Transit Gateway name. This name must be unique with your AWS account and can have a maximum of 32 alphanumeric
+      characters and hyphens. A name cannot begin or end with a hyphen.
+    Type: String
+    Default: tgw1
+    ConstraintDescription: Must be a valid Transit Gateway Name
+  AmazonSideAsn:
+    Type: Number
+    Default: 64512
+  AutoAcceptSharedAttachments:
+    Type: String
+    Default: disable
+  DefaultRouteTableAssociation:
+    Type: String
+    Default: enable
+  DefaultRouteTablePropagation:
+    Type: String
+    Default: enable
+  DnsSupport:
+    Type: String
+    Default: enable
+  MulticastSupport:
+    Type: String
+    Default: disable
+  VpnEcmpSupport:
+    Type: String
+    Default: enable
+Resources:
+  TransitGateway:
+    Type: AWS::EC2::TransitGateway
+    Properties:
+      Description: !Ref TgwDescription
+      AmazonSideAsn: !Ref AmazonSideAsn
+      AutoAcceptSharedAttachments: !Ref AutoAcceptSharedAttachments
+      DefaultRouteTableAssociation: !Ref DefaultRouteTableAssociation
+      DefaultRouteTablePropagation: !Ref DefaultRouteTablePropagation
+      DnsSupport: !Ref DnsSupport
+      MulticastSupport: !Ref MulticastSupport
+      VpnEcmpSupport: !Ref VpnEcmpSupport
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+  TransitGatewayAtt:
+    Type: AWS::EC2::TransitGatewayAttachment
+    DependsOn: TransitGateway
+    Properties:
+      VpcId: !Ref VpcId
+      SubnetIds: !Ref TgwSubnets
+      TransitGatewayId: !Ref TransitGateway
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - SecurityVpcTransitGateWayAttachment
+  TransitGatewaySecurityRouteTable:
+    Type: AWS::EC2::TransitGatewayRouteTable
+    Properties:
+      TransitGatewayId: !Ref TransitGateway
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - TransitGatewaySecurityRouteTable
+  TransitGatewaySecurityAssociation:
+    Type: AWS::EC2::TransitGatewayRouteTableAssociation
+    Properties:
+      TransitGatewayAttachmentId: !Ref TransitGatewayAtt
+      TransitGatewayRouteTableId: !Ref TransitGatewaySecurityRouteTable
+Outputs:
+  TransitGatewayId:
+    Description: TransitGatewayID
+    Value: !Ref TransitGateway
+  TransitGatewaySecurityRouteTableId:
+    Description: TransitGatewayRouteTable ID
+    Value: !Ref TransitGatewaySecurityRouteTable
+  TransitGatewaySecurityAttachmentId:
+    Description: TransitGateway Security Attachment ID
+    Value: !Ref TransitGatewayAtt

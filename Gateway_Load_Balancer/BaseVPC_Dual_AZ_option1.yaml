@@ -1,0 +1,382 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "(v1.1) AWS CFT to deploy a VPC with 4 subnets (Public, Private, HAsync,
+  and HAmgmt) accross 2x Availability Zones."
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: VPC Configuration
+        Parameters:
+          - VPCCIDR
+          - AZForSubnet1
+          - AZForSubnet2
+          - PublicSubnet1
+          - PrivateSubnet1
+          - HASyncSubnet1
+          - HAMgmtSubnet1
+          - PublicSubnet2
+          - PrivateSubnet2
+          - HASyncSubnet2
+          - HAMgmtSubnet2
+Parameters:
+  VPCCIDR:
+    Type: String
+    Description: Provide a network CIDR for the VPC
+  AZForSubnet1:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: Select an Availability Zone for the first set of subnets
+  AZForSubnet2:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: Select an Availability Zone for the second set of subnets
+  PublicSubnet1:
+    Type: String
+    Description: Provide a network CIDR for PublicSubnet1
+  PrivateSubnet1:
+    Type: String
+    Description: Provide a network CIDR for PrivateSubnet1
+  HASyncSubnet1:
+    Type: String
+    Description: Provide a network CIDR for HASyncSubnet1
+  HAMgmtSubnet1:
+    Type: String
+    Description: Provide a network CIDR for HAMgmtSubnet1
+  PublicSubnet2:
+    Type: String
+    Description: Provide a network CIDR for PublicSubnet2
+  PrivateSubnet2:
+    Type: String
+    Description: Provide a network CIDR for PrivateSubnet2
+  HASyncSubnet2:
+    Type: String
+    Description: Provide a network CIDR for HASyncSubnet2
+  HAMgmtSubnet2:
+    Type: String
+    Description: Provide a network CIDR for HAMgmtSubnet2
+Conditions: { }
+Resources:
+  VPCID:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock:
+        Ref: VPCCIDR
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - VPC
+  PublicSub1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: PublicSubnet1
+      AvailabilityZone:
+        Ref: AZForSubnet1
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - PublicSubnet1
+  PrivateSub1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: PrivateSubnet1
+      AvailabilityZone:
+        Ref: AZForSubnet1
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - PrivateSubnet1
+  HASyncSub1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: HASyncSubnet1
+      AvailabilityZone:
+        Ref: AZForSubnet1
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - HASyncSubnet1
+  HAMgmtSub1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: HAMgmtSubnet1
+      AvailabilityZone:
+        Ref: AZForSubnet1
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - HAMgmtSubnet1
+  PublicSub2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: PublicSubnet2
+      AvailabilityZone:
+        Ref: AZForSubnet2
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - PublicSubnet2
+  PrivateSub2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: PrivateSubnet2
+      AvailabilityZone:
+        Ref: AZForSubnet2
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - PrivateSubnet2
+  HASyncSub2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: HASyncSubnet2
+      AvailabilityZone:
+        Ref: AZForSubnet2
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - HASyncSubnet2
+  HAMgmtSub2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: HAMgmtSubnet2
+      AvailabilityZone:
+        Ref: AZForSubnet2
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - HAMgmtSubnet2
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - IGW
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: VPCID
+      InternetGatewayId:
+        Ref: InternetGateway
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - PublicRouteTable
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+            - "-"
+            - - Ref: AWS::StackName
+              - Private1RouteTable
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+            - "-"
+            - - Ref: AWS::StackName
+              - Private2RouteTable
+  SubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSub1
+      RouteTableId:
+        Ref: PublicRouteTable
+  SubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSub2
+      RouteTableId:
+        Ref: PublicRouteTable
+  SubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: HAMgmtSub1
+      RouteTableId:
+        Ref: PublicRouteTable
+  SubnetRouteTableAssociation4:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: HAMgmtSub2
+      RouteTableId:
+        Ref: PublicRouteTable
+  SubnetRouteTableAssociation5:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivateSub1
+      RouteTableId:
+        Ref: PrivateRouteTable1
+  SubnetRouteTableAssociation6:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivateSub2
+      RouteTableId:
+        Ref: PrivateRouteTable2
+  Route1:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+  Route2:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+  Route3:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+Outputs:
+    VPCID:
+      Value:
+        Ref: VPCID
+      Description: VPC ID
+    VPCCIDR:
+      Value:
+        Ref: VPCCIDR
+      Description: CIDR for VPC
+    AZ1:
+      Value:
+        Ref: AZForSubnet1
+      Description: Availability Zone 1
+    AZ2:
+      Value:
+        Ref: AZForSubnet2
+      Description: Availability Zone 2
+    Public1ID:
+      Value:
+        Ref: PublicSub1
+      Description: Subnet ID of Public Subnet 1
+    Private1ID:
+      Value:
+        Ref: PrivateSub1
+      Description: Subnet ID of Private Subnet 1
+    HASync1ID:
+      Value:
+        Ref: HASyncSub1
+      Description: Subnet ID of Sync Subnet 1
+    HAMgmt1ID:
+      Value:
+        Ref: HAMgmtSub1
+      Description: Subnet ID of Management Subnet 1
+    Public2ID:
+      Value:
+        Ref: PublicSub2
+      Description: Subnet ID of Public Subnet 2
+    Private2ID:
+      Value:
+        Ref: PrivateSub2
+      Description: Subnet ID of Private Subnet 2
+    HASync2ID:
+      Value:
+        Ref: HASyncSub2
+      Description: Subnet ID of Sync Subnet 2
+    HAMgmt2ID:
+      Value:
+        Ref: HAMgmtSub2
+      Description: Subnet ID of Management Subnet 2
+    PublicRouteTableID:
+      Value:
+        Ref: PublicRouteTable
+      Description: Route Table ID of Public Route Table
+    PrivateRouteTable1ID:
+      Value:
+        Ref: PrivateRouteTable1
+      Description: Route Table ID of Private Route Table 1
+    PrivateRouteTable2ID:
+      Value:
+        Ref: PrivateRouteTable2
+      Description: Route Table ID of Private Route Table 2

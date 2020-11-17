@@ -1,0 +1,196 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "(v1.1) AWS CFT to deploy a VPC with 2 subnets (Public, Private) in the same AZ."
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: VPC Configuration
+      Parameters:
+      - VPCCIDR
+      - AZ
+      - PublicSubnet
+      - PrivateSubnet
+Parameters:
+  VPCCIDR:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: Provide a network CIDR for the VPC
+  AZ:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: Select an Availability Zone for all resources
+  PublicSubnet:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: Provide a network CIDR for PublicSubnet
+  PrivateSubnet:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: Provide a network CIDR for PrivateSubnet
+Conditions: {}
+Resources:
+  VPCID:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock:
+        Ref: VPCCIDR
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - Ref: AWS::StackName
+            - VPC
+  PublicSub:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: PublicSubnet
+      AvailabilityZone:
+        Ref: AZ
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - Ref: AWS::StackName
+            - PublicSubnet
+  PrivateSub:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: PrivateSubnet
+      AvailabilityZone:
+        Ref: AZ
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - Ref: AWS::StackName
+            - PrivateSubnet
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - Ref: AWS::StackName
+            - IGW
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: VPCID
+      InternetGatewayId:
+        Ref: InternetGateway
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - Ref: AWS::StackName
+            - PublicRouteTable
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - Ref: AWS::StackName
+            - PrivateRouteTable
+  IgwRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - IgwRouteTable
+  Route1:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+  SubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSub
+      RouteTableId:
+        Ref: PublicRouteTable
+  SubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivateSub
+      RouteTableId:
+        Ref: PrivateRouteTable
+  IgwRouteTableAssociation:
+    Type: AWS::EC2::GatewayRouteTableAssociation
+    Properties:
+      GatewayId:
+        Ref: InternetGateway
+      RouteTableId:
+        Ref: IgwRouteTable
+Outputs:
+  VPCID:
+    Value:
+      Ref: VPCID
+    Description: VPC ID
+  VPCCIDR:
+    Value:
+      Ref: VPCCIDR
+    Description: CIDR for VPC
+  AZ:
+    Value:
+      Ref: AZ
+    Description: Availability Zone
+  PublicID:
+    Value:
+      Ref: PublicSub
+    Description: Subnet ID of Public Subnet
+  PublicRouteTableID:
+    Value:
+      Ref: PublicRouteTable
+    Description: Route Table ID of Public Route Table
+  PrivateID:
+    Value:
+      Ref: PrivateSub
+    Description: Subnet ID of Private Subnet
+  PrivateRouteTableID:
+    Value:
+      Ref: PrivateRouteTable
+    Description: Route Table ID of Private Route Table
+  IgwRouteTableID:
+    Value:
+      Ref: IgwRouteTable
+    Description: Route Table ID of Igw Route Table
+  InternetGatewayID:
+    Value:
+      Ref: InternetGateway
+    Description: InternetGateway ID

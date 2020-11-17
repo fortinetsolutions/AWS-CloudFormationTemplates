@@ -1,0 +1,82 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  This template creates an Gateway LoadBalancer VPC Endpoint.
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Interface Endpoint Configuration
+        Parameters:
+          - VpcId
+          - VpceSubnetId
+          - ServiceName
+      - Label:
+          default: Route Table Parameter
+        Parameters:
+          - IgwRouteTableId
+          - PrivateRouteTableId
+          - PrivateSubnetCidr
+    ParameterLabels:
+      VpcId:
+        default: The ID of the VPC in which the appliance endpoint will be created
+      VpceSubnetId:
+        default: Subnet Id for AZ1 for Appliance VPC Endpoint
+      ServiceName:
+        default: The name of the endpoint service to create an appliance endpoint for
+Parameters:
+  VpcId:
+    Description: Select VPC Id in which appliance endpoint will be created
+    Type: AWS::EC2::VPC::Id
+    ConstraintDescription: Must be a valid VPC Id
+  VpceSubnetId:
+    Description: Select subnet id for AZ1 appliance endpoint
+    Type: AWS::EC2::Subnet::Id
+    ConstraintDescription: Must be a valid subnet id
+  ServiceName:
+    Description: >-
+      Enter the name of the service for which you want to create Appliance endpoint.
+      Example service name: com.amazonaws.vpce.us-west-2.vpce-svc-0a76331bc5d6cc4cd
+    Type: String
+    ConstraintDescription: Must be a valid service name
+  IgwRouteTableId:
+    Description: Select Route Table Id associated with IGW ingress traffic
+    Type: String
+  PrivateRouteTableId:
+    Description: Select Route Table Id associated with Private Route Table egress traffic
+    Type: String
+  PrivateSubnetCidr:
+    Description: Subnet CIDR for Private Subnet
+    Type: String
+Resources:
+  ApplianceVpcEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      ServiceName: !Ref ServiceName
+      VpcEndpointType: GatewayLoadBalancer
+      SubnetIds:
+        - !Ref VpceSubnetId
+  Route1:
+    Type: AWS::EC2::Route
+    DependsOn: ApplianceVpcEndpoint
+    Properties:
+      RouteTableId: !Ref IgwRouteTableId
+      DestinationCidrBlock: !Ref PrivateSubnetCidr
+      VpcEndpointId: !Ref ApplianceVpcEndpoint
+  Route2:
+    Type: AWS::EC2::Route
+    DependsOn: ApplianceVpcEndpoint
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableId
+      DestinationCidrBlock: "0.0.0.0/0"
+      VpcEndpointId: !Ref ApplianceVpcEndpoint
+Outputs:
+  ScApplianceVpcEndpointId:
+    Description: Appliance VPC Endpoint ID
+    Value: !Ref ApplianceVpcEndpoint
+  ScApplianceVpcEndpointRoute:
+    Description: Route pointing IGW ingress traffic to VPC Endpoint
+    Value: !Ref Route1
+  ScAppliancePrivateDefaultRoute:
+    Description: Route pointing private subnet egress traffic to VPC Endpoint
+    Value: !Ref Route2

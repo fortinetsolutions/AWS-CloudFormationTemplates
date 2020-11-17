@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "AWS CFT to Deploy gwlb"
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Appliance Gateway Configuration
+        Parameters:
+        - GwlbName
+        - GwlbSubnets
+    ParameterLabels:
+      gwlbName:
+        default: Gateway Load Balancer Name
+      gwlbSubnets:
+        default: List of Subnet Ids for Gwlb
+Parameters:
+  GwlbName:
+    Description: >-
+      Gateway Load Balancer name. This name must be unique with your AWS account and can have a maximum of 32 alphanumeric
+      characters and hyphens. A name cannot begin or end with a hyphen.
+    Type: String
+    Default: gwlb1
+    ConstraintDescription: Must be a valid gwlb Name
+  GwlbSubnets:
+    Description: >-
+      List of subnets to associate with your Gwlb.
+      (e.g., ['subnet-123a351e', subnet-456a351e])
+    Type: CommaDelimitedList
+    ConstraintDescription: Must be a valid list of subnet ids
+Resources:
+  Gwlb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Ref GwlbName
+      Type: gateway
+      Subnets: !Ref GwlbSubnets
+Outputs:
+  SpGwlbArn:
+    Description: Service Provider Gwlb ARN
+    Value: !Ref Gwlb
+
+
+

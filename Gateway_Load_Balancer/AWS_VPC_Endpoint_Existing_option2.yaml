@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  This template creates an Gateway LoadBalancer VPC Endpoint.
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Interface Endpoint Configuration
+        Parameters:
+          - VpcId
+          - VpceSubnetId
+          - TgwRouteTableId
+          - ServiceName
+      - Label:
+          default: Route Table Parameter
+        Parameters:
+          - TgwRouteTableId
+    ParameterLabels:
+      VpcId:
+        default: The ID of the VPC in which the appliance endpoint will be created
+      VpceSubnetId:
+        default: Subnet Id for AZ1 for Appliance VPC Endpoint
+      ServiceName:
+        default: The name of the endpoint service to create an appliance endpoint for
+Parameters:
+  VpcId:
+    Description: Select VPC Id in which appliance endpoint will be created
+    Type: AWS::EC2::VPC::Id
+    ConstraintDescription: Must be a valid VPC Id
+  VpceSubnetId:
+    Description: Select subnet id for AZ1 appliance endpoint
+    Type: AWS::EC2::Subnet::Id
+    ConstraintDescription: Must be a valid subnet id
+  ServiceName:
+    Description: >-
+      Enter the name of the service for which you want to create Appliance endpoint.
+      Example service name: com.amazonaws.vpce.us-west-2.vpce-svc-0a76331bc5d6cc4cd
+    Type: String
+    ConstraintDescription: Must be a valid service name
+  TgwRouteTableId:
+    Description: Select Route Table Id associated with TGW Route Table
+    Type: String
+Resources:
+  GatewayVpcEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      ServiceName: !Ref ServiceName
+      VpcEndpointType: GatewayLoadBalancer
+      SubnetIds:
+        - !Ref VpceSubnetId
+  Route1:
+    DependsOn: GatewayVpcEndpoint
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref TgwRouteTableId
+      DestinationCidrBlock: 0.0.0.0/0
+      VpcEndpointId: !Ref GatewayVpcEndpoint
+Outputs:
+  ScApplianceVpcEndpointId:
+    Description: Gateway VPC Endpoint ID
+    Value: !Ref GatewayVpcEndpoint

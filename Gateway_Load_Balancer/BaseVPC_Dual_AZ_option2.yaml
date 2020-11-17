@@ -1,0 +1,566 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "(v1.1) AWS CFT to deploy a VPC with 2 subnets (Public, Private) accross 2x Availability Zones."
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: VPC Configuration
+        Parameters:
+          - VPCCIDR
+          - AZForSubnet1
+          - AZForSubnet2
+          - PublicSubnet1
+          - PrivateSubnet1
+          - TGWSubnet1
+          - VPCeSubnet1
+          - PublicSubnet2
+          - PrivateSubnet2
+          - TGWSubnet2
+          - VPCeSubnet2
+Parameters:
+  VPCCIDR:
+    Type: String
+    Description: Provide a network CIDR for the VPC
+  AZForSubnet1:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: Select an Availability Zone for the first set of subnets
+  AZForSubnet2:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: Select an Availability Zone for the second set of subnets
+  PublicSubnet1:
+    Type: String
+    Description: Provide a network CIDR for PublicSubnet1
+  PrivateSubnet1:
+    Type: String
+    Description: Provide a network CIDR for PrivateSubnet1
+  TGWSubnet1:
+    Type: String
+    Description: Provide a network CIDR for TGWSubnet1
+  VPCeSubnet1:
+    Type: String
+    Description: Provide a network CIDR for VPCeSubnet1
+  PublicSubnet2:
+    Type: String
+    Description: Provide a network CIDR for PublicSubnet2
+  PrivateSubnet2:
+    Type: String
+    Description: Provide a network CIDR for PrivateSubnet2
+  TGWSubnet2:
+    Type: String
+    Description: Provide a network CIDR for TGWSubnet2
+  VPCeSubnet2:
+    Type: String
+    Description: Provide a network CIDR for VPCeSubnet2
+Conditions: { }
+Resources:
+  VPCID:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock:
+        Ref: VPCCIDR
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - VPC
+  PublicSub1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: PublicSubnet1
+      AvailabilityZone:
+        Ref: AZForSubnet1
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - PublicSubnet1
+  PrivateSub1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: PrivateSubnet1
+      AvailabilityZone:
+        Ref: AZForSubnet1
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - PrivateSubnet1
+  TGWSub1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: TGWSubnet1
+      AvailabilityZone:
+        Ref: AZForSubnet1
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - TGWSubnet1
+  VPCeSub1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: VPCeSubnet1
+      AvailabilityZone:
+        Ref: AZForSubnet1
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - VPCeSubnet1
+  PublicSub2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: PublicSubnet2
+      AvailabilityZone:
+        Ref: AZForSubnet2
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - PublicSubnet2
+  PrivateSub2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: PrivateSubnet2
+      AvailabilityZone:
+        Ref: AZForSubnet2
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - PrivateSubnet2
+  TGWSub2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: TGWSubnet2
+      AvailabilityZone:
+        Ref: AZForSubnet2
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - TGWSubnet2
+  VPCeSub2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCID
+      CidrBlock:
+        Ref: VPCeSubnet2
+      AvailabilityZone:
+        Ref: AZForSubnet2
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - VPCeSubnet2
+  NATGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+        Fn::GetAtt:
+          - NatGatewayEIP1
+          - AllocationId
+      SubnetId:
+        Ref: PublicSub1
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - NATGateway1
+  NatGatewayEIP1:
+    DependsOn: AttachGateway
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - NATGateway1-EIP
+  NATGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+        Fn::GetAtt:
+          - NatGatewayEIP2
+          - AllocationId
+      SubnetId:
+        Ref: PublicSub2
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - NATGateway2
+  NatGatewayEIP2:
+    DependsOn: AttachGateway
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - NATGateway2-EIP
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - IGW
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: VPCID
+      InternetGatewayId:
+        Ref: InternetGateway
+  Public1RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - Public1RouteTable
+  Public2RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - Public2RouteTable
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+            - "-"
+            - - Ref: AWS::StackName
+              - Private1RouteTable
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+            - "-"
+            - - Ref: AWS::StackName
+              - Private2RouteTable
+  TGWRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - TGW1RouteTable
+  TGWRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - TGW2RouteTable
+  VPCeRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - VPCe1RouteTable
+  VPCeRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCID
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - VPCe2RouteTable
+  SubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSub1
+      RouteTableId:
+        Ref: Public1RouteTable
+  SubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSub2
+      RouteTableId:
+        Ref: Public2RouteTable
+  SubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivateSub1
+      RouteTableId:
+        Ref: PrivateRouteTable1
+  SubnetRouteTableAssociation4:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivateSub2
+      RouteTableId:
+        Ref: PrivateRouteTable2
+  SubnetRouteTableAssociation5:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: TGWSub1
+      RouteTableId:
+        Ref: TGWRouteTable1
+  SubnetRouteTableAssociation6:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: TGWSub2
+      RouteTableId:
+        Ref: TGWRouteTable2
+  SubnetRouteTableAssociation7:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: VPCeSub1
+      RouteTableId:
+        Ref: VPCeRouteTable1
+  SubnetRouteTableAssociation8:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: VPCeSub2
+      RouteTableId:
+        Ref: VPCeRouteTable2
+  Route1:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: Public1RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+  Route2:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: Public2RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+  Route3:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+  Route4:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+  Route5:
+    Type: AWS::EC2::Route
+    DependsOn: NATGateway1
+    Properties:
+      RouteTableId:
+        Ref: VPCeRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: NATGateway1
+  Route6:
+    Type: AWS::EC2::Route
+    DependsOn: NATGateway2
+    Properties:
+      RouteTableId:
+        Ref: VPCeRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: NATGateway2
+Outputs:
+    VPCID:
+      Value:
+        Ref: VPCID
+      Description: VPC ID
+    VPCCIDR:
+      Value:
+        Ref: VPCCIDR
+      Description: CIDR for VPC
+    AZ1:
+      Value:
+        Ref: AZForSubnet1
+      Description: Availability Zone 1
+    AZ2:
+      Value:
+        Ref: AZForSubnet2
+      Description: Availability Zone 2
+    Public1ID:
+      Value:
+        Ref: PublicSub1
+      Description: Subnet ID of Public Subnet 1
+    Private1ID:
+      Value:
+        Ref: PrivateSub1
+      Description: Subnet ID of Private Subnet 1
+    TGW1ID:
+      Value:
+        Ref: TGWSub1
+      Description: Subnet ID of TGW Subnet 1
+    VPCe1ID:
+      Value:
+        Ref: VPCeSub1
+      Description: Subnet ID of VPCe Subnet 1
+    NatGateway1ID:
+      Value:
+        Ref: NATGateway1
+      Description: NAT Gateway ID 1
+    Public2ID:
+      Value:
+        Ref: PublicSub2
+      Description: Subnet ID of Public Subnet 2
+    Private2ID:
+      Value:
+        Ref: PrivateSub2
+      Description: Subnet ID of Private Subnet 2
+    TGW2ID:
+      Value:
+        Ref: TGWSub2
+      Description: Subnet ID of TGW Subnet 1
+    VPCe2ID:
+      Value:
+        Ref: VPCeSub1
+      Description: Subnet ID of VPCe Subnet 2
+    NatGateway2ID:
+      Value:
+        Ref: NATGateway2
+      Description: NAT Gateway ID 2
+    Public1RouteTableID:
+      Value:
+        Ref: Public1RouteTable
+      Description: Route Table ID of Public Route Table in AZ 1
+    Public2RouteTableID:
+      Value:
+        Ref: Public2RouteTable
+      Description: Route Table ID of Public Route Table in AZ 2
+    PrivateRouteTable1ID:
+      Value:
+        Ref: PrivateRouteTable1
+      Description: Route Table ID of Private Route Table 1
+    PrivateRouteTable2ID:
+      Value:
+        Ref: PrivateRouteTable2
+      Description: Route Table ID of Private Route Table 2
+    TGWRouteTable1ID:
+      Value:
+        Ref: TGWRouteTable1
+      Description: Route Table ID of TGW Route Table 1
+    TGWRouteTable2ID:
+      Value:
+        Ref: TGWRouteTable2
+      Description: Route Table ID of TGW Route Table 2
+    VPCeRouteTable1ID:
+      Value:
+        Ref: VPCeRouteTable1
+      Description: Route Table ID of VPCe Route Table 1
+    VPCeRouteTable2ID:
+      Value:
+        Ref: VPCeRouteTable2
+      Description: Route Table ID of VPCe Route Table 2

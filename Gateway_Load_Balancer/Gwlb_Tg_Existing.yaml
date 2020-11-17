@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "AWS CFT to Deploy GWLB Target Group"
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+            default: Target Group Configuration
+        Parameters:
+          - GwlbArn
+          - TargetGroupName
+          - TargetGroupPort
+          - HealthPort
+          - HealthProtocol
+          - VpcId
+          - Appliance1IP
+          - Appliance2IP
+    ParameterLabels:
+      GwlbArn:
+        default: Gwlb Arn
+      TargetGroupName:
+        default: Target Group Name
+      TargetGroupPort:
+        default: Target Group Port
+      HealthPort:
+        default: Health Check Port
+      HealthProtocol:
+        default: Health Check Protocol
+      VpcId:
+        default: VPC Id for target group
+      Appliance1IP:
+        default: Appliance 1 IP
+      Appliance2IP:
+        default: Appliance 2 IP
+Parameters:
+  GwlbArn:
+    Description: Gateway Load Balancer Arn
+    Type: String
+    ConstraintDescription: Mast be a valid Gateway Load Balancer Arn
+  TargetGroupName:
+    Description: Target Group Name
+    Type: String
+    Default: tg1
+    ConstraintDescription: Must be a valid target goup name
+  TargetGroupPort:
+    Description: Target Group Port
+    Type: String
+    Default: '80'
+    ConstraintDescription: Must be a valid target goup port
+  HealthProtocol:
+    Description: >-
+      The protocol the appliance gateway uses when performing health checks on targets. For Application Load Balancers,
+      the default is HTTP.
+    Type: String
+    AllowedValues: [ 'TCP', 'HTTP', 'HTTPS' ]
+    ConstraintDescription: Must be a valid health check protocol
+  HealthPort:
+    Description: >-
+      The protocol the load balancer uses when performing health checks on targets. The default is traffic-port,
+      which is the port on which each target receives traffic from the load balancer.
+    Type: String
+    Default: '80'
+    ConstraintDescription: Must be a valid health check port
+  VpcId:
+    Description: VPC Id to associate with the target group. (e.g. vpc-a123baa3)
+    Type: AWS::EC2::VPC::Id
+    ConstraintDescription: Must be a valid VPC Id
+  Appliance1IP:
+    Description: Appliance1 IP address to register with target group.
+    Type: String
+  Appliance2IP:
+    Description: Appliance2 IP address to register with target group.
+    Type: String
+Resources:
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Ref TargetGroupName
+      Port: !Ref TargetGroupPort
+      Protocol: 'GENEVE'
+      HealthCheckPort: !Ref HealthPort
+      HealthCheckProtocol: !Ref HealthProtocol
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: 20
+      VpcId: !Ref VpcId
+      TargetType: ip
+      Targets:
+        - Id: !Ref Appliance1IP
+        - Id: !Ref Appliance2IP
+      Tags:
+        - Key: Name
+          Value: !Join
+            - ""
+            - - !Ref AWS::StackName
+              - "-tg1"
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn: !Ref TargetGroup
+      LoadBalancerArn: !Ref GwlbArn
+
+Outputs:
+  SpTgArn:
+    Description: Service Provider Target Group ARN
+    Value: !Ref TargetGroup
+
+
