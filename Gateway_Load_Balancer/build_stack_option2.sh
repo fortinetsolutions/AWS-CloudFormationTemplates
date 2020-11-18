@@ -191,7 +191,7 @@ echo "VPCe Route Table 2 ID = $VPCeRouteTable2ID"
 echo "NAT Gateway 2 ID = $NatGateway2ID"
 echo
 
-nat_info_line=$(aws ec2 describe-network-interfaces --filter "Name=subnet-id,Values=$Public1_SUBNET" --output text \
+nat_info_line=$(aws ec2 describe-network-interfaces --region "$region" --filter "Name=subnet-id,Values=$Public1_SUBNET" --output text \
     --query 'NetworkInterfaces[?contains(Description, `Interface for NAT Gateway`) == `true`].[PrivateIpAddress,NetworkInterfaceId,Description]')
 nat_ip_address1=`echo $nat_info_line | cut -d ' ' -f1`
 if [[ $nat_ip_address1 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
@@ -201,7 +201,7 @@ else
     echo "NAT Gateway does not have a valid IP address: $nat_ip_address1"
     exit
 fi
-nat_info_line=$(aws ec2 describe-network-interfaces --filter "Name=subnet-id,Values=$Public2_SUBNET" --output text \
+nat_info_line=$(aws ec2 describe-network-interfaces --region "$region" --filter "Name=subnet-id,Values=$Public2_SUBNET" --output text \
     --query 'NetworkInterfaces[?contains(Description, `Interface for NAT Gateway`) == `true`].[PrivateIpAddress,NetworkInterfaceId,Description]')
 nat_ip_address2=`echo $nat_info_line | cut -d ' ' -f1`
 if [[ $nat_ip_address2 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
@@ -345,7 +345,7 @@ echo
 echo "Gateway Load Balancer ARN = $GWLB_ARN"
 echo
 
-lb_info_line=$(aws ec2 describe-network-interfaces --filter "Name=subnet-id,Values=$Private1_SUBNET" --output text \
+lb_info_line=$(aws ec2 describe-network-interfaces --region "$region" --filter "Name=subnet-id,Values=$Private1_SUBNET" --output text \
     --query 'NetworkInterfaces[?contains(Description, `-gateway-lb`) == `true`].[PrivateIpAddress,NetworkInterfaceId,Description]')
 lb_ip_address1=`echo $lb_info_line | cut -d ' ' -f1`
 if [[ $lb_ip_address1 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
@@ -356,7 +356,7 @@ else
     exit
 fi
 
-lb_info_line=$(aws ec2 describe-network-interfaces --filter "Name=subnet-id,Values=$Private2_SUBNET" --output text \
+lb_info_line=$(aws ec2 describe-network-interfaces --region "$region" --filter "Name=subnet-id,Values=$Private2_SUBNET" --output text \
     --query 'NetworkInterfaces[?contains(Description, `-gateway-lb`) == `true`].[PrivateIpAddress,NetworkInterfaceId,Description]')
 lb_ip_address2=`echo $lb_info_line | cut -d ' ' -f1`
 if [[ $lb_ip_address2 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
@@ -550,9 +550,9 @@ echo
 #
 echo
 echo "Changing Default Route (0.0.0.0/0) of Private Route Table 1 $PrivateRouteTable1ID to use ENI of Fortigate 1 ($Fortigate1PrivateENI)"
-aws ec2 replace-route --route-table-id "$PrivateRouteTable1ID" --destination-cidr-block 0.0.0.0/0 --network-interface-id "$Fortigate1PrivateENI"
+aws ec2 replace-route --region "$region" --route-table-id "$PrivateRouteTable1ID" --destination-cidr-block 0.0.0.0/0 --network-interface-id "$Fortigate1PrivateENI"
 echo "Changing Default Route (0.0.0.0/0) of Private Route Table 2 $PrivateRouteTable2ID to use ENI of Fortigate 2 ($Fortigate2PrivateENI)"
-aws ec2 replace-route --route-table-id "$PrivateRouteTable2ID" --destination-cidr-block 0.0.0.0/0 --network-interface-id "$Fortigate2PrivateENI"
+aws ec2 replace-route --region "$region" --route-table-id "$PrivateRouteTable2ID" --destination-cidr-block 0.0.0.0/0 --network-interface-id "$Fortigate2PrivateENI"
 echo
 
 #

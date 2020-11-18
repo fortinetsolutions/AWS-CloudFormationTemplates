@@ -617,7 +617,7 @@ Resources:
             - "    logger.info('<-- event received: {}'.format(json.dumps(event)))"
             - "    try:"
             - "        resp = client.describe_images("
-            - "            Filters=[{'Name': 'name', 'Values': [event['ResourceProperties']['LicenseType']]}],"
+            - "            Filters=[{'Name': 'description', 'Values': [event['ResourceProperties']['LicenseType']]}],"
             - "            Owners=['679593333241', '464423754048', '211372476111']"
             - "        )"
             - "    except Exception as error:"
@@ -631,7 +631,7 @@ Resources:
             - "        for entry in resp['Images']:"
             - "            key = entry['CreationDate']"
             - "            ami_dict[key] = entry['ImageId']"
-            - "        ami_list = sorted(ami_dict, reverse = True)"
+            - "        ami_list = sorted(ami_dict, reverse = True)"e
             - "        logger.info('--> found latest AMI: {}, {}'.format(ami_dict[ami_list[0]], ami_list[0]))"
             - "        responseData = {'ami': ami_dict[ami_list[0]]}"
             - "        cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)"
@@ -660,7 +660,7 @@ Resources:
         Fn::If:
         - LicenseTypeBYOL
         - FortiGate-VM64-AWS *(6.4.*)*
-        - FortiGate-VM64-AWSONDEMAND *(6.4.*)*AGWTEST4*
+        - FortiGate-VM64-AWSONDEMAND *(6.4.3)*GWLB1*
   InitFunction:
     Type: AWS::Lambda::Function
     DependsOn: LambdaRole
