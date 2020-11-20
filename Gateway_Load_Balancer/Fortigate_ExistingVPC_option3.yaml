@@ -37,6 +37,7 @@ Metadata:
       - Private2SubnetRouterIP
       - LoadBalancerIP1
       - LoadBalancerIP2
+      - LinuxInstanceIP
     - Label:
         default: Interface IP Configuration for FortiGate 1
       Parameters:
@@ -91,6 +92,9 @@ Parameters:
   LoadBalancerIP2:
     Type: String
     Description: Provide the IP address of the AGW Load Balancer in AZ2
+  LinuxInstanceIP:
+    Type: String
+    Description: Provide the IP address of the Linux Instance in Customer A VPC
   Public2SubnetRouterIP:
     Type: String
     Default: 10.0.10.1
@@ -631,7 +635,7 @@ Resources:
             - "        for entry in resp['Images']:"
             - "            key = entry['CreationDate']"
             - "            ami_dict[key] = entry['ImageId']"
-            - "        ami_list = sorted(ami_dict, reverse = True)"e
+            - "        ami_list = sorted(ami_dict, reverse = True)"
             - "        logger.info('--> found latest AMI: {}, {}'.format(ami_dict[ami_list[0]], ami_list[0]))"
             - "        responseData = {'ami': ami_dict[ami_list[0]]}"
             - "        cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)"
@@ -733,6 +737,26 @@ Resources:
             - set gateway {PrivateSubnetRouterIP}
             - next
             - end
+            - config router policy
+            - edit 1
+            - set src "0.0.0.0/0.0.0.0"
+            - set dst "{LinuxInstanceIP}/255.255.255.255"
+            - set protocol 6
+            - set start-port 22
+            - set end-port 22
+            - set gateway {PrivateSubnetRouterIP}
+            - set output-device "port2"
+            - next
+            - end
+            - config firewall vip
+            - edit "vip-to-linux-ssh"
+            - set mappedip {LinuxInstanceIP}
+            - set extintf port1
+            - set portforward enable
+            - set extport 2222
+            - set mappedport 22
+            - next
+            - end
             - config firewall policy
             - edit 1
             - set name outbound-all
@@ -768,6 +792,18 @@ Resources:
             - set schedule always
             - set service ALL
             - set logtraffic all
+            - next
+            - edit 4
+            - set name vip-to-linux
+            - set srcintf port1
+            - set dstintf port2
+            - set srcaddr all
+            - set dstaddr vip-to-linux-ssh
+            - set action accept
+            - set schedule always
+            - set service ALL
+            - set logtraffic all
+            - set nat enable
             - next
             - end\
             - "'''"
@@ -842,6 +878,9 @@ Resources:
           - "'LoadBalancerIP':'"
           - Ref: LoadBalancerIP1
           - "',"
+          - "'LinuxInstanceIP':'"
+          - Ref: LinuxInstanceIP
+          - "',"
           - "'PublicSubnetRouterIP':'"
           - Ref: Public1SubnetRouterIP
           - "',"
@@ -871,6 +910,9 @@ Resources:
           - "',"
           - "'LoadBalancerIP':'"
           - Ref: LoadBalancerIP2
+          - "',"
+          - "'LinuxInstanceIP':'"
+          - Ref: LinuxInstanceIP
           - "',"
           - "'PublicSubnetRouterIP':'"
           - Ref: Public2SubnetRouterIP

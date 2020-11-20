@@ -1,0 +1,223 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation Template to Add Linux Web Server Instances to an Existing VPC
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Linux Instance Configuration
+      Parameters:
+      - VPCID
+      - CustomerSubnet
+      - IpAddress
+      - KeyPair
+      - CIDRForInstanceAccess
+      - InstanceType
+    - Label:
+        default: ELB Configuration
+      Parameters:
+      - HealthCheckPort
+    ParameterLabels:
+      VPCID:
+        default: Please enter the VPC specific details here
+Parameters:
+  VPCID:
+    Type: AWS::EC2::VPC::Id
+    Description: Enter the VPC that you want to use
+  CustomerSubnet:
+    Type: AWS::EC2::Subnet::Id
+    Description: Enter the value of the Customer subnet
+  CIDRForInstanceAccess:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: Enter the CIDR from which instance needs to be accessed
+  IpAddress:
+    Type: String
+    Description: PrivateIpAddress of the Instance
+  InstanceType:
+    Type: String
+    Default: c4.large
+    AllowedValues:
+    - m3.medium
+    - m3.large
+    - m3.xlarge
+    - m3.2xlarge
+    - c4.large
+    - c4.xlarge
+    - c4.2xlarge
+    - c3.large
+    - c3.xlarge
+    - c3.2xlarge
+    - t2.micro
+    Description: Enter the instance type and size that you want for the Linux Instances
+  KeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Enter the keypair that you want to associate with the launch of the
+      Instances
+  HealthCheckPort:
+    Type: Number
+    Default: '22'
+    Description: Enter the Health Check port used port for the Web ELB
+Mappings:
+    RegionMap:
+      ap-northeast-1:
+          ubuntuami: ami-adceb9cb
+      ap-northeast-2:
+          ubuntuami: ami-35a3015b
+      ap-south-1:
+          ubuntuami: ami-88d98ae7
+      ap-southeast-1:
+          ubuntuami: ami-a55c1dd9
+      ap-southeast-2:
+          ubuntuami: ami-e1c43f83
+      ca-central-1:
+          ubuntuami: ami-c7a622a3
+      eu-central-1:
+          ubuntuami: ami-714f2b1e
+      eu-west-1:
+          ubuntuami: ami-c1167eb8
+      eu-west-2:
+          ubuntuami: ami-e0bc5987
+      eu-west-3:
+          ubuntuami: ami-6bad1b16
+      sa-east-1:
+          ubuntuami: ami-9a2d63f6
+      us-east-1:
+          ubuntuami: ami-0b383171
+      us-east-2:
+          ubuntuami: ami-4f80b52a
+      us-west-1:
+          ubuntuami: ami-9cb2bdfc
+      us-west-2:
+          ubuntuami: ami-c62eaabe
+Conditions: {}
+Resources:
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+  InstancePolicies:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: root
+      PolicyDocument:
+        Statement:
+        - Effect: Allow
+          Action:
+          - cloudwatch:*
+          Resource:
+          - "*"
+        - Effect: Allow
+          Action:
+          - ec2:*
+          - s3:*
+          Resource:
+          - "*"
+      Roles:
+      - Ref: InstanceRole
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+      - Ref: InstanceRole
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Ref: VPCID
+      GroupDescription: Allow SSH and Web
+      SecurityGroupIngress:
+        IpProtocol: "-1"
+        FromPort: '0'
+        ToPort: '65535'
+        CidrIp:
+          Ref: CIDRForInstanceAccess
+  WebLinuxInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', ubuntuami]
+      UserData:
+        Fn::Base64: |
+           #!/bin/bash
+           apt-get update -y
+           apt-get install -y apache2
+           apt install -y awscli
+           cd /home/ubuntu
+           aws s3 cp s3://fortigym/test.html .
+           aws s3 cp s3://fortigym/44KB.txt .
+           aws s3 cp s3://fortigym/64KB.txt .
+           aws s3 cp s3://fortigym/128KB.txt .
+           varNAME=WebLinux1-Instance
+           varIID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
+           varIP=`curl -s http://169.254.169.254/latest/meta-data/local-ipv4`
+           varAZ=`curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
+           sed -i 's@--NAME--@'"$varNAME"'@' /home/ubuntu/test.html
+           sed -i 's@--IID--@'"$varIID"'@' /home/ubuntu/test.html
+           sed -i 's@--IP--@'"$varIP"'@' /home/ubuntu/test.html
+           sed -i 's@--AZ--@'"$varAZ"'@' /home/ubuntu/test.html
+           mkdir /var/www/html/pathA
+           cp /home/ubuntu/test.html /var/www/html/pathA/test.html
+           cp /home/ubuntu/44KB.txt /var/www/html/pathA/44KB.txt
+           cp /home/ubuntu/64KB.txt /var/www/html/pathA/64KB.txt
+           cp /home/ubuntu/128KB.txt /var/www/html/pathA/128KB.txt		   
+           varMOTD='PathA Test Page'
+           sed -i 's@--MOTD--@'"$varMOTD"'@' /var/www/html/pathA/test.html
+           mkdir /var/www/html/pathB
+           cp /home/ubuntu/44KB.txt /var/www/html/pathB/44KB.txt
+           cp /home/ubuntu/64KB.txt /var/www/html/pathB/64KB.txt
+           cp /home/ubuntu/128KB.txt /var/www/html/pathB/128KB.txt
+           cp /home/ubuntu/test.html /var/www/html/pathB/test.html
+           varMOTD='PathB Test Page'
+           sed -i 's@--MOTD--@'"$varMOTD"'@' /var/www/html/pathB/test.html
+           mkdir /var/www/html/pathC
+           cp /home/ubuntu/44KB.txt /var/www/html/pathC/44KB.txt
+           cp /home/ubuntu/64KB.txt /var/www/html/pathC/64KB.txt
+           cp /home/ubuntu/128KB.txt /var/www/html/pathC/128KB.txt
+           cp /home/ubuntu/test.html /var/www/html/pathC/test.html
+           varMOTD='PathC Test Page'
+           sed -i 's@--MOTD--@'"$varMOTD"'@' /var/www/html/pathC/test.html
+           a2enmod ssl
+           service apache2 restart
+           a2ensite default-ssl.conf
+           service apache2 reload
+      InstanceType:
+        Ref: InstanceType
+      KeyName:
+        Ref: KeyPair
+      IamInstanceProfile:
+        Ref: InstanceProfile
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: 'false'
+        DeviceIndex: '0'
+        PrivateIpAddress:
+          Ref: IpAddress
+        GroupSet:
+        - Ref: SecurityGroup
+        SubnetId:
+          Ref: CustomerSubnet
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-WebLinux1-EC2-Private"
+Outputs:
+  WebLinuxInstancePrivateIP:
+    Value: !GetAtt WebLinuxInstance.PrivateIp
+    Description: Connect to Linux instance using ssh to this IP
+  WebLinuxInstanceID:
+    Value:
+      Ref: WebLinuxInstance
+    Description: Instance ID of WebLinux Instance
+

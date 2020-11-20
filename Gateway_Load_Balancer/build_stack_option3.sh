@@ -424,6 +424,7 @@ then
                         ParameterKey=Private2SubnetRouterIP,ParameterValue="$private2_subnet_router" \
                         ParameterKey=LoadBalancerIP1,ParameterValue="$lb_ip_address1" \
                         ParameterKey=LoadBalancerIP2,ParameterValue="$lb_ip_address2" \
+                        ParameterKey=LinuxInstanceIP,ParameterValue="$customer_a_private_ip" \
                         ParameterKey=FortiGate1PublicIP,ParameterValue="$fortigate1_public_ip" \
                         ParameterKey=FortiGate1PrivateIP,ParameterValue="$fortigate1_private_ip" \
                         ParameterKey=FortiGate2PublicIP,ParameterValue="$fortigate2_public_ip" \
@@ -805,6 +806,8 @@ then
          ParameterKey=Public2RouteTableId,ParameterValue="$Public2RouteTableID" \
          ParameterKey=TGW1RouteTableId,ParameterValue="$TGWRouteTable1ID" \
          ParameterKey=TGW2RouteTableId,ParameterValue="$TGWRouteTable2ID" \
+         ParameterKey=Private1RouteTableId,ParameterValue="$PrivateRouteTable1ID" \
+         ParameterKey=Private2RouteTableId,ParameterValue="$PrivateRouteTable2ID" \
          ParameterKey=VPCe1Id,ParameterValue="$Vpce_Endpoint1_Id" \
          ParameterKey=VPCe2Id,ParameterValue="$Vpce_Endpoint2_Id" \
          ParameterKey=TgwSecurityRouteTableId,ParameterValue="$TransitGatewaySecurityRouteTableId" \
@@ -836,8 +839,6 @@ CA_VPCCIDR=`cat $tfile|grep ^VPCCIDR|cut -f2 -d$'\t'`
 CA_AZ=`cat $tfile|grep ^AZ|cut -f2 -d$'\t'`
 CA_Public_SUBNET=`cat $tfile|grep ^PublicID|cut -f2 -d$'\t'`
 CA_PublicRouteTableID=`cat $tfile|grep ^PublicRouteTableID|cut -f2 -d$'\t'`
-CA_Extra_SUBNET=`cat $tfile|grep ^ExtraID|cut -f2 -d$'\t'`
-CA_ExtraRouteTableID=`cat $tfile|grep ^ExtraRouteTableID|cut -f2 -d$'\t'`
 if [ -f $tfile ]
 then
     rm -f $tfile
@@ -849,8 +850,6 @@ echo "VPC Cidr Block = $CA_VPCCIDR"
 echo "Availability Zone = $CA_AZ"
 echo "Public Subnet = $CA_Public_SUBNET"
 echo "Public Route Table ID = $CA_PublicRouteTableID"
-echo "Extra Subnet = $CA_Extra_SUBNET"
-echo "Extra Route Table ID = $CA_ExtraRouteTableID"
 echo
 
 #
@@ -865,7 +864,7 @@ fi
 while [ $keypress_loop == true ]
 do
     read -t 1 -n 10000 discard
-    read -n1 -r -p "Press enter to deploy Customer A Linux Endpoints and Extra Endpoints ..." keypress
+    read -n1 -r -p "Press enter to deploy Customer A Linux Endpoints ..." keypress
     if [[ "$keypress" == "" ]]
     then
         keypress_loop=false
@@ -876,10 +875,8 @@ done
 if [ "${KI_SPECIFIED}" == true ]
 then
     echo "Deploying "$stack3a" Template and the script will pause when the create-stack is complete"
-    echo "Deploying "$stack3e" Template and the script will pause when the create-stack is complete"
 else
     echo "Deploying "$stack3a" Template"
-    echo "Deploying "$stack3e" Template"
 fi
 
 #
@@ -889,29 +886,13 @@ count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --ou
 if [ "${count}" -eq "0" ]
 then
     aws cloudformation create-stack --stack-name "$stack3a" --output text --region "$region" --capabilities CAPABILITY_IAM \
-        --template-body file://ExistingVPC_WebLinuxInstances.yaml \
+        --template-body file://ExistingVPC_WebLinuxInstances_option3.yaml \
         --parameters    ParameterKey=VPCID,ParameterValue="$CA_VPC" \
                         ParameterKey=KeyPair,ParameterValue="$key" \
                         ParameterKey=InstanceType,ParameterValue="$linux_instance_type" \
                         ParameterKey=HealthCheckPort,ParameterValue="$linux_health_check_port" \
                         ParameterKey=CustomerSubnet,ParameterValue="$CA_Public_SUBNET" \
-                        ParameterKey=CIDRForInstanceAccess,ParameterValue="$access_private" > /dev/null
-fi
-
-
-#
-# Now deploy Linux Instance in Customer VPC A
-#
-count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --output text --region "$region" |grep "$stack3e" |wc -l`
-if [ "${count}" -eq "0" ]
-then
-    aws cloudformation create-stack --stack-name "$stack3e" --output text --region "$region" --capabilities CAPABILITY_IAM \
-        --template-body file://ExistingVPC_WebLinuxInstances.yaml \
-        --parameters    ParameterKey=VPCID,ParameterValue="$CA_VPC" \
-                        ParameterKey=KeyPair,ParameterValue="$key" \
-                        ParameterKey=InstanceType,ParameterValue="$linux_instance_type" \
-                        ParameterKey=HealthCheckPort,ParameterValue="$linux_health_check_port" \
-                        ParameterKey=CustomerSubnet,ParameterValue="$CA_Extra_SUBNET" \
+                        ParameterKey=IpAddress,ParameterValue="$customer_a_private_ip" \
                         ParameterKey=CIDRForInstanceAccess,ParameterValue="$access_private" > /dev/null
 fi
 
@@ -928,26 +909,12 @@ do
     sleep $pause
 done
 
-
-#
-# Wait for template above to CREATE_COMPLETE
-#
-for (( c=1; c<=50; c++ ))
-do
-    count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --output text --region "$region" |grep "$stack3e" |wc -l`
-    if [ ${count} -eq 1 ]
-    then
-        break
-    fi
-    sleep $pause
-done
 #
 # Pull the outputs from the first template as environment variables that are used in the second and third templates
 #
 tfile=$(mktemp /tmp/foostack2.XXXXXXXXX)
 aws cloudformation describe-stacks --output text --region "$region" --stack-name "$stack3a" --query 'Stacks[*].Outputs[*].{KEY:OutputKey,Value:OutputValue}' > $tfile
 CA_Linux_ID=`cat $tfile|grep ^WebLinuxInstanceID|cut -f2 -d$'\t'`
-CA_Linux_IP=`cat $tfile|grep ^WebLinuxInstanceIP|cut -f2 -d$'\t'`
 CA_Linux_Private_IP=`cat $tfile|grep ^WebLinuxInstancePrivateIP|cut -f2 -d$'\t'`
 if [ -f $tfile ]
 then
@@ -956,28 +923,7 @@ fi
 
 echo
 echo "Customer A Linux Instance ID = $CA_Linux_ID"
-echo "Customer A Linux IP = $CA_Linux_IP"
 echo "Customer A Linux Private IP = $CA_Linux_Private_IP"
-echo
-
-
-#
-# Pull the outputs from the first template as environment variables that are used in the second and third templates
-#
-tfile=$(mktemp /tmp/foostack2.XXXXXXXXX)
-aws cloudformation describe-stacks --output text --region "$region" --stack-name "$stack3e" --query 'Stacks[*].Outputs[*].{KEY:OutputKey,Value:OutputValue}' > $tfile
-CA_Linux_Extra_ID=`cat $tfile|grep ^WebLinuxInstanceID|cut -f2 -d$'\t'`
-CA_Linux_Extra_IP=`cat $tfile|grep ^WebLinuxInstanceIP|cut -f2 -d$'\t'`
-CA_Linux_Extra_Private_IP=`cat $tfile|grep ^WebLinuxInstancePrivateIP|cut -f2 -d$'\t'`
-if [ -f $tfile ]
-then
-    rm -f $tfile
-fi
-
-echo
-echo "Customer A Extra Linux Instance ID = $CA_Linux_Extra_ID"
-echo "Customer A Extra Linux IP = $CA_Linux_Extra_IP"
-echo "Customer A Linux Extra Private IP = $CA_Linux_Extra_Private_IP"
 echo
 
 exit

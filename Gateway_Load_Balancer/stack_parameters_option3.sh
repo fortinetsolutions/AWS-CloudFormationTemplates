@@ -32,24 +32,28 @@ stack2d=$project_name-deploy-security-instance
 stack2e=$project_name-vpce-az1
 stack2f=$project_name-vpce-az2
 stack3a=$project_name-li-ca
-stack3e=$project_name-li-extra
 
 #
 # Security VPC Firewall Set variables
 #
-config_bucket=$stack_prefix-ha-$region
+# This value needs to be changed. Account Specific
+#
 key=mdw-key-oregon
+license_bucket=mdw-license-bucket-us-west-2
+access_public="24.242.248.10/32"
+#
+# Values that might work across accounts
+#
+config_bucket=$stack_prefix-ha-$region
 admin_password="Texas4me!"
 linux_instance_type=t2.micro
 linux_health_check_port="22"
 fgt_instance_type=c5n.xlarge
 s3_endpoint_condition=UseExisting
 license_type=PAYG
-license_bucket=mdw-license-bucket-us-west-2
 fortigate1_license_file=fgt1-license.lic
 fortigate2_license_file=fgt2-license.lic
 access_private="0.0.0.0/0"
-access_public="24.242.248.10/32"
 privateaccess="10.0.0.0/16"
 
 #
@@ -110,3 +114,4 @@ private2_subnet_router="10.0.0.81"
 customer_a_cidr="192.168.0.0/25"
 customer_a_public_subnet="192.168.0.0/28"
 customer_a_az="$region"a
+customer_a_private_ip="192.168.0.13"
