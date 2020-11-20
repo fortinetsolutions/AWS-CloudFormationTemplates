@@ -37,19 +37,25 @@ stack3e=$project_name-li-extra
 #
 # Security VPC Firewall Set variables
 #
+# This value needs to be changed. Account Specific
+#
+key=<key pair in your region>
+license_bucket=<s3 bucket in your region>
+access_public="0.0.0.0/0" <replace with personal Public IP for security or allows all access>
+
+#
+# These should work across accounts
+#
 config_bucket=$stack_prefix-ha-$region
-key=mdw-key-oregon
 admin_password="Texas4me!"
 linux_instance_type=t2.micro
 linux_health_check_port="22"
 fgt_instance_type=c5n.xlarge
 s3_endpoint_condition=UseExisting
 license_type=PAYG
-license_bucket=mdw-license-bucket-us-west-2
 fortigate1_license_file=fgt1-license.lic
 fortigate2_license_file=fgt2-license.lic
 access_private="0.0.0.0/0"
-access_public="24.242.248.10/32"
 privateaccess="10.0.0.0/16"
 
 #
