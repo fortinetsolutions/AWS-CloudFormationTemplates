@@ -814,8 +814,8 @@ Resources:
       LicenseType:
         Fn::If:
         - LicenseTypeBYOL
-        - FortiGate-VM64-AWS *(6.4.*)*
-        - FortiGate-VM64-AWSONDEMAND *(6.4.3)*GWLB1*
+        - FortiGate-VM64-AWS * (6.4.4) GA*
+        - FortiGate-VM64-AWSONDEMAND * (6.4.4) GA*
   InitFunction:
     Type: AWS::Lambda::Function
     DependsOn: LambdaRole

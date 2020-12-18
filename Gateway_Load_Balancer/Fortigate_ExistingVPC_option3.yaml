@@ -621,7 +621,7 @@ Resources:
             - "    logger.info('<-- event received: {}'.format(json.dumps(event)))"
             - "    try:"
             - "        resp = client.describe_images("
-            - "            Filters=[{'Name': 'description', 'Values': [event['ResourceProperties']['LicenseType']]}],"
+            - "            Filters=[{'Name': 'name', 'Values': [event['ResourceProperties']['LicenseType']]}],"
             - "            Owners=['679593333241', '464423754048', '211372476111']"
             - "        )"
             - "    except Exception as error:"
@@ -663,8 +663,8 @@ Resources:
       LicenseType:
         Fn::If:
         - LicenseTypeBYOL
-        - FortiGate-VM64-AWS *(6.4.*)*
-        - FortiGate-VM64-AWSONDEMAND *(6.4.3)*GWLB1*
+        - FortiGate-VM64-AWS * (6.4.4) GA*
+        - FortiGate-VM64-AWSONDEMAND * (6.4.4) GA*
   InitFunction:
     Type: AWS::Lambda::Function
     DependsOn: LambdaRole
