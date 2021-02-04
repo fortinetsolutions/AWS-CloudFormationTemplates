@@ -124,7 +124,7 @@ fi
 # Stack group 1
 #
 gfile=$(mktemp /tmp/groupstack.XXXXXXXXX)
-stack_group_1="$stack3e $stack3a $stack2btg"
+stack_group_1="$stack3e $stack3a $stack3b $stack2btg"
 echo $stack_group_1 > $gfile
 tfile=$(mktemp /tmp/foostack.XXXXXXXXX)
 aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --region "$region" \
@@ -144,7 +144,7 @@ fi
 # Stack group 2
 #
 gfile=$(mktemp /tmp/groupstack.XXXXXXXXX)
-stack_group_1="$stack2d $stack1a"
+stack_group_1="$stack2d $stack1a $stack1b"
 echo $stack_group_1 > $gfile
 tfile=$(mktemp /tmp/foostack.XXXXXXXXX)
 aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --region "$region" \

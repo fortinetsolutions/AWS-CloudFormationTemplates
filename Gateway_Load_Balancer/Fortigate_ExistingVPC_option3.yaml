@@ -37,7 +37,8 @@ Metadata:
       - Private2SubnetRouterIP
       - LoadBalancerIP1
       - LoadBalancerIP2
-      - LinuxInstanceIP
+      - LinuxInstanceIP1
+      - LinuxInstanceIP2
     - Label:
         default: Interface IP Configuration for FortiGate 1
       Parameters:
@@ -92,9 +93,12 @@ Parameters:
   LoadBalancerIP2:
     Type: String
     Description: Provide the IP address of the AGW Load Balancer in AZ2
-  LinuxInstanceIP:
+  LinuxInstanceIP1:
     Type: String
     Description: Provide the IP address of the Linux Instance in Customer A VPC
+  LinuxInstanceIP2:
+    Type: String
+    Description: Provide the IP address of the Linux Instance in Customer B VPC
   Public2SubnetRouterIP:
     Type: String
     Default: 10.0.10.1
@@ -732,6 +736,11 @@ Resources:
             - set gateway {LoadBalancerIP}
             - next
             - edit 3
+            - set device gen
+            - set dst 192.168.1.0/25
+            - set gateway {LoadBalancerIP}
+            - next
+            - edit 4
             - set dst {PrivateSubnetCIDR}
             - set device port2
             - set gateway {PrivateSubnetRouterIP}
@@ -749,7 +758,7 @@ Resources:
             - next
             - end
             - config firewall vip
-            - edit "vip-to-linux-ssh"
+            - edit "vip-to-linuxa-ssh"
             - set mappedip {LinuxInstanceIP}
             - set extintf port1
             - set portforward enable
@@ -794,11 +803,11 @@ Resources:
             - set logtraffic all
             - next
             - edit 4
-            - set name vip-to-linux
+            - set name vip-to-linuxa
             - set srcintf port1
             - set dstintf port2
             - set srcaddr all
-            - set dstaddr vip-to-linux-ssh
+            - set dstaddr vip-to-linuxa-ssh
             - set action accept
             - set schedule always
             - set service ALL
@@ -879,7 +888,7 @@ Resources:
           - Ref: LoadBalancerIP1
           - "',"
           - "'LinuxInstanceIP':'"
-          - Ref: LinuxInstanceIP
+          - Ref: LinuxInstanceIP1
           - "',"
           - "'PublicSubnetRouterIP':'"
           - Ref: Public1SubnetRouterIP
@@ -912,7 +921,7 @@ Resources:
           - Ref: LoadBalancerIP2
           - "',"
           - "'LinuxInstanceIP':'"
-          - Ref: LinuxInstanceIP
+          - Ref: LinuxInstanceIP2
           - "',"
           - "'PublicSubnetRouterIP':'"
           - Ref: Public2SubnetRouterIP

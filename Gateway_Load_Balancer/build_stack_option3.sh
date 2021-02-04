@@ -424,7 +424,8 @@ then
                         ParameterKey=Private2SubnetRouterIP,ParameterValue="$private2_subnet_router" \
                         ParameterKey=LoadBalancerIP1,ParameterValue="$lb_ip_address1" \
                         ParameterKey=LoadBalancerIP2,ParameterValue="$lb_ip_address2" \
-                        ParameterKey=LinuxInstanceIP,ParameterValue="$customer_a_private_ip" \
+                        ParameterKey=LinuxInstanceIP1,ParameterValue="$customer_a_private_ip" \
+                        ParameterKey=LinuxInstanceIP2,ParameterValue="$customer_b_private_ip" \
                         ParameterKey=FortiGate1PublicIP,ParameterValue="$fortigate1_public_ip" \
                         ParameterKey=FortiGate1PrivateIP,ParameterValue="$fortigate1_private_ip" \
                         ParameterKey=FortiGate2PublicIP,ParameterValue="$fortigate2_public_ip" \
@@ -484,10 +485,10 @@ echo
 # Fix the private route table and point default route to the ENI of Fortigate 1
 #
 echo
-echo "Changing Default Route (0.0.0.0/0) of Private Route Table 1 $PrivateRouteTable1ID to use ENI of Fortigate 1 ($Fortigate1PrivateENI)"
-aws ec2 replace-route --region "$region" --route-table-id "$PrivateRouteTable1ID" --destination-cidr-block 0.0.0.0/0 --network-interface-id "$Fortigate1PrivateENI"
-echo "Changing Default Route (0.0.0.0/0) of Private Route Table 2 $PrivateRouteTable2ID to use ENI of Fortigate 2 ($Fortigate2PrivateENI)"
-aws ec2 replace-route --region "$region" --route-table-id "$PrivateRouteTable2ID" --destination-cidr-block 0.0.0.0/0 --network-interface-id "$Fortigate2PrivateENI"
+echo "Changing Default Route (0.0.0.0/0) of Private Route Table 1 $PrivateRouteTable1ID to use Transit Gateway ID ($TGW_ID)"
+aws ec2 replace-route --region "$region" --route-table-id "$PrivateRouteTable1ID" --destination-cidr-block 0.0.0.0/0 --transit-gateway-id "$TGW_ID"
+echo "Changing Default Route (0.0.0.0/0) of Private Route Table 2 $PrivateRouteTable2ID to use Transit Gateway ID ($TGW_ID)"
+aws ec2 replace-route --region "$region" --route-table-id "$PrivateRouteTable2ID" --destination-cidr-block 0.0.0.0/0 --transit-gateway-id "$TGW_ID"
 echo
 
 #
@@ -681,7 +682,7 @@ then
     aws cloudformation create-stack --stack-name "$stack2e" --output text --region "$region" \
         --template-body file://AWS_VPC_Endpoint_Existing_option2.yaml \
         --parameters ParameterKey=VpcId,ParameterValue="$VPC" \
-         ParameterKey=VpceSubnetId,ParameterValue="$TGW1_SUBNET" \
+         ParameterKey=VpceSubnetId,ParameterValue="$Private1_SUBNET" \
          ParameterKey=TgwRouteTableId,ParameterValue="$TGWRouteTable1ID" \
          ParameterKey=ServiceName,ParameterValue="$Vpce_Service_Name" > /dev/null
 fi
@@ -696,7 +697,7 @@ then
     aws cloudformation create-stack --stack-name "$stack2f" --output text --region "$region" \
         --template-body file://AWS_VPC_Endpoint_Existing_option2.yaml \
         --parameters ParameterKey=VpcId,ParameterValue="$VPC" \
-         ParameterKey=VpceSubnetId,ParameterValue="$TGW2_SUBNET" \
+         ParameterKey=VpceSubnetId,ParameterValue="$Private2_SUBNET" \
          ParameterKey=TgwRouteTableId,ParameterValue="$TGWRouteTable2ID" \
          ParameterKey=ServiceName,ParameterValue="$Vpce_Service_Name" > /dev/null
 fi
@@ -802,14 +803,6 @@ then
         --template-body file://BaseVPC_Customer_option3.yaml \
         --parameters ParameterKey=VPCCIDR,ParameterValue="$customer_a_cidr" \
          ParameterKey=PublicSubnet,ParameterValue="$customer_a_public_subnet" \
-         ParameterKey=Public1RouteTableId,ParameterValue="$Public1RouteTableID" \
-         ParameterKey=Public2RouteTableId,ParameterValue="$Public2RouteTableID" \
-         ParameterKey=TGW1RouteTableId,ParameterValue="$TGWRouteTable1ID" \
-         ParameterKey=TGW2RouteTableId,ParameterValue="$TGWRouteTable2ID" \
-         ParameterKey=Private1RouteTableId,ParameterValue="$PrivateRouteTable1ID" \
-         ParameterKey=Private2RouteTableId,ParameterValue="$PrivateRouteTable2ID" \
-         ParameterKey=VPCe1Id,ParameterValue="$Vpce_Endpoint1_Id" \
-         ParameterKey=VPCe2Id,ParameterValue="$Vpce_Endpoint2_Id" \
          ParameterKey=TgwSecurityRouteTableId,ParameterValue="$TransitGatewaySecurityRouteTableId" \
          ParameterKey=TgwId,ParameterValue="$TGW_ID" \
          ParameterKey=TgwSecurityAttachmentId,ParameterValue="$TransitGatewaySecurityAttachmentId" \
@@ -926,6 +919,171 @@ echo "Customer A Linux Instance ID = $CA_Linux_ID"
 echo "Customer A Linux Private IP = $CA_Linux_Private_IP"
 echo
 
+
+#
+# Deploy Customer B VPC
+#
+if [ "$PAUSE_SPECIFIED" == true ]
+then
+    pause=$PAUSE_VALUE
+fi
+
+if [ "$KI_SPECIFIED" == true ]
+then
+    keypress_loop=true
+else
+    keypress_loop=false
+fi
+while [ $keypress_loop == true ]
+do
+    echo
+    read -t 1 -n 10000 discard
+    read -n1 -r -p "Press enter to deploy customer B vpc..." keypress
+    if [[ "$keypress" == "" ]]
+    then
+        keypress_loop=false
+    fi
+done
+
+if [ "${KI_SPECIFIED}" == true ]
+then
+    echo "Deploying "$stack1b" Template and the script will pause when the create-stack is complete"
+else
+    echo "Deploying "$stack1b" Template"
+fi
+
+
+#
+# deploy the stack if it doesn't already exist
+#
+count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --output text --region "$region" |grep "$stack1b" |wc -l`
+if [ "${count}" -eq "0" ]
+then
+    aws cloudformation create-stack --stack-name "$stack1b" --output text --region "$region" \
+        --template-body file://BaseVPC_Customer_option3.yaml \
+        --parameters ParameterKey=VPCCIDR,ParameterValue="$customer_b_cidr" \
+         ParameterKey=PublicSubnet,ParameterValue="$customer_b_public_subnet" \
+         ParameterKey=TgwSecurityRouteTableId,ParameterValue="$TransitGatewaySecurityRouteTableId" \
+         ParameterKey=TgwId,ParameterValue="$TGW_ID" \
+         ParameterKey=TgwSecurityAttachmentId,ParameterValue="$TransitGatewaySecurityAttachmentId" \
+         ParameterKey=AZ,ParameterValue="$customer_b_az" > /dev/null
+fi
+
+#
+# Wait for template above to CREATE_COMPLETE
+#
+for (( c=1; c<=50; c++ ))
+do
+    count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --output text --region "$region" |grep "$stack1b" |wc -l`
+    if [ "${count}" -ne "0" ]
+    then
+        break
+    fi
+    sleep $pause
+done
+
+#
+# Pull the outputs from the first template as environment variables that are used in the second and third templates
+#
+tfile=$(mktemp /tmp/foostack1.XXXXXXXXX)
+aws cloudformation describe-stacks --output text --region "$region" --stack-name "$stack1b" --query 'Stacks[*].Outputs[*].{KEY:OutputKey,Value:OutputValue}' > $tfile
+CB_VPC=`cat $tfile|grep ^VPCID|cut -f2 -d$'\t'`
+CB_VPCCIDR=`cat $tfile|grep ^VPCCIDR|cut -f2 -d$'\t'`
+CB_AZ=`cat $tfile|grep ^AZ|cut -f2 -d$'\t'`
+CB_Public_SUBNET=`cat $tfile|grep ^PublicID|cut -f2 -d$'\t'`
+CB_PublicRouteTableID=`cat $tfile|grep ^PublicRouteTableID|cut -f2 -d$'\t'`
+if [ -f $tfile ]
+then
+    rm -f $tfile
+fi
+
+echo
+echo "Created VPC = $CB_VPC"
+echo "VPC Cidr Block = $CB_VPCCIDR"
+echo "Availability Zone = $CB_AZ"
+echo "Public Subnet = $CB_Public_SUBNET"
+echo "Public Route Table ID = $CB_PublicRouteTableID"
+echo
+
+
+#
+#Deploy Customer B VPC Linux Endpoint
+#
+if [ "$KI_SPECIFIED" == true ]
+then
+    keypress_loop=true
+else
+    keypress_loop=false
+fi
+while [ $keypress_loop == true ]
+do
+    read -t 1 -n 10000 discard
+    read -n1 -r -p "Press enter to deploy Customer B Linux Endpoints ..." keypress
+    if [[ "$keypress" == "" ]]
+    then
+        keypress_loop=false
+    fi
+done
+
+
+if [ "${KI_SPECIFIED}" == true ]
+then
+    echo "Deploying "$stack3b" Template and the script will pause when the create-stack is complete"
+else
+    echo "Deploying "$stack3b" Template"
+fi
+
+#
+# Now deploy Linux Instance in Customer VPC B
+#
+count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --output text --region "$region" |grep "$stack3b" |wc -l`
+if [ "${count}" -eq "0" ]
+then
+    aws cloudformation create-stack --stack-name "$stack3b" --output text --region "$region" --capabilities CAPABILITY_IAM \
+        --template-body file://ExistingVPC_WebLinuxInstances_option3.yaml \
+        --parameters    ParameterKey=VPCID,ParameterValue="$CB_VPC" \
+                        ParameterKey=KeyPair,ParameterValue="$key" \
+                        ParameterKey=InstanceType,ParameterValue="$linux_instance_type" \
+                        ParameterKey=HealthCheckPort,ParameterValue="$linux_health_check_port" \
+                        ParameterKey=CustomerSubnet,ParameterValue="$CB_Public_SUBNET" \
+                        ParameterKey=IpAddress,ParameterValue="$customer_b_private_ip" \
+                        ParameterKey=CIDRForInstanceAccess,ParameterValue="$access_private" > /dev/null
+fi
+
+#
+# Wait for template above to CREATE_COMPLETE
+#
+for (( c=1; c<=50; c++ ))
+do
+    count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --output text --region "$region" |grep "$stack3b" |wc -l`
+    if [ ${count} -eq 1 ]
+    then
+        break
+    fi
+    sleep $pause
+done
+
+#
+# Pull the outputs from the first template as environment variables that are used in the second and third templates
+#
+tfile=$(mktemp /tmp/foostack2.XXXXXXXXX)
+aws cloudformation describe-stacks --output text --region "$region" --stack-name "$stack3b" --query 'Stacks[*].Outputs[*].{KEY:OutputKey,Value:OutputValue}' > $tfile
+CB_Linux_ID=`cat $tfile|grep ^WebLinuxInstanceID|cut -f2 -d$'\t'`
+CB_Linux_Private_IP=`cat $tfile|grep ^WebLinuxInstancePrivateIP|cut -f2 -d$'\t'`
+if [ -f $tfile ]
+then
+    rm -f $tfile
+fi
+
+echo
+echo "Customer B Linux Instance ID = $CB_Linux_ID"
+echo "Customer B Linux Private IP = $CB_Linux_Private_IP"
+echo
+
+echo
+echo "Modifying the Security VPC TGW Attachment to support Appliance Mode."
+echo
+aws ec2 aws ec2 modify-transit-gateway-vpc-attachment --transit-gateway-attachment-id $TransitGatewaySecurityAttachmentId --options ApplianceModeSupport=enable
 exit
 #
 # End of the script

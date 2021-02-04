@@ -12,14 +12,6 @@ Metadata:
       - TgwId
       - TgwSecurityRouteTableId
       - TgwSecurityAttachmentId
-      - Public1RouteTableId
-      - TGW1RouteTableId
-      - Private1RouteTableId
-      - VPCe1Id
-      - Public2RouteTableId
-      - TGW2RouteTableId
-      - Private2RouteTableId
-      - VPCe2Id
 Parameters:
   VPCCIDR:
     Type: String
@@ -41,30 +33,6 @@ Parameters:
   TgwSecurityAttachmentId:
     Type: String
     Description: Provide a TransitGateway Security Attachment ID
-  Public1RouteTableId:
-    Type: String
-    Description: Provide a Public Route Table in AZ 1 for VPC CIDR Route
-  TGW1RouteTableId:
-    Type: String
-    Description: Provide a VPCe1 Route Table in AZ 1 for VPC CIDR Route
-  Private1RouteTableId:
-    Type: String
-    Description: Provide a Private Route Table in AZ 1 for VPC CIDR Route
-  VPCe1Id:
-    Type: String
-    Description: Provide a VPC Endpoint in AZ 1 for route destination
-  Public2RouteTableId:
-    Type: String
-    Description: Provide a Public Route Table in AZ 2 for VPC CIDR Route
-  TGW2RouteTableId:
-    Type: String
-    Description: Provide a VPCe2 Route Table in AZ 2 for VPC CIDR Route
-  Private2RouteTableId:
-    Type: String
-    Description: Provide a Private Route Table in AZ 2 for VPC CIDR Route
-  VPCe2Id:
-    Type: String
-    Description: Provide a VPC Endpoint in AZ 2 for route destination
 Resources:
   VPCID:
     Type: AWS::EC2::VPC
@@ -157,48 +125,11 @@ Resources:
       TransitGatewayAttachmentId: !Ref TgwSecurityAttachmentId
       TransitGatewayRouteTableId: !Ref TransitGatewayCustomerRouteTable
   Route1:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref Public1RouteTableId
-      DestinationCidrBlock: !Ref VPCCIDR
-      VpcEndpointId: !Ref VPCe1Id
-  Route2:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref Public2RouteTableId
-      DestinationCidrBlock: !Ref VPCCIDR
-      VpcEndpointId: !Ref VPCe2Id
-  Route3:
     DependsOn: TransitGatewayAtt
     Type: AWS::EC2::Route
     Properties:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
-      TransitGatewayId: !Ref TgwId
-  Route4:
-    DependsOn: TransitGatewayAtt
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref TGW1RouteTableId
-      DestinationCidrBlock: !Ref VPCCIDR
-      TransitGatewayId: !Ref TgwId
-  Route5:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref TGW2RouteTableId
-      DestinationCidrBlock: !Ref VPCCIDR
-      TransitGatewayId: !Ref TgwId
-  Route6:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref Private1RouteTableId
-      DestinationCidrBlock: !Ref VPCCIDR
-      TransitGatewayId: !Ref TgwId
-  Route7:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref Private2RouteTableId
-      DestinationCidrBlock: !Ref VPCCIDR
       TransitGatewayId: !Ref TgwId
 Outputs:
   VPCID:

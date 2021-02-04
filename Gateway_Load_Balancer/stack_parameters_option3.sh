@@ -6,9 +6,9 @@
 #
 region=us-west-2
 
-stack_prefix=gwlb3
+stack_prefix=gwbl3
 environment_tag=dev
-project_name=$stack_prefix-beta
+project_name=$stack_prefix-demo
 
 #
 # Cloudinit stack names that build the AGW Stacks
@@ -20,6 +20,7 @@ project_name=$stack_prefix-beta
 stack1s=$project_name-security
 stack1t=$project_name-tgw
 stack1a=$project_name-customer-a
+stack1b=$project_name-customer-b
 
 #
 # Templates to deploy Security VPC Fortigate's and Customer Endpoints
@@ -32,15 +33,16 @@ stack2d=$project_name-deploy-security-instance
 stack2e=$project_name-vpce-az1
 stack2f=$project_name-vpce-az2
 stack3a=$project_name-li-ca
+stack3b=$project_name-li-cb
 
 #
 # Security VPC Firewall Set variables
 #
 # This value needs to be changed. Account Specific
 #
-key=<key pair in your region>
-license_bucket=<s3 bucket in your region>
-access_public="0.0.0.0/0" <replace with personal Public IP for security or allows all access>
+key=mdw-key-oregon
+license_bucket=mdw-license-bucket-us-west-2
+access_public=" 24.242.248.10/32"
 #
 # Values that might work across accounts
 #
@@ -114,4 +116,13 @@ private2_subnet_router="10.0.0.81"
 customer_a_cidr="192.168.0.0/25"
 customer_a_public_subnet="192.168.0.0/28"
 customer_a_az="$region"a
-customer_a_private_ip="192.168.0.13"
+customer_a_private_ip="192.168.0.14"
+
+
+#
+# Customer B VPC variables
+#
+customer_b_cidr="192.168.1.0/25"
+customer_b_public_subnet="192.168.1.0/28"
+customer_b_az="$region"c
+customer_b_private_ip="192.168.1.14"

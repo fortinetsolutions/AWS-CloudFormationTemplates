@@ -42,9 +42,9 @@ stack3c1=$project_name-cc-vpce
 #
 # This value needs to be changed. Account Specific
 #
-key=<key pair in your region>
-license_bucket=<s3 bucket in your region>
-access_public="0.0.0.0/0" <replace with personal Public IP for security or allows all access>
+key=mdw-key-oregon
+license_bucket=mdw-license-bucket-us-west-2
+access_public="0.0.0.0/0"
 
 #
 # These should work across accounts
