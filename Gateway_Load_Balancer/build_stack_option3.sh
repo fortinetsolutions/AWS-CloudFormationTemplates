@@ -1083,7 +1083,7 @@ echo
 echo
 echo "Modifying the Security VPC TGW Attachment to support Appliance Mode."
 echo
-aws ec2 aws ec2 modify-transit-gateway-vpc-attachment --transit-gateway-attachment-id $TransitGatewaySecurityAttachmentId --options ApplianceModeSupport=enable
+aws ec2 modify-transit-gateway-vpc-attachment --transit-gateway-attachment-id $TransitGatewaySecurityAttachmentId --options ApplianceModeSupport=enable
 exit
 #
 # End of the script
