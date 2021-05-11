@@ -202,6 +202,11 @@
 			"Default": "2",
 			"Description": "Maximum number of FortiGate instances in the BYOL Auto-Scaling Group."
 		},
+		"ASGPAYGMinSize": {
+			"Type": "Number",
+			"Default": "0",
+			"Description": "Minimum number of FortiGate instances in the PAYG Auto-Scaling Group."
+		},
 		"ASGPAYGMaxSize": {
 			"Type": "Number",
 			"Default": "5",
@@ -1336,10 +1341,12 @@
 				"LaunchConfigurationName": {
 					"Ref": "LaunchConfigPAYG"
 				},
+				"MinSize": {
+					"Ref": "ASGPAYGMinSize"
+				},
 				"MaxSize": {
 					"Ref": "ASGPAYGMaxSize"
 				},
-				"MinSize": "0",
 				"TerminationPolicies": [
 					"NewestInstance"
 				],

@@ -8,7 +8,7 @@ source $(dirname $0)/stack_parameters.sh
 
 linux_instance_type=c4.large
 fgt_instance_type=c5.large
-key=kp-poc-common
+key=mdw-key-oregon
 clear_text_password=
 password_secret=Fortigate/Admin/Password
 health_check_port=22
@@ -346,7 +346,7 @@ count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --ou
 if [ "${count}" -eq "0" ]
 then
     aws cloudformation create-stack --stack-name "$stack5" --output text --region "$region" --capabilities CAPABILITY_IAM \
-        --template-body file://AutoScale_Automation-Framework.template.json   >/dev/null
+        --template-body file://AutoScale_Automation-Framework.json   >/dev/null
 fi
 
 #
@@ -406,7 +406,7 @@ count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --ou
 if [ "${count}" -eq "0" ]
 then
     aws cloudformation create-stack --stack-name "$stack6" --output text --region "$region" --capabilities CAPABILITY_IAM \
-        --template-body file://FGT_AutoScale_ExistingVPC_Hybrid-Licensing.template.json \
+        --template-body file://FGT_AutoScale_ExistingVPC_Hybrid-Licensing.json \
         --parameters    ParameterKey=VPCID,ParameterValue="$VPC" \
                         ParameterKey=VPCCIDR,ParameterValue="$VPCCIDR" \
                         ParameterKey=PublicSubnet1,ParameterValue="$SUBNET1" \
@@ -416,11 +416,10 @@ then
                         ParameterKey=CIDRForInstanceAccess,ParameterValue="$access" \
                         ParameterKey=AdminHttpsPort,ParameterValue="$admin_port" \
                         ParameterKey=KeyPair,ParameterValue="$key" \
-                        ParameterKey=InitialPassword,ParameterValue="$clear_text_password" \
-                        ParameterKey=SsmSecureStringParamName,ParameterValue="$password_secret" \
+                        ParameterKey=SsmSecureStringParamName,ParameterValue="$password_parameter_name" \
                         ParameterKey=InitS3Bucket,ParameterValue="$license_bucket" \
                         ParameterKey=InternalLBDNSName,ParameterValue="$lb_dns_name" \
-                        ParameterKey=ListenerPort,ParameterValue="$listener_port" \
+                        ParameterKey=NlbListenerPort,ParameterValue="$listener_port" \
                         ParameterKey=APIGatewayURL,ParameterValue="$apiurl" \
                         ParameterKey=EnvironmentTag,ParameterValue="$environment_tag" \
                         ParameterKey=ScaleUpThreshold,ParameterValue=$scale_up_threshold \
@@ -449,14 +448,20 @@ done
 tfile=$(mktemp /tmp/foostack6.XXXXXXXXX)
 aws cloudformation describe-stacks --stack-name "$stack6" --output text --region "$region" \
     --query 'Stacks[*].Outputs[*].{KEY:OutputKey,Value:OutputValue}' > $tfile
-apiurl=`cat $tfile|grep ^AutoScaleAPIURL|cut -f2 -d$'\t'`
+username=`cat $tfile|grep ^Username|cut -f2 -d$'\t'`
+ssm_parameter_name=`cat $tfile|grep ^SsmParameterName|cut -f2 -d$'\t'`
+alb=`cat $tfile|grep ^Alb|cut -f2 -d$'\t'`
+nlb=`cat $tfile|grep ^Nlb|cut -f2 -d$'\t'`
 if [ -f $tfile ]
 then
     rm -f $tfile
 fi
 
 echo
-echo "API URL = "$apiurl""
+echo "User Name = $username"
+echo "Ssm Parameter Name = $ssm_parameter_name"
+echo "Application Load Balancer = $alb"
+echo "Network Load Balancer = $nlb"
 echo
 
 

@@ -5,12 +5,12 @@
         "log_level": "INFO",
         "manage_role": false,
         "role_name": "fortinet-autoscale-lambda-role",
-        "aws_region": "us-east-1",
+        "aws_region": "us-west-2",
         "django_settings": "autoscale.settings",
         "profile_name": "default",
         "project_name": "autoscale",
         "runtime": "python3.7",
-        "s3_bucket": "mdw-autoscale",
+        "s3_bucket": "mdw-config",
         "events": [ {
             "function": "autoscale.views.start_scheduled",
             "expression": "rate(1 minute)"

@@ -69,7 +69,7 @@ Parameters:
     Description: Enter the Health Check port used port for the Web ELB
   DomainName:
     Type: String
-    Default: fortiengineering.com
+    Default: fortimdw.com
     Description: Enter the Domain Name for Route53 DNS Record Sets
   WebDNSPrefix:
     Type: String
