@@ -154,6 +154,10 @@ stack6_name=`cat $tfile |grep "$stack6"|cut -f2 -d$'\t'`
 stack6_id=`cat $tfile |grep "$stack6"|cut -f1 -d$'\t'`
 stack5_name=`cat $tfile |grep "$stack5"|cut -f2 -d$'\t'`
 stack5_id=`cat $tfile |grep "$stack5"|cut -f1 -d$'\t'`
+stack3_name=`cat $tfile |grep "$stack3"|cut -f2 -d$'\t'`
+stack3_id=`cat $tfile |grep "$stack3"|cut -f1 -d$'\t'`
+stack2_name=`cat $tfile |grep "$stack2"|cut -f2 -d$'\t'`
+stack2_id=`cat $tfile |grep "$stack2"|cut -f1 -d$'\t'`
 stack1_name=`cat $tfile |grep "$stack1"|cut -f2 -d$'\t'`
 stack1_id=`cat $tfile |grep "$stack1"|cut -f1 -d$'\t'`
 if [ -f $tfile ]
@@ -163,6 +167,8 @@ fi
 
 echo "Stack 6 name $stack6_name id $stack6_id in region $region"
 echo "Stack 5 name $stack5_name id $stack5_id in region $region"
+echo "Stack 3 name $stack1_name id $stack3_id in region $region"
+echo "Stack 2 name $stack1_name id $stack2_id in region $region"
 echo "Stack 1 name $stack1_name id $stack1_id in region $region"
 while [ $keypress_loop == true ]
 do
@@ -200,6 +206,35 @@ aws logs describe-log-groups --query 'logGroups[*].logGroupName' --output table 
 awk '{print $2}' | grep ^/aws/lambda | while read x; do  echo "deleting $x" ; aws logs delete-log-group --log-group-name $x; done
 echo "Done"
 
+#
+# stack 3
+#
+if [ -n "$stack3_name" ]
+then
+    echo "Deleting $stack3_name id $stack3_id region $region"
+    delete_stack $stack3_id $stack3_name $region $stack3
+fi
+if [ -n "$stack3_name" ]
+then
+    echo "Waiting for $stack3 deletion"
+    wait_for_stack_deletion $stack3_id $stack3_name $region
+fi
+#
+# stack 2
+#
+if [ -n "$stack2_name" ]
+then
+    echo "Deleting $stack2_name id $stack2_id region $region"
+    delete_stack $stack2_id $stack2_name $region $stack2
+fi
+if [ -n "$stack2_name" ]
+then
+    echo "Waiting for $stack2 deletion"
+    wait_for_stack_deletion $stack2_id $stack2_name $region
+fi
+#
+# stack 1
+#
 if [ -n "$stack1_name" ]
 then
     echo "Deleting $stack1_name id $stack1_id region $region"

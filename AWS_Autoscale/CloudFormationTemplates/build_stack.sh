@@ -9,7 +9,6 @@ source $(dirname $0)/stack_parameters.sh
 linux_instance_type=c4.large
 fgt_instance_type=c5.large
 key=mdw-key-oregon
-clear_text_password=
 password_secret=Fortigate/Admin/Password
 health_check_port=22
 listener_port=80
