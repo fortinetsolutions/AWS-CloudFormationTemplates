@@ -10,7 +10,7 @@
         "profile_name": "default",
         "project_name": "autoscale",
         "runtime": "python3.7",
-        "s3_bucket": "mdw-config",
+        "s3_bucket": "mdw-fortibucket-us-west-2",
         "events": [ {
             "function": "autoscale.views.start_scheduled",
             "expression": "rate(1 minute)"

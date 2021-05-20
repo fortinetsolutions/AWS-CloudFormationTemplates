@@ -30,7 +30,7 @@
 		},
 		"BucketName": {
 			"Type": "String",
-			"Default": "fortibucket",
+			"Default": "mdw-fortibucket",
 			"Description": "S3 Bucket that holds lambda zip file"
 		}
 	},

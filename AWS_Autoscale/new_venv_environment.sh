@@ -66,10 +66,10 @@ tput clear
 sudo apt remove python python3.5 python3.6 python3.7 --yes
 sudo apt-get install python3.7 python3.7-venv python3-pip --yes
 sudo apt-get upgrade --yes
-python3.7 -m venv venv
+python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
-pip3.7 install -r requirements.txt
+pip3 install -r requirements.txt
 sudo apt install snap snapd --yes
 sudo snap install terraform
 

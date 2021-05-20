@@ -6,6 +6,7 @@ stack2=$stack_prefix-ws
 stack3=$stack_prefix-tg
 stack5=$stack_prefix-fwrk
 stack6=$stack_prefix-asg
+stack7=$stack_prefix-paygo-asg
 
 region=us-west-2
 

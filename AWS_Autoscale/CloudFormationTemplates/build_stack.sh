@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bash 
 
 source $(dirname $0)/stack_parameters.sh
 
@@ -91,7 +91,8 @@ fi
 echo "Making http server substitions in fortigate config files for http server name: $webdns"
 
 cp base_current.conf "$config_object"
-sed -i "s/{WEB_DNS_NAME}/$webdns/g" $config_object
+gsed -i "s/{WEB_DNS_NAME}/$webdns/g" $config_object
+gsed -i "s/{DOMAIN}/$domain/g" $config_object
 
 echo "Copying config file to s3://$config_bucket/$config_object"
 echo
@@ -290,7 +291,7 @@ fi
 for (( c=1; c<=50; c++ ))
 do
     count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --output text --region "$region" |grep "$stack3" |wc -l`
-    if [ ${count} -eq 1 ]
+    if [ "${count}" -ne "0" ]
     then
         break
     fi
@@ -354,7 +355,7 @@ fi
 for (( c=1; c<=50; c++ ))
 do
     count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --output text --region "$region" |grep "$stack5" |wc -l`
-    if [ ${count} -eq 1 ]
+    if [ "${count}" -ne "0" ]
     then
         break
     fi
@@ -383,13 +384,12 @@ fi
 while [ $keypress_loop == true ]
 do
     read -t 1 -n 10000 discard
-    read -n1 -r -p "Press enter to deploy autoscaling group..." keypress
+    read -n1 -r -p "Press enter to deploy hybrid licensing autoscaling group..." keypress
     if [[ "$keypress" == "" ]]
     then
         keypress_loop=false
     fi
 done
-
 
 if [ "${KI_SPECIFIED}" == true ]
 then
@@ -401,6 +401,7 @@ fi
 #
 # Now deploy fortigate autoscaling instances in the public & private subnets on top of the existing VPC
 #
+
 count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --output text --region "$region" |grep "$stack6" |wc -l`
 if [ "${count}" -eq "0" ]
 then
@@ -437,7 +438,7 @@ fi
 for (( c=1; c<=50; c++ ))
 do
     count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --output text --region "$region" |grep "$stack6" |wc -l`
-    if [ ${count} -eq 1 ]
+    if [ "${count}" -ne "0" ]
     then
         break
     fi
@@ -463,7 +464,92 @@ echo "Application Load Balancer = $alb"
 echo "Network Load Balancer = $nlb"
 echo
 
+if [ "$KI_SPECIFIED" == true ]
+then
+    keypress_loop=true
+else
+    keypress_loop=false
+fi
+while [ $keypress_loop == true ]
+do
+    read -t 1 -n 10000 discard
+    read -n1 -r -p "Press enter to deploy paygo autoscaling group..." keypress
+    if [[ "$keypress" == "" ]]
+    then
+        keypress_loop=false
+    fi
+done
 
+
+if [ "${KI_SPECIFIED}" == true ]
+then
+    echo "Deploying "$stack7" Template and the script will pause when the create-stack is complete"
+else
+    echo "Deploying "$stack7" Template"
+fi
+
+#
+# Now deploy fortigate autoscaling instances in the public & private subnets on top of the existing VPC
+#
+
+count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --output text --region "$region" |grep "$stack7" |wc -l`
+if [ "${count}" -eq "0" ]
+then
+    aws cloudformation create-stack --stack-name "$stack7" --output text --region "$region" --capabilities CAPABILITY_IAM \
+        --template-body file://FGT_AutoScale_ExistingVPC_Paygo.json \
+        --parameters    ParameterKey=VPCID,ParameterValue="$VPC" \
+                        ParameterKey=VPCCIDR,ParameterValue="$VPCCIDR" \
+                        ParameterKey=PublicSubnet1,ParameterValue="$SUBNET1" \
+                        ParameterKey=PrivateSubnet1,ParameterValue="$SUBNET2" \
+                        ParameterKey=PublicSubnet2,ParameterValue="$SUBNET3" \
+                        ParameterKey=PrivateSubnet2,ParameterValue="$SUBNET4" \
+                        ParameterKey=CIDRForInstanceAccess,ParameterValue="$access" \
+                        ParameterKey=AdminHttpsPort,ParameterValue="$admin_port" \
+                        ParameterKey=KeyPair,ParameterValue="$key" \
+                        ParameterKey=SsmSecureStringParamName,ParameterValue="$password_parameter_name" \
+                        ParameterKey=InitS3Bucket,ParameterValue="$license_bucket" \
+                        ParameterKey=InternalLBDNSName,ParameterValue="$lb_dns_name" \
+                        ParameterKey=NlbListenerPort,ParameterValue="$listener_port" \
+                        ParameterKey=APIGatewayURL,ParameterValue="$apiurl" \
+                        ParameterKey=EnvironmentTag,ParameterValue="$environment_tag" \
+                        ParameterKey=ScaleUpThreshold,ParameterValue=$scale_up_threshold \
+                        ParameterKey=ScaleDownThreshold,ParameterValue=$scale_down_threshold \
+                        ParameterKey=PAYGInstanceType,ParameterValue="$fgt_instance_type" \
+                        ParameterKey=ASGPAYGMinSize,ParameterValue=0 \
+                        ParameterKey=ASGPAYGMaxSize,ParameterValue=5 > /dev/null
+fi
+
+#
+# Wait for template above to CREATE_COMPLETE
+#
+for (( c=1; c<=50; c++ ))
+do
+    count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --output text --region "$region" |grep "$stack7" |wc -l`
+    if [ "${count}" -ne "0" ]
+    then
+        break
+    fi
+    sleep $pause
+done
+
+tfile=$(mktemp /tmp/foostack7.XXXXXXXXX)
+aws cloudformation describe-stacks --stack-name "$stack7" --output text --region "$region" \
+    --query 'Stacks[*].Outputs[*].{KEY:OutputKey,Value:OutputValue}' > $tfile
+username=`cat $tfile|grep ^Username|cut -f2 -d$'\t'`
+ssm_parameter_name=`cat $tfile|grep ^SsmParameterName|cut -f2 -d$'\t'`
+alb_paygo=`cat $tfile|grep ^Albpaygo|cut -f2 -d$'\t'`
+nlb_paygo=`cat $tfile|grep ^Nlbpaygo|cut -f2 -d$'\t'`
+if [ -f $tfile ]
+then
+    rm -f $tfile
+fi
+
+echo
+echo "User Name = $username"
+echo "Ssm Parameter Name = $ssm_parameter_name"
+echo "Application Load Balancer = $alb-paygo"
+echo "Network Load Balancer = $nlb-paygo"
+echo
 #
 # End of the script
 #

@@ -32,7 +32,7 @@ from .const import *
 from .signals import *
 from .scheduled import *
 from .utils import *
-
+from .settings import *
 
 VITAL_NOTIFICATION_FIELDS = [
     'Type', 'Message', 'Timestamp', 'Signature',
@@ -174,10 +174,35 @@ def redo_lifecycle_hooks(name):
     return
 
 
+def validate_sns_topic(sns_client, topic_arn):
+    validate_topic = True
+    next_token = ''
+    while validate_topic is True:
+        try:
+            rtr = sns_client.list_topics(NextToken=next_token)
+        except Exception as ex:
+            print("validate_sns_topic(): message = %s" % ex)
+            return -2
+        if 'Topics' in rtr:
+            l = len(rtr['Topics'])
+            if l > 0:
+                for i in rtr['Topics']:
+                    val = i.get('TopicArn')
+                    if topic_arn == val:
+                        return True
+        if 'NextToken' in rtr:
+            next_token = rtr['NextToken']
+        else:
+            validate_topic = False
+    return False
+
+
 def confirm_subscription(account, region, topic_name):
-    logger.debug("confirm_subscription(): topic = %s" % topic_name)
+    logger.info("confirm_subscription(): topic = %s" % topic_name)
     topic_arn = 'arn:aws:sns:{0}:{1}:{2}'.format(region, account, topic_name)
     sns_client = boto3.client('sns')
+    if not validate_sns_topic(sns_client, topic_arn):
+        return -2
     try:
         rt = sns_client.list_subscriptions_by_topic(TopicArn=topic_arn)
     except sns_client.exceptions.NotFoundException:
@@ -389,12 +414,6 @@ def start_scheduled(event, context):
     asg_client = boto3.client('autoscaling')
     dbc = boto3.client('dynamodb')
     dbr = boto3.resource('dynamodb')
-    t = dbc.list_tables()
-    logger.debug("start_scheduled4(): t = %s" % json.dumps(t, sort_keys=True, indent=4, separators=(',', ': ')))
-    if 'TableNames' not in t:
-        return
-    if len(t['TableNames']) == 0:
-        return
     table_found = False
     try:
         t = dbc.list_tables()
@@ -441,10 +460,11 @@ def start_scheduled(event, context):
             logger.debug("found items in r:")
             if len(r['Items']) > 0:
                 for asg in r['Items']:
-                    logger.debug("start_scheduled() FOUND autoscale group = %s" % asg['TypeId'])
+                    logger.info("start_scheduled() FOUND autoscale group = %s" % asg['TypeId'])
                     gname = asg['TypeId']
                     nbyol = gname + '-byol'
                     npaygo = gname + '-paygo'
+                    logger.info("start_scheduled(1): byol = %s, paygo = %s" % (nbyol, npaygo))
                     try:
                         r = asg_client.describe_auto_scaling_groups(AutoScalingGroupNames=[nbyol, npaygo])
                     except Exception as ex:
@@ -719,15 +739,15 @@ def sns(request):
                             logger.debug("sns(notification 4)")
                             table_found = True
                 except g.db_client.exceptions.ResourceNotFoundException:
-                    logger.exception("process_autoscale_group_exception_1()")
+                    logger.exception("sns(): db_client_describe_table() - NOT FOUND")
                     table_found = False
                 if table_found is True:
-                    logger.debug("process_autoscale_group(4): FOUND autoscale scale group table")
+                    logger.debug("sns(4): FOUND autoscale scale group table")
                     mt = g.db_resource.Table(g.table_name)
                     try:
                         a = mt.get_item(Key={"Type": TYPE_AUTOSCALE_GROUP, "TypeId": "0000"})
                     except g.db_client.exceptions.ResourceNotFoundException:
-                        logger.exception("process_autoscale_group()")
+                        logger.exception("sns(5)")
                         return
                     if 'Item' in a and 'UpdateCountdown' in a['Item']:
                         item = a['Item']
