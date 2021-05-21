@@ -1,19 +1,43 @@
 #!/bin/bash
-sudo add-apt-repository ppa:deadsnakes/ppa -y
-sudo apt-get update
+unameOut="$(uname -s)"
 
-sudo apt-get install awscli -y
-
+case "${unameOut}" in
+    Linux*)     machine=Linux;;
+    Darwin*)    machine=Mac;;
+    CYGWIN*)    machine=Cygwin;;
+    MINGW*)     machine=MinGw;;
+    *)          machine="UNKNOWN:${unameOut}"
+esac
+type apt-get > /dev/null 2>&1
+if [ $? -eq 0 ]
+then
+    apt_installed=$true
+fi
 tput clear
-echo
-echo "Provide AWS Credentials via "aws configure" and deployment specific parameters"
-echo
-echo
-aws configure
-echo "export AWS_ACCESS_KEY_ID=`aws configure get aws_access_key_id`" >> ~/.bashrc
-echo "export AWS_SECRET_ACCESS_KEY=`aws configure get aws_secret_access_key`" >> ~/.bashrc
-echo "export AWS_REGION=`aws configure get region`" >> ~/.bashrc
-source ~/.bashrc
+if [[ -z "$AWS_CONTAINER_AUTHORIZATION_TOKEN" ]]
+then
+    if [ $apt_installed ]
+    then
+        sudo add-apt-repository ppa:deadsnakes/ppa -y
+        sudo apt-get update
+        sudo apt-get install awscli -y
+        sudo apt remove python python3.5 python3.6 python3.7 --yes
+        sudo apt-get install python3.7 python3.7-venv python3-pip --yes
+        sudo apt-get upgrade --yes
+        sudo apt install snap snapd --yes
+        sudo snap install terraform
+    fi
+    echo
+    echo "Provide AWS Credentials via "aws configure" and deployment specific parameters"
+    echo
+    echo
+    aws configure
+    echo "export AWS_ACCESS_KEY_ID=`aws configure get aws_access_key_id`" >> ~/.bashrc
+    echo "export AWS_SECRET_ACCESS_KEY=`aws configure get aws_secret_access_key`" >> ~/.bashrc
+    echo "export AWS_REGION=`aws configure get region`" >> ~/.bashrc
+    source ~/.bashrc
+fi
+
 #
 # Ask the user which region to deploy to
 #
@@ -23,7 +47,7 @@ if [[ -n "$userInput" ]]
 then
     region=$userInput
 fi
-
+aws configure set default.region $region
 #
 # Ask the user for an s3 bucket name that doesn't exist
 #
@@ -63,15 +87,10 @@ then
 fi
 tput clear
 
-sudo apt remove python python3.5 python3.6 python3.7 --yes
-sudo apt-get install python3.7 python3.7-venv python3-pip --yes
-sudo apt-get upgrade --yes
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
 pip3 install -r requirements.txt
-sudo apt install snap snapd --yes
-sudo snap install terraform
 
 #
 # Now modify the appropriate files based on user input
