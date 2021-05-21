@@ -346,7 +346,7 @@ count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --ou
 if [ "${count}" -eq "0" ]
 then
     aws cloudformation create-stack --stack-name "$stack5" --output text --region "$region" --capabilities CAPABILITY_IAM \
-        --template-body file://AutoScale_Automation-Framework.json   >/dev/null
+        --template-body file://AutoScale_Automation-Framework.yaml   >/dev/null
 fi
 
 #
@@ -406,7 +406,7 @@ count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --ou
 if [ "${count}" -eq "0" ]
 then
     aws cloudformation create-stack --stack-name "$stack6" --output text --region "$region" --capabilities CAPABILITY_IAM \
-        --template-body file://FGT_AutoScale_ExistingVPC_Hybrid-Licensing.json \
+        --template-body file://FGT_AutoScale_ExistingVPC_Hybrid-Licensing.yaml \
         --parameters    ParameterKey=VPCID,ParameterValue="$VPC" \
                         ParameterKey=VPCCIDR,ParameterValue="$VPCCIDR" \
                         ParameterKey=PublicSubnet1,ParameterValue="$SUBNET1" \
@@ -416,6 +416,7 @@ then
                         ParameterKey=CIDRForInstanceAccess,ParameterValue="$access" \
                         ParameterKey=AdminHttpsPort,ParameterValue="$admin_port" \
                         ParameterKey=KeyPair,ParameterValue="$key" \
+                        ParameterKey=FortiOSVersion,ParameterValue="$fortios_version" \
                         ParameterKey=SsmSecureStringParamName,ParameterValue="$password_parameter_name" \
                         ParameterKey=InitS3Bucket,ParameterValue="$license_bucket" \
                         ParameterKey=InternalLBDNSName,ParameterValue="$lb_dns_name" \
@@ -425,10 +426,10 @@ then
                         ParameterKey=ScaleUpThreshold,ParameterValue=$scale_up_threshold \
                         ParameterKey=ScaleDownThreshold,ParameterValue=$scale_down_threshold \
                         ParameterKey=BYOLInstanceType,ParameterValue="$fgt_instance_type" \
-                        ParameterKey=ASGBYOLMinSize,ParameterValue=0 \
+                        ParameterKey=ASGBYOLMinSize,ParameterValue=1 \
                         ParameterKey=ASGBYOLMaxSize,ParameterValue=2 \
                         ParameterKey=PAYGInstanceType,ParameterValue="$fgt_instance_type" \
-                        ParameterKey=ASGPAYGMinSize,ParameterValue=0 \
+                        ParameterKey=ASGPAYGMinSize,ParameterValue=1 \
                         ParameterKey=ASGPAYGMaxSize,ParameterValue=5 > /dev/null
 fi
 
@@ -496,7 +497,7 @@ count=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --ou
 if [ "${count}" -eq "0" ]
 then
     aws cloudformation create-stack --stack-name "$stack7" --output text --region "$region" --capabilities CAPABILITY_IAM \
-        --template-body file://FGT_AutoScale_ExistingVPC_Paygo.json \
+        --template-body file://FGT_AutoScale_ExistingVPC_Paygo.yaml \
         --parameters    ParameterKey=VPCID,ParameterValue="$VPC" \
                         ParameterKey=VPCCIDR,ParameterValue="$VPCCIDR" \
                         ParameterKey=PublicSubnet1,ParameterValue="$SUBNET1" \
@@ -506,6 +507,7 @@ then
                         ParameterKey=CIDRForInstanceAccess,ParameterValue="$access" \
                         ParameterKey=AdminHttpsPort,ParameterValue="$admin_port" \
                         ParameterKey=KeyPair,ParameterValue="$key" \
+                        ParameterKey=FortiOSVersion,ParameterValue="$fortios_version" \
                         ParameterKey=SsmSecureStringParamName,ParameterValue="$password_parameter_name" \
                         ParameterKey=InitS3Bucket,ParameterValue="$license_bucket" \
                         ParameterKey=InternalLBDNSName,ParameterValue="$lb_dns_name" \
@@ -515,7 +517,7 @@ then
                         ParameterKey=ScaleUpThreshold,ParameterValue=$scale_up_threshold \
                         ParameterKey=ScaleDownThreshold,ParameterValue=$scale_down_threshold \
                         ParameterKey=PAYGInstanceType,ParameterValue="$fgt_instance_type" \
-                        ParameterKey=ASGPAYGMinSize,ParameterValue=0 \
+                        ParameterKey=ASGPAYGMinSize,ParameterValue=1 \
                         ParameterKey=ASGPAYGMaxSize,ParameterValue=5 > /dev/null
 fi
 

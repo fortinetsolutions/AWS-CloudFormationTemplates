@@ -120,10 +120,29 @@ else
     keypress_loop=false
 fi
 tfile=$(mktemp /tmp/foostack.XXXXXXXXX)
+aws cloudformation list-stack-resources --stack-name "$stack7" --region "$region" --query "StackResourceSummaries[?contains(ResourceType, 'AWS::AutoScaling::AutoScalingGroup')].{Name:PhysicalResourceId}" >$tfile
+for i in `cat $tfile`
+do
+    echo "Updating Min and Desired to 0: Autoscale Group = $i"
+    aws autoscaling update-auto-scaling-group --auto-scaling-group-name "$i" --min-size 0 --desired-capacity 0
+done
+for i in `cat $tfile`
+do
+    echo "Waiting for zero instance in autoscale group $i"
+    wait_for_zero_instances $i
+done
+if [ -f $tfile ]
+then
+    rm -f $tfile
+fi
+if [ "$KI_SPECIFIED" == true ]
+then
+    keypress_loop=true
+else
+    keypress_loop=false
+fi
+tfile=$(mktemp /tmp/foostack.XXXXXXXXX)
 aws cloudformation list-stack-resources --stack-name "$stack6" --region "$region" --query "StackResourceSummaries[?contains(ResourceType, 'AWS::AutoScaling::AutoScalingGroup')].{Name:PhysicalResourceId}" >$tfile
-#
-# break here
-#
 for i in `cat $tfile`
 do
     echo "Updating Min and Desired to 0: Autoscale Group = $i"
@@ -150,6 +169,8 @@ aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE --region "$
 #
 # break here
 #
+stack7_name=`cat $tfile |grep "$stack7"|cut -f2 -d$'\t'`
+stack7_id=`cat $tfile |grep "$stack7"|cut -f1 -d$'\t'`
 stack6_name=`cat $tfile |grep "$stack6"|cut -f2 -d$'\t'`
 stack6_id=`cat $tfile |grep "$stack6"|cut -f1 -d$'\t'`
 stack5_name=`cat $tfile |grep "$stack5"|cut -f2 -d$'\t'`
@@ -164,7 +185,7 @@ if [ -f $tfile ]
 then
     rm -f $tfile
 fi
-
+echo "Stack 7 name $stack7_name id $stack7_id in region $region"
 echo "Stack 6 name $stack6_name id $stack6_id in region $region"
 echo "Stack 5 name $stack5_name id $stack5_id in region $region"
 echo "Stack 3 name $stack1_name id $stack3_id in region $region"
@@ -180,6 +201,16 @@ do
     fi
 done
 
+if [ -n "$stack7_name" ]
+then
+    echo "Deleting $stack7_name id $stack7_id region $region"
+    delete_stack $stack7_id $stack7_name $region $stack7
+fi
+if [ -n "$stack7_name" ]
+then
+    echo "Waiting for $stack7 deletion"
+    wait_for_stack_deletion $stack7_id $stack7_name $region
+fi
 if [ -n "$stack6_name" ]
 then
     echo "Deleting $stack6_name id $stack6_id region $region"

@@ -5,8 +5,8 @@ stack1=$stack_prefix-base
 stack2=$stack_prefix-ws
 stack3=$stack_prefix-tg
 stack5=$stack_prefix-fwrk
-stack6=$stack_prefix-asg
-stack7=$stack_prefix-paygo-asg
+stack6=$stack_prefix-hybrid-asg1
+stack7=$stack_prefix-paygo-asg2
 
 region=us-west-2
 
@@ -14,6 +14,7 @@ config_bucket=mdw-config
 lambda_bucket=fortimdw
 license_bucket=mdw-license-bucket-us-west-2
 password_parameter_name="/mdw/dev/password"
+fortios_version="6.4.5"
 admin_https_port=443
 lb_dns_name=mdw-lb-dbc9d5f4ee5e9c0c.elb.us-east-1.amazonaws.com
 api_gateway=https://3zco01g4v3.execute-api.us-east-1.amazonaws.com/dev/sns
