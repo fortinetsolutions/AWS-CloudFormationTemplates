@@ -1,7 +1,7 @@
 #!/usr/bin/env bash 
 
 source $(dirname $0)/stack_parameters.sh
-
+sed_tool=sed
 #
 # Extra variables
 #
