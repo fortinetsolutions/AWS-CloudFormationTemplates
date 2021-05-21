@@ -54,6 +54,20 @@ do
      esac
 done
 
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)     machine=Linux;;
+    Darwin*)    machine=Mac;;
+    CYGWIN*)    machine=Cygwin;;
+    MINGW*)     machine=MinGw;;
+    *)          machine="UNKNOWN:${unameOut}"
+esac
+
+if [ "$machine" == "Mac" ]
+then
+    sed_tool="gsed"
+fi
+
 if [ "$PAUSE_SPECIFIED" == true ]
 then
     pause=$PAUSE_VALUE
@@ -91,8 +105,8 @@ fi
 echo "Making http server substitions in fortigate config files for http server name: $webdns"
 
 cp base_current.conf "$config_object"
-gsed -i "s/{WEB_DNS_NAME}/$webdns/g" $config_object
-gsed -i "s/{DOMAIN}/$domain/g" $config_object
+$sed_tool -i "s/{WEB_DNS_NAME}/$webdns/g" $config_object
+$sed_tool -i "s/{DOMAIN}/$domain/g" $config_object
 
 echo "Copying config file to s3://$config_bucket/$config_object"
 echo
