@@ -568,6 +568,9 @@ Resources:
             - config system admin
             - edit admin
             - set force-password-change disable
+            - set gui-allow-default-hostname enable
+            - set gui-display-hostname enable
+            - set gui-firmware-upgrade-setup-warning disable
             - Fn::Sub:
               - set password ${secret}
               - secret:
