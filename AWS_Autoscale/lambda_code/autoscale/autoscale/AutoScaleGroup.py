@@ -341,8 +341,10 @@ class AutoScaleGroup(object):
             suffix = o['Key'].split('.')
             if len(suffix) == 2 and suffix[1] == 'lic':
                 self.write_license_to_db(bucket, o['Key'])
+        logger.info("find_s3_license_file(exit): bucket = %s" % bucket)
 
     def assign_license_to_instance(self, fortigate):
+        logger.info("assign_license_to_instance()")
         if fortigate.ec2 is None:
             return
         t = self.db_resource.Table(self.name)
@@ -379,42 +381,50 @@ class AutoScaleGroup(object):
             try:
                 status = s3c.download_fileobj(bucket, object_key, content)
             except Exception as ex:
-                logger.exception("caught: %s with PutLicenseInfo" % ex.message)
-        b64lic = base64.b64encode(open(file).read().encode()).decode()
+                logger.exception("caught: %s with download_fileobj():" % ex.message)
         ip = None
         if 'PublicIpAddress' in fortigate.ec2:
             ip = fortigate.ec2['PublicIpAddress']
         elif 'PrivateIpAddress' in self.ec2:
             ip = fortigate.ec2['PrivateIpAddress']
+        logger.info("PutLicense found a key = %s" % object_key)
         instance_id = fortigate.instance_id
         status = fortigate.api.login(ip, 'admin', self.cft_password)
-        status_type = type(status)
-        logger.info("PutLicense api.login status type = %s" % status_type)
-        if isinstance(status, str):
-            logger.info("PutLicense failed: %s status = %s" % (fortigate.instance_id, status))
-            status = -1
-            return status
         if status == -1:
-            logger.info("PutLicense failed: %s status = %s" % (fortigate.instance_id, status))
+            logger.info("PutLicense after api.login: status = %d" % status)
             return status
-        status = fortigate.api.post(api='monitor', path='system', name='vmlicense',
-                                    action='upload', data={"file_content": b64lic})
-        status_type = type(status)
-        if not isinstance(status, bytes):
-            logger.info("PutLicense api.put bad status type = %s" % status_type)
-            return -1
+        r = fortigate.api.get(api='monitor', path='license', name='status')
         try:
-            msg = json.loads(status)
+            data = json.loads(r)
         except json.decoder.JSONDecodeError:
-            logger.exception("login.exception(2): status = %s" % status)
+            logger.exception("login.exception(api.get)")
             return -1
-        if 'status' not in msg:
-            logger.info("PutLicense api.put bad message status")
+        if 'results' not in data or 'vm' not in data['results'] or 'valid' not in data['results']['vm']:
             return -1
-        if msg['status'] != 'success':
-            logger.info("PutLicense failed: %s status = %s" % (fortigate.instance_id, msg['status']))
-            return -1
-        logger.info("PutLicense: %s status = %s, file = %s" % (fortigate.instance_id, status, file))
+        license_valid = data['results']['vm']['valid']
+        if license_valid is True:
+            logger.info("PutLicense - this instance has a license")
+        if license_valid is False:
+            logger.info("PutLicense - this instance needs a license")
+            b64lic = base64.b64encode(open(file).read().encode()).decode()
+            logger.info("PutLicense before api.post.")
+            status = fortigate.api.post(api='monitor', path='system', name='vmlicense',
+                                        action='upload', data={"file_content": b64lic})
+            status_type = type(status)
+            if not isinstance(status, bytes):
+                return -1
+            try:
+                msg = json.loads(status)
+            except json.decoder.JSONDecodeError:
+                logger.exception("login.exception(2): status = %s" % status)
+                return -1
+            if 'status' not in msg:
+                logger.info("PutLicense api.put bad message status")
+                return -1
+            if msg['status'] != 'success':
+                logger.info("PutLicense failed: %s status = %s" % (fortigate.instance_id, msg['status']))
+                return -1
+        logger.info("PutLicense - instance now has a license: %s status = %s, file = %s" % (fortigate.instance_id, status, file))
         self.write_license_to_db(bucket=bucket, key=l['TypeId'], instance_id=instance_id)
         return status
 
@@ -736,23 +746,19 @@ class AutoScaleGroup(object):
             # This is the master
             #
             self.master_ip = f.ec2['PrivateIpAddress']
-            logger.info('lch_launch_instance4a(): master_ip = %s' % self.master_ip)
             self.table.update_item(Key={"Type": TYPE_AUTOSCALE_GROUP, "TypeId": "0000"},
                                    UpdateExpression="set MasterIp = :m, MasterId = :i, OrigMasterId = :p",
                                    ExpressionAttributeValues={':m': self.master_ip, ':i': f.ec2['InstanceId'],
                                                               ':p': f.ec2['InstanceId']})
             self.asg.update([('MasterId', f.ec2['InstanceId'])])
-            logger.info('lch_launch_instance4b(): master info master_ip = %s' % self.master_ip)
         if 'PrivateSubnetId' in instance:
             self.private_subnet_id = instance['PrivateSubnetId']
-        logger.info('lch_launch_instance5(): DB instance = %s' % instance)
         rc = f.add_member_to_autoscale_group(self.master_ip, self.cft_password)
         if rc == -1:
             logger.info('lch_launch_instance5a(): DB instance = %s failed to add to autoscale group' % instance)
             return STATUS_NOT_OK
         instance['State'] = 'InService'
         self.table.put_item(Item=instance)
-        logger.info('lch_launch_instance6(): State = %s' % instance['State'])
         if 'MasterId' in self.asg and f.ec2['InstanceId'] == self.asg['MasterId']:
             key = 'Fortigate-S3-License-Bucket'
             license_bucket = f.get_tag(key)

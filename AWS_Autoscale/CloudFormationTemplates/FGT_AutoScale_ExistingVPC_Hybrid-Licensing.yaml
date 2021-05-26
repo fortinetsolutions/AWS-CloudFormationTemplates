@@ -632,13 +632,13 @@ Resources:
           - - config system global
             - Fn::Sub: set admin-sport ${AdminHttpsPort}
             - set pre-login-banner disable
-            - end
-            - config system admin
-            - edit admin
             - set force-password-change disable
             - set gui-allow-default-hostname enable
             - set gui-display-hostname enable
             - set gui-firmware-upgrade-setup-warning disable
+            - end
+            - config system admin
+            - edit admin
             - Fn::Sub:
               - set password ${secret}
               - secret:
@@ -827,13 +827,13 @@ Resources:
           - - config system global
             - Fn::Sub: set admin-sport ${AdminHttpsPort}
             - set pre-login-banner disable
-            - end
-            - config system admin
-            - edit admin
             - set force-password-change disable
             - set gui-allow-default-hostname enable
             - set gui-display-hostname enable
             - set gui-firmware-upgrade-setup-warning disable
+            - end
+            - config system admin
+            - edit admin
             - Fn::Sub:
               - set password ${secret}
               - secret:

@@ -123,7 +123,10 @@ class Fortigate(object):
             ip = self.ec2['PublicIpAddress']
         elif 'PrivateIpAddress' in self.ec2:
             ip = self.ec2['PrivateIpAddress']
-        self.api.login(ip, 'admin', password)
+        status = self.api.login(ip, 'admin', password)
+        if status == -1:
+            logger.error("make_instance_ready(): API Login failed: %s" % self.instance_id)
+            return status
         content = self.api.get(api='monitor', path='system', name='firmware', action='select', mkey=None)
         data = json.loads(content)
         if 'version' in data:
@@ -211,21 +214,19 @@ class Fortigate(object):
 
     def update_ec2_info(self):
         self.ec2 = None
-        logger.info('update_ec2_info(): id = %s' % self.instance_id)
         try:
             instances = self.ec2_client.describe_instances(InstanceIds=[self.instance_id])
         except Exception as ex:
             logger.exception("Fortigate.exception(): message = %s, instance = %s" % (ex, self.instance_id))
             return
         if 'ResponseMetadata' not in instances or instances['ResponseMetadata']['HTTPStatusCode'] != STATUS_OK:
-            logger.info('update_ec2_info1():')
+            logger.info('update_ec2_info1(error):')
             return
         if 'Reservations' not in instances or len(instances['Reservations']) == 0:
-            logger.info('update_ec2_info2():')
+            logger.info('update_ec2_info2(error):')
             return
         for instance in instances['Reservations']:
             for i in instance['Instances']:
-                logger.info('update_ec2_info3(): ec2_info.instance_id = %s' % i['InstanceId'])
                 if i['InstanceId'] == self.instance_id:
                     self.ec2 = i
 
@@ -332,16 +333,15 @@ class Fortigate(object):
                   "psksecret": self.auto_scale_group.table_name,
                   "callback-url": callback_url
             }
-            logger.info('posting auto-scale config: {}' .format(data))
+            logger.debug('posting auto-scale config: {}' .format(data))
             try:
                 status = self.api.login(self.ec2['PublicIpAddress'], 'admin', password)
             except Exception as ex:
                 logger.exception("login.exception(1): message = %s, instance = %s" % (ex, self.instance_id))
                 return -1
-            logger.info('posting master autoscale config: {%d}' % status)
             if status != 0:
+                logger.info('api.login(): FAIL')
                 return -1
-            logger.info('before api put content: data = {}' .format(data))
             try:
                 content = self.api.put(api='cmdb', path='system', name='auto-scale', data=data)
             except Exception as ex:
@@ -350,7 +350,7 @@ class Fortigate(object):
             if isinstance(content, str):
                 logger.info('add_member_to_autoscale_group(): api put failed')
                 return -1
-            logger.info('after api put content: {}' .format(content))
+            logger.debug('after api put content: {}' .format(content))
             if isinstance(content, bytes):
                 try:
                     msg = json.loads(content)
@@ -358,14 +358,14 @@ class Fortigate(object):
                     logger.exception("login.exception(2): content = %s, data = %s" % (content, data))
                     return -1
             else:
-                logger.info('add_member_to_autoscale_group(): not bytes object')
+                logger.debug('add_member_to_autoscale_group(): not bytes object')
                 return -1
-            logger.info('posting api put status: {}' .format(msg['status']))
+            logger.debug('posting api put status: {}' .format(msg['status']))
             if msg['status'] == 'success':
                 self.ec2_client.create_tags(Resources=[self.instance_id],
                                             Tags=[{'Key': 'Fortinet-Autoscale', 'Value': 'Master'}])
                 status = 0
-            logger.info('restapi response: {}' .format(content))
+            logger.debug('restapi response: {}' .format(content))
             self.api.logout()
         else:
             data = {
@@ -376,22 +376,21 @@ class Fortigate(object):
                   "psksecret": self.auto_scale_group.table_name,
                   "callback-url": callback_url
             }
-            logger.info('posting slave autoscale config: {}' .format(data))
+            logger.debug('posting slave autoscale config: {}' .format(data))
             try:
                 status = self.api.login(self.ec2['PublicIpAddress'], 'admin', password)
             except Exception as ex:
                 logger.exception("login.exception(): message = %s, instance = %s" % (ex, self.instance_id))
                 return -1
-            logger.info('posting slave autoscale config: {%d}' % status)
             if status != 0:
+                logger.info('api.login(): FAIL')
                 return -1
-            logger.info('before api put content: data = {}' .format(data))
             try:
                 content = self.api.put(api='cmdb', path='system', name='auto-scale', data=data)
             except Exception as ex:
                 logger.exception("api put exception(): message = %s, instance = %s" % (ex, self.instance_id))
                 return -1
-            logger.info('after api put content: {}' .format(content))
+            logger.debug('after api put content: {}' .format(content))
             if isinstance(content, bytes):
                 try:
                     msg = json.loads(content)
@@ -399,13 +398,13 @@ class Fortigate(object):
                     logger.exception("login.exception(2): content = %s, data = %s" % (content, data))
                     return -1
             else:
-                logger.info('add_member_to_autoscale_group(): not bytes object')
+                logger.debug('add_member_to_autoscale_group(): not bytes object')
                 return -1
             if msg['status'] == 'success':
                 self.ec2_client.create_tags(Resources=[self.instance_id],
                                             Tags=[{'Key': 'Fortinet-Autoscale', 'Value': 'Slave'}])
                 status = 0
-            logger.info('restapi response: {}' .format(content))
+            logger.debug('restapi response: {}' .format(content))
             self.api.logout()
         return status
 

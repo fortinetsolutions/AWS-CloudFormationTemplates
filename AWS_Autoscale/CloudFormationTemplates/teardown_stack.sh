@@ -279,9 +279,9 @@ fi
 
 cd ../lambda_code/autoscale
 rm -f autoscale-dev-*.zip
-aws s3 rm s3://fortimdw-us-east-1/autoscale-dev.zip
+aws s3 rm s3://mdw-fortibucket-us-west-2/autoscale-dev.zip
 zappa package dev
-aws s3 cp autoscale-dev-*.zip s3://fortimdw-us-east-1/autoscale-dev.zip
+aws s3 cp autoscale-dev-*.zip s3://mdw-fortibucket-us-west-2/autoscale-dev.zip
 cd -
 aws dynamodb list-tables | awk '{print $2}'|while read x; do echo "deleting table $x"; aws dynamodb delete-table --table-name $x; done
 echo "Done"

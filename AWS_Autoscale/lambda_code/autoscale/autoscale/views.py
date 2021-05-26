@@ -198,7 +198,7 @@ def validate_sns_topic(sns_client, topic_arn):
 
 
 def confirm_subscription(account, region, topic_name):
-    logger.info("confirm_subscription(): topic = %s" % topic_name)
+    logger.debug("confirm_subscription(): topic = %s" % topic_name)
     topic_arn = 'arn:aws:sns:{0}:{1}:{2}'.format(region, account, topic_name)
     sns_client = boto3.client('sns')
     if not validate_sns_topic(sns_client, topic_arn):
@@ -274,7 +274,7 @@ def process_autoscale_group(asg_name, account, region):
                 if 'TargetGroup' in item:
                     topic_name = item['TargetGroup']
                     status = confirm_subscription(account, region, topic_name)
-                    logger.info("process_autoscale_group(6): confirm_subscription() status = %d" % status)
+                    logger.debug("process_autoscale_group(6): confirm_subscription() status = %d" % status)
             if item['UpdateCountdown'] == 1:
                 redo_lifecycle_hooks(asg_name)
                 logger.info("process_autoscale_group(7): UPDATING Autoscale Group Counts")
@@ -297,7 +297,7 @@ def process_autoscale_group(asg_name, account, region):
             return
         if 'Items' in instances:
             if len(instances['Items']) > 0:
-                logger.info("process_autoscale_group(10): name = %s, instances count = %s" %
+                logger.debug("process_autoscale_group(10): name = %s, instances count = %s" %
                             (asg_name, len(instances['Items'])))
                 for i in instances['Items']:
                     logger.debug("process_autoscale_group(11): state = %s, countdown = %d" %
@@ -428,10 +428,10 @@ def start_scheduled(event, context):
                 else:
                     topic = tn + '-byol'
                     status = confirm_subscription(account, region, topic)
-                    logger.info("start_scheduled(byol): confirm_subscription() status = %d" % status)
+                    logger.debug("start_scheduled(byol): confirm_subscription() status = %d" % status)
                     topic = tn + '-paygo'
                     status = confirm_subscription(account, region, topic)
-                    logger.info("start_scheduled(paygo): confirm_subscription() status = %d" % status)
+                    logger.debug("start_scheduled(paygo): confirm_subscription() status = %d" % status)
     except Exception as ex:
         logger.exception('list_tables(): ex = %s' % ex)
         table_found = False
@@ -460,11 +460,11 @@ def start_scheduled(event, context):
             logger.debug("found items in r:")
             if len(r['Items']) > 0:
                 for asg in r['Items']:
-                    logger.info("start_scheduled() FOUND autoscale group = %s" % asg['TypeId'])
+                    logger.debug("start_scheduled() FOUND autoscale group = %s" % asg['TypeId'])
                     gname = asg['TypeId']
                     nbyol = gname + '-byol'
                     npaygo = gname + '-paygo'
-                    logger.info("start_scheduled(1): byol = %s, paygo = %s" % (nbyol, npaygo))
+                    logger.debug("start_scheduled(1): byol = %s, paygo = %s" % (nbyol, npaygo))
                     try:
                         r = asg_client.describe_auto_scaling_groups(AutoScalingGroupNames=[nbyol, npaygo])
                     except Exception as ex:

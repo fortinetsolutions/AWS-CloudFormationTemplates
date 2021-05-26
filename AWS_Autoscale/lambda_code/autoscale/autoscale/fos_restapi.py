@@ -8,9 +8,14 @@
 # A Python module to access the FortiOS REST API 
 #
 ###################################################################
+import signal
 
 import requests
 import json
+
+
+class AlarmException(Exception):
+    pass
 
 
 class FortiOSREST(object):
@@ -73,6 +78,9 @@ class FortiOSREST(object):
                     else:
                         print("\n" + json.dumps(j, indent=2, sort_keys=True))
 
+    def fos_timeout_handler(self, sig, frame):
+        raise AlarmException
+
     def debug(self, status):
         if status == 'on':
             self._debug = True
@@ -105,9 +113,16 @@ class FortiOSREST(object):
         else:
             self.url_prefix = 'http://' + self.host + ":" + str(self.admin_sport)
         url = self.url_prefix + '/logincheck'
-        res = self._session.post(url,
-                                 data='username=' + username + '&secretkey=' + password,
-                                 verify=False)
+        signal.signal(signal.SIGALRM, self.fos_timeout_handler)
+        signal.alarm(5)
+        try:
+            res = self._session.post(url,
+                                    data='username=' + username + '&secretkey=' + password,
+                                    verify=False)
+        except AlarmException:
+            res = None
+            return -1
+        signal.alarm(0)
         if res.status_code != 200:
             return -1
         self.dprint(res)
@@ -170,11 +185,18 @@ class FortiOSREST(object):
         url = self.get_url(api, path, name, action, mkey)
         res = self._session.get(url, params=parameters)
         self.dprint(res)
-        return res.content
+        return res.text
 
     def post(self, api, path, name, action=None, mkey=None, parameters=None, data=None):
         url = self.get_url(api, path, name, action, mkey)
-        res = self._session.post(url, params=parameters, data=json.dumps(data))
+        signal.signal(signal.SIGALRM, self.fos_timeout_handler)
+        signal.alarm(5)
+        try:
+            res = self._session.post(url, params=parameters, data=json.dumps(data))
+        except AlarmException:
+            res = None
+            return -1
+        signal.alarm(0)
         self.dprint(res)
         return res.content
 
