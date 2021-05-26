@@ -564,10 +564,9 @@ Resources:
           - - config system global
             - Fn::Sub: set admin-sport ${AdminHttpsPort}
             - set pre-login-banner disable
-            - set force-password-change disable
             - set gui-allow-default-hostname enable
             - set gui-display-hostname enable
-            - set gui-firmware-upgrade-setup-warning disable
+            - set gui-firmware-upgrade-warning disable
             - end
             - config system admin
             - edit admin
