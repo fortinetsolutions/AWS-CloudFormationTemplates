@@ -500,7 +500,7 @@ then
     echo
 fi
 
-if [ "$DEPLOY_DEPLOY_PAYGO_ASG_SPECIFIED" == true ]
+if [ "$DEPLOY_PAYGO_ASG_SPECIFIED" == true ]
 then
     if [ "$KI_SPECIFIED" == true ]
     then

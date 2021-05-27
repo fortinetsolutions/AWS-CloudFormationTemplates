@@ -723,7 +723,7 @@ class AutoScaleGroup(object):
                 logger.info('lch_launch_instance(1e): received duplicate EC2_LAUNCH')
                 return STATUS_OK
             instance['State'] = 'ADD_TO_AUTOSCALE_GROUP'
-            instance['CountDown'] = 120
+            instance['CountDown'] = 60
             self.table.put_item(Item=instance)
             return STATUS_NOT_OK
 

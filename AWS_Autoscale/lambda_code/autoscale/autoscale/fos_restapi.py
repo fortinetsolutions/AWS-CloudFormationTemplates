@@ -11,6 +11,8 @@
 import signal
 
 import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import json
 
 
@@ -47,7 +49,7 @@ class FortiOSREST(object):
                 for key, value in headers.items():
                     print(key + ": " + value)
 
-            if body is not 'null':
+            if body != 'null':
                 if body is not None:
                     try:
                         j = json.loads(body)
@@ -69,7 +71,7 @@ class FortiOSREST(object):
                 for key, value in headers.items():
                     print(key + ": " + value)
 
-            if body is not 'null':
+            if body != 'null':
                 if body is not None:
                     try:
                         j = json.loads(body)
@@ -101,10 +103,15 @@ class FortiOSREST(object):
 
     def update_csrf(self):
         # Retrieve server csrf and update session's headers
+        csrftoken = None
         for cookie in self._session.cookies:
             if cookie.name == 'ccsrftoken':
                 csrftoken = cookie.value[1:-1]  # token stored as a list
                 self._session.headers.update({'X-CSRFTOKEN': csrftoken})
+        if csrftoken is None:
+            return -1
+        else:
+            return 0
 
     def login(self, host, username, password):
         self.host = host
@@ -128,8 +135,7 @@ class FortiOSREST(object):
         self.dprint(res)
 
         # Update session's csrftoken
-        self.update_csrf()
-        return 0
+        return self.update_csrf()
 
     def logout(self):
         url = self.url_prefix + '/logout'
