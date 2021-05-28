@@ -570,6 +570,7 @@ Resources:
             - end
             - config system admin
             - edit admin
+            - set gui-ignore-release-overview-version "6.4.1"
             - Fn::Sub:
               - set password ${secret}
               - secret:
