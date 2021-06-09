@@ -8,7 +8,7 @@ cfn-flip==1.2.0
 chardet==3.0.4
 Click==7.0
 cryptography==2.6.1
-Django==2.2.10
+Django==2.2.22
 docutils==0.14
 durationpy==0.5
 future==0.16.0
