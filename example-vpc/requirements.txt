@@ -2,7 +2,7 @@ argcomplete==1.9.3
 asn1crypto==0.24.0
 boto3==1.9.140
 botocore==1.12.140
-certifi==2019.3.9
+certifi==2022.12.7
 cffi==1.12.3
 cfn-flip==1.2.0
 chardet==3.0.4
